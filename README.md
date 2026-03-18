@@ -1,3 +1,21 @@
+SAGI - RAD Bikes
+Sistema de Automatización y Gestión de Inventarios para RAD Bikes.
+
+Configuración del Entorno
+1. Requisitos Previos
+Instalar Node.js.
+
+2. Instalación
+Clonar el repositorio y ejecutar el siguiente comando en la terminal para instalar las dependencias:
+npm install
+
+3. Ejecución
+Para iniciar el servidor de desarrollo:
+npm run dev
+
+El sistema estará disponible en http://localhost:3000.
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
