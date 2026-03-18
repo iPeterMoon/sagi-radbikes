@@ -7,11 +7,15 @@ Instalar Node.js.
 
 2. Instalación
 Clonar el repositorio y ejecutar el siguiente comando en la terminal para instalar las dependencias:
+```bash
 npm install
+```
 
-3. Ejecución
+4. Ejecución
 Para iniciar el servidor de desarrollo:
+```bash
 npm run dev
+```
 
 El sistema estará disponible en http://localhost:3000.
 
