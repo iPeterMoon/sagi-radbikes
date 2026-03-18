@@ -4,13 +4,13 @@ import { useState } from "react";
 import { Product, ModalType } from "@/types/inventory";
 import { MOCK_PRODUCTS, CATEGORIES } from "@/lib/mockData";
 import { getStockStatus } from "@/lib/utils";
-import ProductTable from "@/components/gestionar_catalogo/ProductTable";
-import ProductFormModal from "@/components/gestionar_catalogo/ProductFormModal";
+import ProductTable from "./components/ProductTable";
+import ProductFormModal from "./components/ProductFormModal";
 import {
   DeleteConfirmationModal,
   SalesHistoryErrorModal,
-} from "@/components/gestionar_catalogo/DeleteConfirmationModal";
-import StatusFeedbackModal from "@/components/gestionar_catalogo/StatusFeedbackModal";
+} from "./components/DeleteConfirmationModal";
+import StatusFeedbackModal from "./components/StatusFeedbackModal";
 import { IconSearch, IconPlus } from "@/components/ui/Icons";
 
 const PER_PAGE = 5;
