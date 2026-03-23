@@ -5,7 +5,9 @@ import { IProductImageDAO } from "../interfaces/IProductImageDAO";
 export class ProductImageDAO implements IProductImageDAO {
   private readonly db: PrismaClient["product_images"];
   private readonly supabase: SupabaseClient;
-  private readonly BUCKET_NAME = "product-images";
+
+  private readonly BUCKET_NAME =
+    process.env.SUPABASE_BUCKET_IMAGES || "product-images";
 
   constructor(prisma: PrismaClient, supabase: SupabaseClient) {
     this.db = prisma.product_images;
