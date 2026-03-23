@@ -1,10 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { IServicioInventario } from "../negocio/interfaces/IServicioInventario";
 import { ServicioInventario } from "../negocio/ServicioInventario";
 import { AccesoDatos } from "../datos/AccesoDatos";
-import { CrearProductoDTO, ActualizarProductoDTO, FiltroProductoDTO } from "../negocio/DTOsEntrada/ProductoDTOs";
+import {
+  CrearProductoDTO,
+  ActualizarProductoDTO,
+  FiltroProductoDTO,
+} from "../negocio/DTOsEntrada/ProductoDTOs";
 
-const accesoDatos: IServicioInventario = new ServicioInventario(new AccesoDatos());
+const accesoDatos: IServicioInventario = new ServicioInventario(
+  new AccesoDatos(),
+);
 
 export async function obtenerProductos(req: NextRequest) {
   try {
@@ -25,11 +32,17 @@ export async function obtenerProductos(req: NextRequest) {
   }
 }
 
-export async function obtenerPorId(req: NextRequest, { params }: { params: { id: string } }) {
+export async function obtenerPorId(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
     const producto = await accesoDatos.obtenerProductoPorId(params.id);
     if (!producto) {
-      return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Producto no encontrado" },
+        { status: 404 },
+      );
     }
     return NextResponse.json(producto);
   } catch (error: any) {
@@ -57,7 +70,10 @@ export async function actualizarProducto(req: NextRequest) {
   }
 }
 
-export async function eliminarProducto(req: NextRequest, { params }: { params: { id: string } }) {
+export async function eliminarProducto(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
     const result = await accesoDatos.eliminarProducto(params.id);
     return NextResponse.json({ success: result });
@@ -117,7 +133,10 @@ export async function agregarImagenes(req: NextRequest) {
   }
 }
 
-export async function eliminarImagen(req: NextRequest, { params }: { params: { id: string } }) {
+export async function eliminarImagen(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
     const result = await accesoDatos.eliminarImagen(params.id);
     return NextResponse.json({ success: result });
@@ -126,7 +145,10 @@ export async function eliminarImagen(req: NextRequest, { params }: { params: { i
   }
 }
 
-export async function obtenerEtiquetas(req: NextRequest, { params }: { params: { id: string } }) {
+export async function obtenerEtiquetas(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
     const etiquetas = await accesoDatos.obtenerEtiquetas(params.id);
     return NextResponse.json(etiquetas);
@@ -145,7 +167,10 @@ export async function crearEtiqueta(req: NextRequest) {
   }
 }
 
-export async function eliminarEtiqueta(req: NextRequest, { params }: { params: { id: string } }) {
+export async function eliminarEtiqueta(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
     const result = await accesoDatos.eliminarEtiqueta(params.id);
     return NextResponse.json({ success: result });

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -30,14 +31,16 @@ function mapDtoToProduct(dto: any): Product {
     description: dto.descripcion,
     tags: dto.etiquetas || [],
     active: true,
-    image: dto.imagenes?.[0]?.nombre || "",
+    image: dto.imagenes?.[0]?.nombre || "/placeholder.png",
     hasSalesHistory: false,
   };
 }
 
 export default function InventarioPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<{idCategoria: string; nombre: string}[]>([]);
+  const [categories, setCategories] = useState<
+    { idCategoria: string; nombre: string }[]
+  >([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"bajo" | "critico" | null>(
     null,
