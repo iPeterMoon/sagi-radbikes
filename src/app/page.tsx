@@ -8,8 +8,11 @@ import {
   Lock,
 } from "@boxicons/react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { authApi } from "@/lib/api/auth";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -21,18 +24,16 @@ export default function LoginPage() {
     setError("");
     setIsLoading(true);
 
-    // Simulación de validación de credenciales
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Credenciales de prueba (en producción esto iría a un backend)
-    if (username === "admin" && password === "admin123") {
-      // Login exitoso - aquí iría la redirección
-      console.log("Login exitoso");
-    } else {
-      setError("Credenciales incorrectas");
+    try {
+      const sesion = await authApi.login({ username: username, password: password });
+      localStorage.setItem("token", sesion.token);
+      localStorage.setItem("usuario", JSON.stringify(sesion.usuario));
+      router.push("/catalogo");
+    } catch (err: any) {
+      setError(err.message || "Credenciales incorrectas");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (

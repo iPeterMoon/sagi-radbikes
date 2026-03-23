@@ -1,6 +1,7 @@
 import { products } from "@prisma/client";
+import { IGenericDAO } from "./IGenericDAO";
 
-export interface IProductDAO {
+export interface IProductDAO extends IGenericDAO<products>{
   getBelowStock(threshold: number): Promise<products[]>;
   getByCategory(categoryId: bigint): Promise<products[]>;
   getBySubCategory(subCategoryId: bigint): Promise<products[]>;

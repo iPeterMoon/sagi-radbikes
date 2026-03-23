@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Product, ModalType } from "@/types/inventory";
-import { MOCK_PRODUCTS, CATEGORIES } from "@/lib/mockData";
+import { useState, useEffect } from "react";
+import { ModalType, Product } from "@/types/inventory";
+import { inventarioApi } from "@/lib/api/inventario";
 import { getStockStatus } from "@/lib/utils";
 import ProductTable from "./components/ProductTable";
 import ProductFormModal from "./components/ProductFormModal";
@@ -15,8 +15,29 @@ import { IconSearch, IconPlus } from "@/components/ui/Icons";
 
 const PER_PAGE = 5;
 
+function mapDtoToProduct(dto: any): Product {
+  return {
+    id: Number(dto.idProducto),
+    name: dto.nombre,
+    sku: "",
+    barcode: "",
+    brand: dto.marca?.nombre || "",
+    category: dto.categoria?.nombre || "",
+    subcategory: "",
+    price: dto.precio,
+    stock: dto.stock,
+    minStock: 5,
+    description: dto.descripcion,
+    tags: dto.etiquetas || [],
+    active: true,
+    image: dto.imagenes?.[0]?.nombre || "",
+    hasSalesHistory: false,
+  };
+}
+
 export default function InventarioPage() {
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<{idCategoria: string; nombre: string}[]>([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"bajo" | "critico" | null>(
     null,
@@ -24,6 +45,33 @@ export default function InventarioPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<ModalType>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProducts();
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const cats = await inventarioApi.obtenerCategorias();
+      setCategories(cats);
+    } catch (error) {
+      console.error("Error loading categories:", error);
+    }
+  };
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const dtos = await inventarioApi.obtenerProductos();
+      setProducts(dtos.map(mapDtoToProduct));
+    } catch (error) {
+      console.error("Error loading products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = products.filter((p) => {
     const q = search.toLowerCase();
@@ -51,13 +99,40 @@ export default function InventarioPage() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE) || 1;
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  const handleSave = (data: Product) => {
-    if (modal?.type === "edit") {
-      setProducts((prev) => prev.map((p) => (p.id === data.id ? data : p)));
-      setModal(null);
-    } else {
-      setProducts((prev) => [...prev, data]);
-      setModal({ type: "success-add" });
+  const handleSave = async (data: Product) => {
+    try {
+      if (modal?.type === "edit") {
+        await inventarioApi.actualizarProducto({
+          idProducto: data.id.toString(),
+          nombre: data.name,
+          precio: data.price,
+          stock: data.stock,
+          descripcion: data.description,
+          idCategoria: data.category,
+          imagenesNuevas: [],
+          imagenesEliminar: [],
+          idImagenPrincipal: "",
+          idMarca: data.brand,
+          idSubCategoria: data.subcategory,
+        });
+        setModal(null);
+        loadProducts();
+      } else {
+        await inventarioApi.crearProducto({
+          nombre: data.name,
+          precio: data.price,
+          stock: data.stock,
+          descripcion: data.description,
+          idCategoria: data.category,
+          idMarca: data.brand,
+          imagenesArchivo: [],
+          idSubCategoria: data.subcategory,
+        });
+        setModal({ type: "success-add" });
+        loadProducts();
+      }
+    } catch (error) {
+      console.error("Error saving product:", error);
     }
   };
 
@@ -69,16 +144,24 @@ export default function InventarioPage() {
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (modal?.type !== "delete") return;
-    setProducts((prev) => prev.filter((p) => p.id !== modal.product.id));
-    setModal({ type: "success-delete" });
+    try {
+      await inventarioApi.eliminarProducto(modal.product.id.toString());
+      setModal({ type: "success-delete" });
+      loadProducts();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
   };
 
-  const handleToggle = (id: number) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p)),
-    );
+  const handleToggle = async (id: number) => {
+    try {
+      await inventarioApi.ajustarStock(id.toString(), 0);
+      loadProducts();
+    } catch (error) {
+      console.error("Error toggling product:", error);
+    }
   };
 
   const filterBtnClass = (active: boolean, activeColors: string) =>
@@ -158,9 +241,9 @@ export default function InventarioPage() {
             className="py-2.25 pl-3.5 pr-8 rounded-lg border border-gray-200 bg-white cursor-pointer text-[13px] text-gray-700 appearance-none outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
           >
             <option value="">Categoría</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {categories.map((c) => (
+              <option key={c.idCategoria} value={c.nombre}>
+                {c.nombre}
               </option>
             ))}
           </select>
