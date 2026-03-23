@@ -1,7 +1,17 @@
 import { IAccesoDatos } from "../datos/IAccesoDatos";
 import { IServicioInventario } from "./interfaces/IServicioInventario";
-import { CrearProductoDTO, ActualizarProductoDTO, FiltroProductoDTO } from "./DTOsEntrada/ProductoDTOs";
-import { ProductoDTO, CategoriaDTO, MarcaDTO, SubCategoriaDTO, EtiquetaDTO } from "./DTOsSalida/ProductoDTOs";
+import {
+  CrearProductoDTO,
+  ActualizarProductoDTO,
+  FiltroProductoDTO,
+} from "./DTOsEntrada/ProductoDTOs";
+import {
+  ProductoDTO,
+  CategoriaDTO,
+  MarcaDTO,
+  SubCategoriaDTO,
+  EtiquetaDTO,
+} from "./DTOsSalida/ProductoDTOs";
 import { ProductoBO } from "./BOs/ProductoBO";
 import { CategoriaBO } from "./BOs/CategoriaBO";
 import { MarcaBO } from "./BOs/MarcaBO";
@@ -35,7 +45,9 @@ export class ServicioInventario implements IServicioInventario {
     return this.productoBO.crear(producto);
   }
 
-  async actualizarProducto(producto: ActualizarProductoDTO): Promise<ProductoDTO> {
+  async actualizarProducto(
+    producto: ActualizarProductoDTO,
+  ): Promise<ProductoDTO> {
     return this.productoBO.actualizar(producto);
   }
 
@@ -59,7 +71,9 @@ export class ServicioInventario implements IServicioInventario {
     return this.subCategoriaBO.obtenerTodas();
   }
 
-  async obtenerSubCategoriasPorCategoria(idCategoria: string): Promise<SubCategoriaDTO[]> {
+  async obtenerSubCategoriasPorCategoria(
+    idCategoria: string,
+  ): Promise<SubCategoriaDTO[]> {
     return this.subCategoriaBO.obtenerPorCategoria(idCategoria);
   }
 
@@ -75,8 +89,12 @@ export class ServicioInventario implements IServicioInventario {
     return this.etiquetaBO.obtenerPorProducto(idProducto);
   }
 
-  async crearEtiqueta(etiqueta: EtiquetaDTO, idProducto: string): Promise<EtiquetaDTO> {
+  async crearEtiqueta(
+    etiqueta: EtiquetaDTO,
+    idProducto: string,
+  ): Promise<EtiquetaDTO> {
     const entity = { ...etiqueta, product_id: BigInt(idProducto) };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.etiquetaBO.crear(entity as any);
   }
 
