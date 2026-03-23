@@ -1,5 +1,4 @@
 export interface IGenericDAO<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
-
   getAll(include?: object): Promise<T[]>;
 
   getById(id: number | bigint, include?: object): Promise<T | null>;
