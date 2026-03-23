@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 import Image from "next/image";
 import { Product, ProductTag, ProductFormModalProps } from "@/types/inventory";
-import { BRANDS, CATEGORIES, SUBCATEGORIES } from "@/lib/mockData";
+import { inventarioApi } from "@/lib/api/inventario";
 import AddAttributeModal, { AttributeType } from "./AddAttributeModal";
+
+type CategoryOption = { idCategoria: string; nombre: string };
+type BrandOption = { idMarca: string; nombre: string };
 import {
   IconX,
   IconTag,
@@ -72,26 +75,105 @@ export default function ProductFormModal({
         },
   );
 
-  const [localBrands, setLocalBrands] = useState<string[]>(BRANDS);
-  const [localCategories, setLocalCategories] = useState<string[]>(CATEGORIES);
+  // IDs para mapear nombres a IDs
+  const [brandId, setBrandId] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [subcategoryId, setSubcategoryId] = useState<string>("");
+
+  const [localBrands, setLocalBrands] = useState<BrandOption[]>([]);
+  const [localCategories, setLocalCategories] = useState<CategoryOption[]>([]);
   const [localSubcategories, setLocalSubcategories] =
-    useState<Record<string, string[]>>(SUBCATEGORIES);
+    useState<Record<string, string[]>>({});
+  const [localSubcategoriesWithIds, setLocalSubcategoriesWithIds] =
+    useState<Record<string, Array<{ id: string; nombre: string }>>>({});
+
+  useEffect(() => {
+    const loadAttributes = async () => {
+      try {
+        const [brands, categories, subcategories] = await Promise.all([
+          inventarioApi.obtenerMarcas(),
+          inventarioApi.obtenerCategorias(),
+          inventarioApi.obtenerSubCategorias(),
+        ]);
+
+        const brandsList: BrandOption[] = brands.map((b) => ({
+          idMarca: b.idMarca,
+          nombre: b.nombre,
+        }));
+
+        const categoriesList: CategoryOption[] = categories.map((c) => ({
+          idCategoria: c.idCategoria,
+          nombre: c.nombre,
+        }));
+
+        const subcategoriesMap: Record<string, Array<{ id: string; nombre: string }>> = {};
+        subcategories.forEach((sc) => {
+          const categoryId = sc.idCategoria;
+          if (!subcategoriesMap[categoryId]) {
+            subcategoriesMap[categoryId] = [];
+          }
+          if (!subcategoriesMap[categoryId].some((s) => s.nombre === sc.nombre)) {
+            subcategoriesMap[categoryId].push({ id: sc.idSubCategoria, nombre: sc.nombre });
+          }
+        });
+
+        setLocalBrands(brandsList);
+        setLocalCategories(categoriesList);
+        setLocalSubcategoriesWithIds(subcategoriesMap);
+
+        // Legacy map for backward compatibility
+        const subcategoriesLegacy: Record<string, string[]> = {};
+        subcategories.forEach((sc) => {
+          const categoryName =
+            categories.find((c) => c.idCategoria === sc.idCategoria)?.nombre ||
+            sc.idCategoria;
+          if (!subcategoriesLegacy[categoryName]) {
+            subcategoriesLegacy[categoryName] = [];
+          }
+          if (!subcategoriesLegacy[categoryName].includes(sc.nombre)) {
+            subcategoriesLegacy[categoryName].push(sc.nombre);
+          }
+        });
+        setLocalSubcategories(subcategoriesLegacy);
+
+        // Si estamos en modo edición, establecer los IDs
+        if (product) {
+          // Buscar ID de marca
+          const brandMatch = brandsList.find((b) => b.nombre === product.brand);
+          if (brandMatch) {
+            setBrandId(brandMatch.idMarca);
+          }
+
+          // Buscar ID de categoría
+          const categoryMatch = categoriesList.find((c) => c.nombre === product.category);
+          if (categoryMatch) {
+            setCategoryId(categoryMatch.idCategoria);
+            
+            // Buscar ID de subcategoría
+            const subMatch = subcategoriesMap[categoryMatch.idCategoria]?.find(
+              (s) => s.nombre === product.subcategory
+            );
+            if (subMatch) {
+              setSubcategoryId(subMatch.id);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading product attributes:", error);
+      }
+    };
+
+    loadAttributes();
+  }, [product]);
 
   // Estado del nuevo Modal Externo
   const [activeSubModal, setActiveSubModal] = useState<AttributeType>(null);
 
-  const [imagesList, setImagesList] = useState<string[]>(
-    form.image
-      ? [form.image]
-      : [
-          "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop",
-          "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=200&h=200&fit=crop",
-        ],
+  const [imagesList, setImagesList] = useState<string[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<{ src: string; file: File }[]>([]);
+  const [originalImages] = useState<string[]>(
+    form.image ? [form.image] : [],
   );
-
-  if (!form.image && imagesList.length > 0) {
-    setForm((prev) => ({ ...prev, image: imagesList[0] }));
-  }
 
   const [tagName, setTagName] = useState("");
   const [tagValue, setTagValue] = useState("");
@@ -118,29 +200,85 @@ export default function ProductFormModal({
       form.tags.filter((_, i) => i !== index),
     );
 
-  const handleSaveAttribute = (value: string, parentCat?: string) => {
-    if (activeSubModal === "brand") {
-      if (!localBrands.includes(value))
-        setLocalBrands((prev) => [...prev, value]);
-      set("brand", value);
-    } else if (activeSubModal === "category") {
-      if (!localCategories.includes(value)) {
-        setLocalCategories((prev) => [...prev, value]);
-        setLocalSubcategories((prev) => ({ ...prev, [value]: [] }));
-      }
-      set("category", value);
-      set("subcategory", "");
-    } else if (activeSubModal === "subcategory" && parentCat) {
-      setLocalSubcategories((prev) => {
-        const existing = prev[parentCat] || [];
-        if (existing.includes(value)) return prev;
-        return { ...prev, [parentCat]: [...existing, value] };
-      });
+  const handleSaveAttribute = async (value: string, parentCat?: string) => {
+    if (!value.trim()) return;
 
-      set("category", parentCat);
-      set("subcategory", value);
+    try {
+      if (activeSubModal === "brand") {
+        const created = await inventarioApi.crearMarca({ nombre: value.trim() });
+        setLocalBrands((prev) => {
+          if (prev.some((b) => b.nombre === created.nombre)) return prev;
+          return [...prev, created];
+        });
+        setBrandId(created.idMarca);
+        set("brand", created.nombre);
+      } else if (activeSubModal === "category") {
+        const created = await inventarioApi.crearCategoria({
+          nombre: value.trim(),
+          descripcion: "",
+        });
+        setLocalCategories((prev) => {
+          if (prev.some((c) => c.nombre === created.nombre)) return prev;
+          return [...prev, created];
+        });
+        setLocalSubcategories((prev) => ({
+          ...prev,
+          [created.nombre]: prev[created.nombre] ?? [],
+        }));
+        setLocalSubcategoriesWithIds((prev) => ({
+          ...prev,
+          [created.idCategoria]: prev[created.idCategoria] ?? [],
+        }));
+        setCategoryId(created.idCategoria);
+        set("category", created.nombre);
+        setSubcategoryId("");
+        set("subcategory", "");
+      } else if (activeSubModal === "subcategory" && parentCat) {
+        let category = localCategories.find((c) => c.nombre === parentCat);
+
+        if (!category) {
+          const createdCategory = await inventarioApi.crearCategoria({
+            nombre: parentCat,
+            descripcion: "",
+          });
+          setLocalCategories((prev) => [...prev, createdCategory]);
+          category = createdCategory;
+        }
+
+        if (!category) {
+          throw new Error("No se pudo determinar la categoría para la subcategoría");
+        }
+
+        const created = await inventarioApi.crearSubCategoria({
+          nombre: value.trim(),
+          idCategoria: category.idCategoria,
+        });
+
+        setLocalSubcategories((prev) => {
+          const existing = prev[parentCat] || [];
+          if (existing.includes(created.nombre)) return prev;
+          return { ...prev, [parentCat]: [...existing, created.nombre] };
+        });
+
+        setLocalSubcategoriesWithIds((prev) => {
+          const existing = prev[category!.idCategoria] || [];
+          if (existing.some((s) => s.nombre === created.nombre)) return prev;
+          return {
+            ...prev,
+            [category!.idCategoria]: [...existing, { id: created.idSubCategoria, nombre: created.nombre }],
+          };
+        });
+
+        setCategoryId(category.idCategoria);
+        set("category", parentCat);
+        setSubcategoryId(created.idSubCategoria);
+        set("subcategory", created.nombre);
+      }
+    } catch (error) {
+      console.error("Error saving attribute:", error);
+    } finally {
+      setActiveSubModal(null);
     }
-    setActiveSubModal(null);
   };
 
   const handleUploadClick = () => fileInputRef.current?.click();
@@ -151,6 +289,7 @@ export default function ProductFormModal({
       const file = files[0];
       const imageUrl = URL.createObjectURL(file);
       setImagesList((prev) => [...prev, imageUrl]);
+      setSelectedFiles((prev) => [...prev, { src: imageUrl, file }]);
       if (!form.image) set("image", imageUrl);
       event.target.value = "";
     }
@@ -160,6 +299,7 @@ export default function ProductFormModal({
     const imageUrlToRemove = imagesList[indexToRemove];
     const newList = imagesList.filter((_, index) => index !== indexToRemove);
     setImagesList(newList);
+    setSelectedFiles((prev) => prev.filter((item) => item.src !== imageUrlToRemove));
     if (form.image === imageUrlToRemove)
       set("image", newList.length > 0 ? newList[0] : "");
   };
@@ -174,14 +314,26 @@ export default function ProductFormModal({
 
   const handleSave = () => {
     if (!validate()) return;
-    onSave({
-      ...form,
-      id: product?.id ?? Date.now(),
-      hasSalesHistory: product?.hasSalesHistory ?? false,
-    });
+    onSave(
+      {
+        ...form,
+        id: product?.id ?? Date.now(),
+        hasSalesHistory: product?.hasSalesHistory ?? false,
+        brand: form.brand, // nombre será actualizado por cambio de ID más arriba
+        category: form.category,
+        subcategory: form.subcategory,
+      },
+      selectedFiles.map((item) => item.file),
+      {
+        // Pasar también los IDs para el backend
+        brandId,
+        categoryId,
+        subcategoryId,
+      }
+    );
   };
 
-  const currentSubcategories = localSubcategories[form.category] ?? [];
+
 
   return (
     <>
@@ -269,14 +421,22 @@ export default function ProductFormModal({
               <div className="flex gap-2">
                 <FieldWithIcon icon={<IconLayers />} className="flex-1">
                   <select
-                    value={form.brand}
-                    onChange={(e) => set("brand", e.target.value)}
+                    value={brandId}
+                    onChange={(e) => {
+                      const selectedBrand = localBrands.find(
+                        (b) => b.idMarca === e.target.value
+                      );
+                      if (selectedBrand) {
+                        setBrandId(selectedBrand.idMarca);
+                        set("brand", selectedBrand.nombre);
+                      }
+                    }}
                     className={`${twField} pl-8 appearance-none cursor-pointer`}
                   >
                     <option value="">Seleccionar...</option>
                     {localBrands.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
+                      <option key={b.idMarca} value={b.idMarca}>
+                        {b.nombre}
                       </option>
                     ))}
                   </select>
@@ -298,17 +458,24 @@ export default function ProductFormModal({
                 <div className="flex gap-2">
                   <FieldWithIcon icon={<IconGrid />} className="flex-1">
                     <select
-                      value={form.category}
+                      value={categoryId}
                       onChange={(e) => {
-                        set("category", e.target.value);
-                        set("subcategory", "");
+                        const selectedCategory = localCategories.find(
+                          (c) => c.idCategoria === e.target.value
+                        );
+                        if (selectedCategory) {
+                          setCategoryId(selectedCategory.idCategoria);
+                          set("category", selectedCategory.nombre);
+                          setSubcategoryId("");
+                          set("subcategory", "");
+                        }
                       }}
                       className={`${twField} pl-8 appearance-none cursor-pointer`}
                     >
                       <option value="">Seleccionar...</option>
                       {localCategories.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
+                        <option key={c.idCategoria} value={c.idCategoria}>
+                          {c.nombre}
                         </option>
                       ))}
                     </select>
@@ -328,17 +495,23 @@ export default function ProductFormModal({
                 <div className="flex gap-2">
                   <FieldWithIcon icon={<IconHash />} className="flex-1">
                     <select
-                      value={form.subcategory}
-                      onChange={(e) => set("subcategory", e.target.value)}
+                      value={subcategoryId}
+                      onChange={(e) => {
+                        const selectedSubcategory = (localSubcategoriesWithIds[categoryId] || []).find(
+                          (s) => s.id === e.target.value
+                        );
+                        if (selectedSubcategory) {
+                          setSubcategoryId(selectedSubcategory.id);
+                          set("subcategory", selectedSubcategory.nombre);
+                        }
+                      }}
                       className={`${twField} pl-8 appearance-none cursor-pointer`}
-                      disabled={
-                        !form.category && currentSubcategories.length === 0
-                      }
+                      disabled={!categoryId}
                     >
                       <option value="">Seleccionar...</option>
-                      {currentSubcategories.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
+                      {(localSubcategoriesWithIds[categoryId] || []).map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.nombre}
                         </option>
                       ))}
                     </select>
@@ -476,10 +649,42 @@ export default function ProductFormModal({
             <div className="mb-1">
               <label className={twLabel}>Imágenes del producto</label>
               <div className="flex flex-wrap gap-3 items-start mt-2">
+                {/* Imágenes originales (existentes) */}
+                {originalImages.map((src, i) => {
+                  const isSelected = form.image === src;
+                  return (
+                    <div key={`original-${i}`} className="relative group">
+                      <div
+                        onClick={() => set("image", src)}
+                        className={`relative cursor-pointer rounded-lg border-2 transition-all duration-200 overflow-hidden ${isSelected ? "border-blue-600 shadow-md ring-2 ring-blue-100" : "border-transparent hover:border-gray-300"}`}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-1 left-1 z-10 bg-blue-600 rounded px-1.5 py-0.5 text-white text-[9px] font-bold leading-none shadow-sm">
+                            PRINCIPAL
+                          </div>
+                        )}
+                        <Image
+                          src={src?.trim() ? src : "/placeholder.png"}
+                          alt={`product-${i}`}
+                          width={86}
+                          height={86}
+                          className="w-21.5 h-21.5 object-cover"
+                          onError={(e) => {
+                            // Si la imagen no carga, usar placeholder
+                            const img = e.target as HTMLImageElement;
+                            img.src = "/placeholder.png";
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Imágenes nuevas (cargadas en esta sesión) */}
                 {imagesList.map((src, i) => {
                   const isSelected = form.image === src;
                   return (
-                    <div key={i} className="relative group">
+                    <div key={`new-${i}`} className="relative group">
                       <div
                         onClick={() => set("image", src)}
                         className={`relative cursor-pointer rounded-lg border-2 transition-all duration-200 overflow-hidden ${isSelected ? "border-blue-600 shadow-md ring-2 ring-blue-100" : "border-transparent hover:border-gray-300"}`}
@@ -491,7 +696,7 @@ export default function ProductFormModal({
                         )}
                         <Image
                           src={src}
-                          alt={`product-${i}`}
+                          alt={`product-new-${i}`}
                           width={86}
                           height={86}
                           className="w-21.5 h-21.5 object-cover"
@@ -511,6 +716,7 @@ export default function ProductFormModal({
                     </div>
                   );
                 })}
+
                 <div
                   onClick={handleUploadClick}
                   className="w-22.5 h-22.5 border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg flex flex-col items-center justify-center cursor-pointer gap-1 text-gray-500 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 transition-all"
@@ -548,7 +754,7 @@ export default function ProductFormModal({
       {activeSubModal && (
         <AddAttributeModal
           type={activeSubModal}
-          categories={localCategories}
+          categories={localCategories.map((c) => c.nombre)}
           initialParentCategory={form.category}
           onClose={() => setActiveSubModal(null)}
           onSave={handleSaveAttribute}

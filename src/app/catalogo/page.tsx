@@ -15,24 +15,30 @@ import StatusFeedbackModal from "./components/StatusFeedbackModal";
 import { IconSearch, IconPlus } from "@/components/ui/Icons";
 
 const PER_PAGE = 5;
+const PLACEHOLDER_IMAGE = "/placeholder.png";
 
 function mapDtoToProduct(dto: any): Product {
+  let imgName = dto.imagenes?.[0]?.nombre;
+  if (!imgName || imgName === "null") {
+    imgName = "";
+  }
+
   return {
     id: Number(dto.idProducto),
     name: dto.nombre,
-    sku: "",
-    barcode: "",
+    sku: dto.sku,
+    barcode: dto.codigoDeBarras,
     brand: dto.marca?.nombre || "",
     category: dto.categoria?.nombre || "",
-    subcategory: "",
+    subcategory: dto.subcategoria?.nombre || "",
     price: dto.precio,
     stock: dto.stock,
-    minStock: 5,
+    minStock: 5, // TODO: This should come from the backend
     description: dto.descripcion,
     tags: dto.etiquetas || [],
-    active: true,
-    image: dto.imagenes?.[0]?.nombre || "/placeholder.png",
-    hasSalesHistory: false,
+    active: true, // TODO: This should come from the backend
+    image: imgName,
+    hasSalesHistory: false, // TODO: This should come from the backend
   };
 }
 
@@ -48,12 +54,6 @@ export default function InventarioPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<ModalType>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadProducts();
-    loadCategories();
-  }, []);
 
   const loadCategories = async () => {
     try {
@@ -66,15 +66,20 @@ export default function InventarioPage() {
 
   const loadProducts = async () => {
     try {
-      setLoading(true);
       const dtos = await inventarioApi.obtenerProductos();
       setProducts(dtos.map(mapDtoToProduct));
     } catch (error) {
       console.error("Error loading products:", error);
-    } finally {
-      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      await loadProducts();
+      await loadCategories();
+    };
+    fetchInitialData();
+  }, []);
 
   const filtered = products.filter((p) => {
     const q = search.toLowerCase();
@@ -102,35 +107,49 @@ export default function InventarioPage() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE) || 1;
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  const handleSave = async (data: Product) => {
+  const handleSave = async (
+    data: Product,
+    newImages: File[],
+    attributeIds?: { brandId: string; categoryId: string; subcategoryId: string }
+  ) => {
     try {
       if (modal?.type === "edit") {
-        await inventarioApi.actualizarProducto({
+        const updatedProduct = await inventarioApi.actualizarProducto({
           idProducto: data.id.toString(),
           nombre: data.name,
           precio: data.price,
           stock: data.stock,
           descripcion: data.description,
-          idCategoria: data.category,
+          idCategoria: attributeIds?.categoryId || data.category,
           imagenesNuevas: [],
           imagenesEliminar: [],
           idImagenPrincipal: "",
-          idMarca: data.brand,
-          idSubCategoria: data.subcategory,
+          idMarca: attributeIds?.brandId || data.brand,
+          idSubCategoria: attributeIds?.subcategoryId || data.subcategory,
         });
+
+        if (newImages.length > 0) {
+          await inventarioApi.agregarImagenes(updatedProduct.idProducto, newImages);
+        }
+
         setModal(null);
         loadProducts();
       } else {
-        await inventarioApi.crearProducto({
+        const createdProduct = await inventarioApi.crearProducto({
           nombre: data.name,
           precio: data.price,
           stock: data.stock,
           descripcion: data.description,
-          idCategoria: data.category,
-          idMarca: data.brand,
+          idCategoria: attributeIds?.categoryId || data.category,
+          idMarca: attributeIds?.brandId || data.brand,
           imagenesArchivo: [],
-          idSubCategoria: data.subcategory,
+          idSubCategoria: attributeIds?.subcategoryId || data.subcategory,
         });
+
+        if (newImages.length > 0) {
+          await inventarioApi.agregarImagenes(createdProduct.idProducto, newImages);
+        }
+
         setModal({ type: "success-add" });
         loadProducts();
       }

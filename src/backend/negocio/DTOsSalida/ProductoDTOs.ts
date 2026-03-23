@@ -32,11 +32,15 @@ export interface EtiquetaDTO {
 export interface ProductoDTO {
   idProducto: string;
   nombre: string;
+  sku: string;
+  codigoDeBarras: string;
   precio: number;
   stock: number;
   descripcion: string;
   imagenes: ImagenProductoDTO[];
   categoria: CategoriaDTO;
+  marca: MarcaDTO;
+  subcategoria: SubCategoriaDTO;
   estadoStock: EstadoStock;
   etiquetas: EtiquetaDTO[];
 }

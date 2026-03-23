@@ -10,9 +10,14 @@ export class MarcaMapper {
   }
 
   static toEntity(dto: MarcaDTO): Partial<brands> {
-    return {
-      id: BigInt(dto.idMarca),
+    const entity: Partial<brands> = {
       name: dto.nombre,
     };
+
+    if (dto.idMarca) {
+      entity.id = BigInt(dto.idMarca);
+    }
+
+    return entity;
   }
 }

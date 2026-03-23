@@ -3,23 +3,26 @@ import { obtenerPorId, eliminarProducto, actualizarProducto } from "@/backend/co
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<any> }
 ) {
-  return obtenerPorId(req, { params: await params });
+  const { id } = await params;
+  return obtenerPorId(req, { params: { id } });
 }
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<any> }
 ) {
   const dto = await req.json();
-  dto.idProducto = (await params).id;
+  const { id } = await params;
+  dto.idProducto = id;
   return actualizarProducto(req);
 }
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<any> }
 ) {
-  return eliminarProducto(req, { params: await params });
+  const { id } = await params;
+  return eliminarProducto(req, { params: { id } });
 }

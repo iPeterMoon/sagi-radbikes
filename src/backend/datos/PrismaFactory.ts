@@ -7,11 +7,9 @@ declare global {
   var prismaGlobal: PrismaClient | undefined;
 }
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL!});
-
 export class PrismaFactory {
   private constructor() {}
-  
+
   static getCliente(): PrismaClient {
     if (!globalThis.prismaGlobal) {
       const pool = new Pool({ connectionString: process.env.DATABASE_URL });

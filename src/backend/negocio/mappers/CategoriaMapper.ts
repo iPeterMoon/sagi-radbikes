@@ -11,10 +11,15 @@ export class CategoriaMapper {
   }
 
   static toEntity(dto: CategoriaDTO): Partial<categories> {
-    return {
-      id: BigInt(dto.idCategoria),
+    const entity: Partial<categories> = {
       name: dto.nombre,
       description: dto.descripcion,
     };
+
+    if (dto.idCategoria) {
+      entity.id = BigInt(dto.idCategoria);
+    }
+
+    return entity;
   }
 }

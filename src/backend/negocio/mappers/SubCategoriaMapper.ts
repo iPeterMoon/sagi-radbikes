@@ -11,10 +11,15 @@ export class SubCategoriaMapper {
   }
 
   static toEntity(dto: SubCategoriaDTO): Partial<subcategory> {
-    return {
-      id: BigInt(dto.idSubCategoria),
+    const entity: Partial<subcategory> = {
       name: dto.nombre,
       category_id: BigInt(dto.idCategoria),
     };
+
+    if (dto.idSubCategoria) {
+      entity.id = BigInt(dto.idSubCategoria);
+    }
+
+    return entity;
   }
 }

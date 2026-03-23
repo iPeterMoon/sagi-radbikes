@@ -12,6 +12,11 @@ export interface IServicioInventario {
   obtenerMarcas(): Promise<MarcaDTO[]>;
   obtenerSubCategorias(): Promise<SubCategoriaDTO[]>;
   obtenerSubCategoriasPorCategoria(idCategoria: string): Promise<SubCategoriaDTO[]>;
+
+  crearCategoria(categoria: CategoriaDTO): Promise<CategoriaDTO>;
+  crearMarca(marca: MarcaDTO): Promise<MarcaDTO>;
+  crearSubCategoria(subCategoria: SubCategoriaDTO): Promise<SubCategoriaDTO>;
+
   agregarImagenes(idProducto: string, archivos: File[]): Promise<void>;
   eliminarImagen(idImagen: string): Promise<boolean>;
   obtenerEtiquetas(idProducto: string): Promise<EtiquetaDTO[]>;

@@ -72,6 +72,30 @@ export const inventarioApi = {
     return fetchApi<SubCategoriaDTO[]>(`${API_BASE}/subcategorias${params}`);
   },
 
+  async crearCategoria(categoria: Omit<CategoriaDTO, "idCategoria">): Promise<CategoriaDTO> {
+    return fetchApi<CategoriaDTO>(`${API_BASE}/categorias`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(categoria),
+    });
+  },
+
+  async crearMarca(marca: Omit<MarcaDTO, "idMarca">): Promise<MarcaDTO> {
+    return fetchApi<MarcaDTO>(`${API_BASE}/marcas`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(marca),
+    });
+  },
+
+  async crearSubCategoria(subCategoria: Omit<SubCategoriaDTO, "idSubCategoria">): Promise<SubCategoriaDTO> {
+    return fetchApi<SubCategoriaDTO>(`${API_BASE}/subcategorias`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(subCategoria),
+    });
+  },
+
   async agregarImagenes(idProducto: string, archivos: File[]): Promise<void> {
     const formData = new FormData();
     formData.append("idProducto", idProducto);

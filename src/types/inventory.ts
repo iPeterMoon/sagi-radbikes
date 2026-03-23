@@ -68,7 +68,11 @@ export interface ProductTableProps {
 export interface ProductFormModalProps {
   product: Product | null;
   onClose: () => void;
-  onSave: (data: Product) => void;
+  onSave: (
+    data: Product,
+    newImages: File[],
+    attributeIds?: { brandId: string; categoryId: string; subcategoryId: string }
+  ) => void;
 }
 
 export interface DeleteConfirmModalProps {

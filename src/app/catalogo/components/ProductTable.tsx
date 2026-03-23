@@ -56,7 +56,7 @@ export default function ProductTable({
                 <td className={tdClass}>
                   <div className="flex items-center justify-center gap-3">
                     <Image
-                      src={product.image}
+                      src={product.image?.trim() ? product.image : "/placeholder.png"}
                       alt={product.name}
                       width={44}
                       height={44}

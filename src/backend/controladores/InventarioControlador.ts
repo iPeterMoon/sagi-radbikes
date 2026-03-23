@@ -8,10 +8,21 @@ import {
   ActualizarProductoDTO,
   FiltroProductoDTO,
 } from "../negocio/DTOsEntrada/ProductoDTOs";
+import {
+  CategoriaDTO,
+  MarcaDTO,
+  SubCategoriaDTO,
+} from "../negocio/DTOsSalida/ProductoDTOs";
+import { PrismaFactory } from "../datos/PrismaFactory";
 
 const accesoDatos: IServicioInventario = new ServicioInventario(
   new AccesoDatos(),
 );
+
+// Parche global para serializar BigInt a JSON sin que Next.js lance error
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
 
 export async function obtenerProductos(req: NextRequest) {
   try {
@@ -53,6 +64,41 @@ export async function obtenerPorId(
 export async function crearProducto(req: NextRequest) {
   try {
     const dto: CrearProductoDTO = await req.json();
+    const prisma = PrismaFactory.getCliente();
+
+    // Convertir nombre de marca a ID
+    if (dto.idMarca && isNaN(Number(dto.idMarca))) {
+      const brand = await prisma.brands.findFirst({
+        where: { name: dto.idMarca },
+      });
+      if (!brand) {
+        throw new Error(`La marca '${dto.idMarca}' no existe.`);
+      }
+      dto.idMarca = brand.id.toString();
+    }
+
+    // Convertir nombre de categoría a ID
+    if (dto.idCategoria && isNaN(Number(dto.idCategoria))) {
+      const category = await prisma.categories.findFirst({
+        where: { name: dto.idCategoria },
+      });
+      if (!category) {
+        throw new Error(`La categoría '${dto.idCategoria}' no existe.`);
+      }
+      dto.idCategoria = category.id.toString();
+    }
+
+    // Convertir nombre de subcategoría a ID
+    if (dto.idSubCategoria && isNaN(Number(dto.idSubCategoria))) {
+      const subcategory = await prisma.subcategory.findFirst({
+        where: { name: dto.idSubCategoria },
+      });
+      if (!subcategory) {
+        throw new Error(`La subcategoría '${dto.idSubCategoria}' no existe.`);
+      }
+      dto.idSubCategoria = subcategory.id.toString();
+    }
+
     const producto = await accesoDatos.crearProducto(dto);
     return NextResponse.json(producto, { status: 201 });
   } catch (error: any) {
@@ -63,6 +109,41 @@ export async function crearProducto(req: NextRequest) {
 export async function actualizarProducto(req: NextRequest) {
   try {
     const dto: ActualizarProductoDTO = await req.json();
+    const prisma = PrismaFactory.getCliente();
+
+    // Convertir nombre de marca a ID
+    if (dto.idMarca && isNaN(Number(dto.idMarca))) {
+      const brand = await prisma.brands.findFirst({
+        where: { name: dto.idMarca },
+      });
+      if (!brand) {
+        throw new Error(`La marca '${dto.idMarca}' no existe.`);
+      }
+      dto.idMarca = brand.id.toString();
+    }
+
+    // Convertir nombre de categoría a ID
+    if (dto.idCategoria && isNaN(Number(dto.idCategoria))) {
+      const category = await prisma.categories.findFirst({
+        where: { name: dto.idCategoria },
+      });
+      if (!category) {
+        throw new Error(`La categoría '${dto.idCategoria}' no existe.`);
+      }
+      dto.idCategoria = category.id.toString();
+    }
+
+    // Convertir nombre de subcategoría a ID
+    if (dto.idSubCategoria && isNaN(Number(dto.idSubCategoria))) {
+      const subcategory = await prisma.subcategory.findFirst({
+        where: { name: dto.idSubCategoria },
+      });
+      if (!subcategory) {
+        throw new Error(`La subcategoría '${dto.idSubCategoria}' no existe.`);
+      }
+      dto.idSubCategoria = subcategory.id.toString();
+    }
+
     const producto = await accesoDatos.actualizarProducto(dto);
     return NextResponse.json(producto);
   } catch (error: any) {
@@ -101,6 +182,47 @@ export async function obtenerCategorias() {
   }
 }
 
+export async function crearCategoria(req: NextRequest) {
+  try {
+    const categoria: CategoriaDTO = await req.json();
+    const created = await accesoDatos.crearCategoria(categoria);
+    return NextResponse.json(created, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function crearMarca(req: NextRequest) {
+  try {
+    const marca: MarcaDTO = await req.json();
+    const created = await accesoDatos.crearMarca(marca);
+    return NextResponse.json(created, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function crearSubCategoria(req: NextRequest) {
+  try {
+    const payload: { nombre: string; idCategoria: string } = await req.json();
+    if (!payload.nombre || !payload.idCategoria) {
+      return NextResponse.json(
+        { error: "Se requiere nombre e idCategoria" },
+        { status: 400 },
+      );
+    }
+    const subCategoria: SubCategoriaDTO = {
+      idSubCategoria: "",
+      nombre: payload.nombre,
+      idCategoria: payload.idCategoria,
+    };
+    const created = await accesoDatos.crearSubCategoria(subCategoria);
+    return NextResponse.json(created, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function obtenerMarcas() {
   try {
     const marcas = await accesoDatos.obtenerMarcas();
@@ -123,9 +245,38 @@ export async function obtenerSubCategorias(req: NextRequest) {
   }
 }
 
-export async function agregarImagenes(req: NextRequest) {
+export async function agregarImagenes(
+  req: NextRequest,
+  { params }: { params?: { idProducto?: string } } = {},
+) {
   try {
-    const { idProducto, archivos } = await req.json();
+    let idProducto = params?.idProducto || "";
+    let archivos: File[] = [];
+
+    const contentType = req.headers.get("content-type") || "";
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      const idFromBody = formData.get("idProducto");
+      if (typeof idFromBody === "string" && idFromBody.trim()) {
+        idProducto = idFromBody;
+      }
+      const archivoEntries = formData.getAll("archivos");
+      archivos = archivoEntries.filter((item): item is File => item instanceof File);
+    } else {
+      const body = await req.json();
+      if (!idProducto && body?.idProducto) {
+        idProducto = body.idProducto;
+      }
+      archivos = body?.archivos || [];
+    }
+
+    if (!idProducto) {
+      throw new Error("idProducto es requerido");
+    }
+    if (!archivos || archivos.length === 0) {
+      throw new Error("No se encontraron archivos para subir");
+    }
+
     await accesoDatos.agregarImagenes(idProducto, archivos);
     return NextResponse.json({ success: true });
   } catch (error: any) {

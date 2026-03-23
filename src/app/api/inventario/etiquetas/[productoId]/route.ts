@@ -3,7 +3,7 @@ import { obtenerEtiquetas, crearEtiqueta, eliminarEtiqueta } from "@/backend/con
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ productoId: string }> }
+  { params }: { params: Promise<any> }
 ) {
   const { productoId } = await params;
   return obtenerEtiquetas(req, { params: { id: productoId } });
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ productoId: string }> }
+  { params }: { params: Promise<any> }
 ) {
   const { productoId } = await params;
   return eliminarEtiqueta(req, { params: { id: productoId } });

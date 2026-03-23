@@ -63,12 +63,26 @@ export class ServicioInventario implements IServicioInventario {
     return this.categoriaBO.obtenerTodas();
   }
 
+  async crearCategoria(categoria: CategoriaDTO): Promise<CategoriaDTO> {
+    return this.categoriaBO.crear(categoria);
+  }
+
   async obtenerMarcas(): Promise<MarcaDTO[]> {
     return this.marcaBO.obtenerTodas();
   }
 
+  async crearMarca(marca: MarcaDTO): Promise<MarcaDTO> {
+    return this.marcaBO.crear(marca);
+  }
+
   async obtenerSubCategorias(): Promise<SubCategoriaDTO[]> {
     return this.subCategoriaBO.obtenerTodas();
+  }
+
+  async crearSubCategoria(
+    subCategoria: SubCategoriaDTO,
+  ): Promise<SubCategoriaDTO> {
+    return this.subCategoriaBO.crear(subCategoria);
   }
 
   async obtenerSubCategoriasPorCategoria(

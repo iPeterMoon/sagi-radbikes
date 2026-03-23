@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrismaClient, product_images } from "@prisma/client";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { IProductImageDAO } from "../interfaces/IProductImageDAO";
 
 export class ProductImageDAO implements IProductImageDAO {
   private readonly db: PrismaClient["product_images"];
+  private readonly prisma: PrismaClient;
   private readonly supabase: SupabaseClient;
 
   private readonly BUCKET_NAME =
@@ -11,6 +13,7 @@ export class ProductImageDAO implements IProductImageDAO {
 
   constructor(prisma: PrismaClient, supabase: SupabaseClient) {
     this.db = prisma.product_images;
+    this.prisma = prisma;
     this.supabase = supabase;
   }
 
