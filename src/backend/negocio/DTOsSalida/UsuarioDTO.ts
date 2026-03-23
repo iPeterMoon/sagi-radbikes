@@ -1,7 +1,7 @@
 import { RolDTO } from "./RolDTO";
 
 export interface UsuarioDTO {
-  idUsuario: bigint;
+  idUsuario: string;
   username: string;
   roles: RolDTO[];
 }

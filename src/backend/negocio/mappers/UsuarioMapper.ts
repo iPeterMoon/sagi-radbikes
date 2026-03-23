@@ -9,7 +9,7 @@ export class UsuarioMapper {
     const roles = entity.user_role?.map((ur) => ur.roles) || [];
 
     return {
-      idUsuario: entity.id,
+      idUsuario: String(entity.id),
       username: entity.username || "",
       roles: RolMapper.toDTOArray(roles),
     };
@@ -17,7 +17,7 @@ export class UsuarioMapper {
 
   static toEntity(dto: UsuarioDTO): users {
     return {
-      id: dto.idUsuario,
+      id: BigInt(dto.idUsuario),
       created_at: new Date(),
       username: dto.username,
       password: null,

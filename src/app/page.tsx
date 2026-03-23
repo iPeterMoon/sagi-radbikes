@@ -8,11 +8,9 @@ import {
   Lock,
 } from "@boxicons/react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api/auth";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,16 +18,21 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log("handleSubmit called");
     e.preventDefault();
+    e.stopPropagation();
     setError("");
     setIsLoading(true);
 
     try {
+      console.log("Calling login API...");
       const sesion = await authApi.login({ username: username, password: password });
+      console.log("Login successful, sesion:", sesion);
       localStorage.setItem("token", sesion.token);
       localStorage.setItem("usuario", JSON.stringify(sesion.usuario));
-      router.push("/catalogo");
+      window.location.href = "/catalogo";
     } catch (err: any) {
+      console.error("Login error:", err);
       setError(err.message || "Credenciales incorrectas");
     } finally {
       setIsLoading(false);
@@ -64,7 +67,7 @@ export default function LoginPage() {
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={(e) => { e.preventDefault(); console.log("Form submitted"); handleSubmit(e); }} className="space-y-5">
           {/* Campo Usuario */}
           <div>
             <label
