@@ -4,7 +4,7 @@ import { SesionDTO } from "@/backend/negocio/DTOsSalida/SesionDTO";
 const API_BASE = "/api/auth";
 
 async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, options);
+  const res = await fetch(url, { ...options, credentials: "include" });
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: "Request failed" }));
     throw new Error(error.error || "Request failed");

@@ -13,7 +13,15 @@ export class SesionControlador {
     try {
       const dto: LoginDTO = await req.json();
       const sesion = await this.servicio.iniciarSesion(dto);
-      return NextResponse.json(sesion);
+      const response = NextResponse.json(sesion);
+      response.cookies.set("token", sesion.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7 // 7 days
+      });
+      return response;
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
