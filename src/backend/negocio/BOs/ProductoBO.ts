@@ -50,6 +50,17 @@ export class ProductoBO implements IProductoBO {
       is_active: true,
     };
     const created = await this.accesoDatos.productDAO.create(entity);
+
+    if (dto.etiquetas) {
+      for (const etiqueta of dto.etiquetas) {
+        await this.accesoDatos.labelDAO.create({
+          name: etiqueta.name,
+          value: etiqueta.value,
+          product_id: created.id,
+        });
+      }
+    }
+
     return ProductoMapper.toDTO(created as any);
   }
 
@@ -63,10 +74,23 @@ export class ProductoBO implements IProductoBO {
       subcategory_id: BigInt(dto.idSubCategoria),
     };
     const updated = await this.accesoDatos.productDAO.update(BigInt(dto.idProducto), entity);
+
+    if (dto.etiquetas) {
+      await this.accesoDatos.labelDAO.deleteByProduct(BigInt(dto.idProducto));
+      for (const etiqueta of dto.etiquetas) {
+        await this.accesoDatos.labelDAO.create({
+          name: etiqueta.name,
+          value: etiqueta.value,
+          product_id: updated.id,
+        });
+      }
+    }
+
     return ProductoMapper.toDTO(updated as any);
   }
 
   async eliminar(id: string): Promise<boolean> {
+    await this.accesoDatos.productImageDAO.deleteByProduct(BigInt(id));
     await this.accesoDatos.productDAO.delete(BigInt(id));
     return true;
   }

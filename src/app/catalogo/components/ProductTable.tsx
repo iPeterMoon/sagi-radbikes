@@ -14,8 +14,8 @@ export default function ProductTable({
 }: ProductTableProps) {
   if (products.length === 0) {
     return (
-      <div className="p-12 text-center text-gray-400">
-        <IconSearch size={32} className="mx-auto" />
+      <div className="p-12 text-center text-gray-400 flex flex-col items-center">
+        <IconSearch size={32} />
         <p className="mt-3 text-sm">No se encontraron productos</p>
       </div>
     );

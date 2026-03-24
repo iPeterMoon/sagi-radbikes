@@ -47,7 +47,7 @@ export function DeleteConfirmationModal({
 
         <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg py-2.5 px-3.5 mb-6 text-left">
           <Image
-            src={product.image}
+            src={product.image || "/placeholder.png"}
             alt={product.name}
             width={44}
             height={44}

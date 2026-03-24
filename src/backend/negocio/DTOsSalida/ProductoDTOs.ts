@@ -19,7 +19,7 @@ export interface SubCategoriaDTO {
 
 export interface ImagenProductoDTO {
   idImagen: string;
-  nombre: string;
+  url: string;
   esPrincipal: boolean;
 }
 

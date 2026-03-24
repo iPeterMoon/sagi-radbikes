@@ -7,6 +7,7 @@ export interface CrearProductoDTO {
   idMarca: string;
   imagenesArchivo: File[];
   idSubCategoria: string;
+  etiquetas?: { name: string; value: string }[];
 }
 
 export interface ActualizarProductoDTO {
@@ -21,6 +22,7 @@ export interface ActualizarProductoDTO {
   idImagenPrincipal: string;
   idMarca: string;
   idSubCategoria: string;
+  etiquetas?: { name: string; value: string }[];
 }
 
 export interface FiltroProductoDTO {

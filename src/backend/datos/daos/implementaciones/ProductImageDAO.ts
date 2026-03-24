@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrismaClient, product_images } from "@prisma/client";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { IProductImageDAO } from "../interfaces/IProductImageDAO";

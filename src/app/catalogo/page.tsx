@@ -15,13 +15,9 @@ import StatusFeedbackModal from "./components/StatusFeedbackModal";
 import { IconSearch, IconPlus } from "@/components/ui/Icons";
 
 const PER_PAGE = 5;
-const PLACEHOLDER_IMAGE = "/placeholder.png";
 
 function mapDtoToProduct(dto: any): Product {
-  let imgName = dto.imagenes?.[0]?.nombre;
-  if (!imgName || imgName === "null") {
-    imgName = "";
-  }
+  const imageUrl = dto.imagenes?.[0]?.url;
 
   return {
     id: Number(dto.idProducto),
@@ -35,9 +31,12 @@ function mapDtoToProduct(dto: any): Product {
     stock: dto.stock,
     minStock: 5, // TODO: This should come from the backend
     description: dto.descripcion,
-    tags: dto.etiquetas || [],
+    tags: (dto.etiquetas || []).map((etiqueta: any) => ({
+      name: etiqueta.nombre,
+      value: etiqueta.valor,
+    })),
     active: true, // TODO: This should come from the backend
-    image: imgName,
+    image: imageUrl || "",
     hasSalesHistory: false, // TODO: This should come from the backend
   };
 }
@@ -120,12 +119,13 @@ export default function InventarioPage() {
           precio: data.price,
           stock: data.stock,
           descripcion: data.description,
-          idCategoria: attributeIds?.categoryId || data.category,
+          idCategoria: attributeIds?.categoryId ?? "",
           imagenesNuevas: [],
           imagenesEliminar: [],
           idImagenPrincipal: "",
-          idMarca: attributeIds?.brandId || data.brand,
-          idSubCategoria: attributeIds?.subcategoryId || data.subcategory,
+          idMarca: attributeIds?.brandId ?? "",
+          idSubCategoria: attributeIds?.subcategoryId ?? "",
+          etiquetas: data.tags,
         });
 
         if (newImages.length > 0) {
@@ -140,10 +140,11 @@ export default function InventarioPage() {
           precio: data.price,
           stock: data.stock,
           descripcion: data.description,
-          idCategoria: attributeIds?.categoryId || data.category,
-          idMarca: attributeIds?.brandId || data.brand,
+          idCategoria: attributeIds?.categoryId ?? "",
+          idMarca: attributeIds?.brandId ?? "",
           imagenesArchivo: [],
-          idSubCategoria: attributeIds?.subcategoryId || data.subcategory,
+          idSubCategoria: attributeIds?.subcategoryId ?? "",
+          etiquetas: data.tags,
         });
 
         if (newImages.length > 0) {

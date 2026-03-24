@@ -70,6 +70,16 @@ export class ProductDAO extends GenericDAO<products> implements IProductDAO {
           maxPrice !== null ? { price: { lte: maxPrice } } : {},
         ],
       },
+      include: {
+        product_images: true,
+        subcategory: {
+          include: {
+            categories: true,
+          },
+        },
+        brands: true,
+        product_physical: true,
+      },
     });
   }
 

@@ -633,12 +633,13 @@ export default function ProductFormModal({
                         <strong className="text-blue-600 font-bold">
                           {tag.value}
                         </strong>
-                        <span
+                        <button
+                          type="button"
                           onClick={() => removeTag(i)}
-                          className="cursor-pointer text-gray-300 font-bold hover:text-red-500 ml-1 text-sm leading-none"
+                          className="cursor-pointer text-gray-300 font-bold hover:text-red-500 ml-1 text-sm leading-none bg-transparent border-none p-0 h-auto"
                         >
                           ×
-                        </span>
+                        </button>
                       </span>
                     ))}
                   </div>
