@@ -67,6 +67,7 @@ export default function AddAttributeModal({
             <div className="mb-4">
               <label className={twLabel}>Categoría Padre</label>
               <select
+                id="categoriaPadre"
                 value={parentCat}
                 onChange={(e) => setParentCat(e.target.value)}
                 className={`${twField} appearance-none cursor-pointer`}
@@ -86,6 +87,7 @@ export default function AddAttributeModal({
               Nombre de la nueva {title.toLowerCase()}
             </label>
             <input
+              id={title.toLowerCase() + "-input"}
               autoFocus
               value={value}
               onChange={(e) => setValue(e.target.value)}

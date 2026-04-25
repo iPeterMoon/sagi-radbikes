@@ -92,7 +92,10 @@ export default function ProductTable({
                   <Badge status={status} />
                 </td>
                 <td className={`${tdClass} text-center`}>
-                  <div className="flex justify-center">
+                  <div 
+                    id="estadoProducto"
+                    className="flex justify-center"
+                    >
                     <Toggle
                       checked={product.active}
                       onChange={() => onToggle(product.id)}

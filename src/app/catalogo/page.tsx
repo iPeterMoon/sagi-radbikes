@@ -215,6 +215,7 @@ export default function InventarioPage() {
             <IconSearch />
           </span>
           <input
+            id="searchBar"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);

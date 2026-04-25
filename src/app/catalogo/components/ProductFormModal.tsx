@@ -342,10 +342,12 @@ export default function ProductFormModal({
         className="fixed inset-0 bg-black/50 flex items-center justify-center z-1000 p-4"
       >
         <div
+          id="product-modal"
           onClick={(e) => e.stopPropagation()}
           className="bg-white rounded-2xl w-[min(96vw,560px)] max-h-[90vh] overflow-hidden flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
         >
           <input
+            id="image"
             type="file"
             ref={fileInputRef}
             onChange={handleFileChange}
@@ -377,6 +379,7 @@ export default function ProductFormModal({
               </label>
               <FieldWithIcon icon={<IconTag />}>
                 <input
+                  id="nombreProducto"
                   value={form.name}
                   onChange={(e) => set("name", e.target.value)}
                   placeholder="Ej. Mountain Bike Pro X-2024"
@@ -393,6 +396,7 @@ export default function ProductFormModal({
                 <label className={twLabel}>SKU</label>
                 <FieldWithIcon icon={<IconTag />}>
                   <input
+                    id="sku"
                     value={form.sku}
                     onChange={(e) => set("sku", e.target.value)}
                     placeholder="RAD-001"
@@ -407,6 +411,7 @@ export default function ProductFormModal({
                 <label className={twLabel}>Código de barras</label>
                 <FieldWithIcon icon={<IconBarcode />}>
                   <input
+                    id="codigoBarras"
                     value={form.barcode}
                     onChange={(e) => set("barcode", e.target.value)}
                     placeholder="7501000..."
@@ -421,6 +426,7 @@ export default function ProductFormModal({
               <div className="flex gap-2">
                 <FieldWithIcon icon={<IconLayers />} className="flex-1">
                   <select
+                    id="marca"
                     value={brandId}
                     onChange={(e) => {
                       const selectedBrand = localBrands.find(
@@ -446,6 +452,7 @@ export default function ProductFormModal({
                   onClick={() => setActiveSubModal("brand")}
                   className={twAddBtn}
                   title="Agregar Marca"
+                  id="marca"
                 >
                   <IconPlus />
                 </button>
@@ -458,6 +465,7 @@ export default function ProductFormModal({
                 <div className="flex gap-2">
                   <FieldWithIcon icon={<IconGrid />} className="flex-1">
                     <select
+                      id="categoria"
                       value={categoryId}
                       onChange={(e) => {
                         const selectedCategory = localCategories.find(
@@ -485,6 +493,7 @@ export default function ProductFormModal({
                     onClick={() => setActiveSubModal("category")}
                     className={twAddBtn}
                     title="Agregar Categoría"
+                    id="categoria"
                   >
                     <IconPlus />
                   </button>
@@ -495,6 +504,7 @@ export default function ProductFormModal({
                 <div className="flex gap-2">
                   <FieldWithIcon icon={<IconHash />} className="flex-1">
                     <select
+                      id="subcategoria"
                       value={subcategoryId}
                       onChange={(e) => {
                         const selectedSubcategory = (localSubcategoriesWithIds[categoryId] || []).find(
@@ -521,6 +531,7 @@ export default function ProductFormModal({
                     onClick={() => setActiveSubModal("subcategory")}
                     className={twAddBtn}
                     title="Agregar Subcategoría"
+                    id="subcategoria"
                   >
                     <IconPlus />
                   </button>
@@ -536,6 +547,7 @@ export default function ProductFormModal({
                     $
                   </span>
                   <input
+                    id="precio"
                     type="number"
                     min={0}
                     value={form.price || ""}
@@ -550,6 +562,7 @@ export default function ProductFormModal({
                 </label>
                 <FieldWithIcon icon={<IconBox />}>
                   <input
+                    id="stock"
                     type="number"
                     min={0}
                     value={form.stock || ""}
@@ -562,6 +575,7 @@ export default function ProductFormModal({
                 <label className={twLabel}>Stock mín. aceptable</label>
                 <FieldWithIcon icon={<IconAlertTri />}>
                   <input
+                    id="stockMin"
                     type="number"
                     min={0}
                     value={form.minStock || ""}
@@ -575,6 +589,7 @@ export default function ProductFormModal({
             <div className="mb-3">
               <label className={twLabel}>Descripción del producto</label>
               <textarea
+                id="descripcion"
                 value={form.description}
                 onChange={(e) => set("description", e.target.value)}
                 rows={3}
@@ -591,6 +606,7 @@ export default function ProductFormModal({
                     Atributo
                   </label>
                   <input
+                    id="atributo"
                     value={tagName}
                     onChange={(e) => setTagName(e.target.value)}
                     placeholder="Ej. Color, Talla"
@@ -602,6 +618,7 @@ export default function ProductFormModal({
                     Valor
                   </label>
                   <input
+                    id="valor"
                     value={tagValue}
                     onChange={(e) => setTagValue(e.target.value)}
                     placeholder="Ej. Negro Mate, XL"
@@ -610,6 +627,7 @@ export default function ProductFormModal({
                   />
                 </div>
                 <button
+                  id="agregar"
                   type="button"
                   onClick={addTag}
                   className="bg-blue-600 text-white border-none rounded-lg px-4 h-9.5 cursor-pointer text-[13px] font-semibold whitespace-nowrap hover:bg-blue-700 transition-colors shadow-sm"
@@ -719,6 +737,7 @@ export default function ProductFormModal({
                 })}
 
                 <div
+                  id="subirImagen"
                   onClick={handleUploadClick}
                   className="w-22.5 h-22.5 border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg flex flex-col items-center justify-center cursor-pointer gap-1 text-gray-500 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 transition-all"
                 >
