@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { SidebarProps } from "@/types/inventory";
 import {
   IconDashboard,
@@ -12,14 +13,13 @@ import {
 interface NavItem {
   id: string;
   label: string;
+  href: string;
   Icon: React.FC;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", Icon: IconDashboard },
-  { id: "catalogo", label: "Catálogo", Icon: IconCatalog },
-  { id: "pos", label: "Punto de Venta", Icon: IconPOS },
-  { id: "reportes", label: "Reportes", Icon: IconReports },
+  { id: "catalogo",  label: "Catálogo",         href: "/catalogo", Icon: IconCatalog   },
+  { id: "pos",       label: "Punto de Venta",   href: "/pos",    Icon: IconPOS       },
 ];
 
 export default function Sidebar({ active, open }: SidebarProps) {
@@ -30,14 +30,13 @@ export default function Sidebar({ active, open }: SidebarProps) {
       }`}
     >
       <div className="w-60 flex flex-col flex-1">
-        {" "}
         <nav className="flex-1 p-4 px-3">
-          {" "}
-          {NAV_ITEMS.map(({ id, label, Icon }) => {
+          {NAV_ITEMS.map(({ id, label, href, Icon }) => {
             const isActive = active === id;
             return (
-              <div
+              <Link
                 key={id}
+                href={href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm cursor-pointer whitespace-nowrap transition-colors ${
                   isActive
                     ? "bg-blue-50 text-blue-700 font-semibold"
@@ -46,15 +45,16 @@ export default function Sidebar({ active, open }: SidebarProps) {
               >
                 <Icon />
                 {label}
-              </div>
+              </Link>
             );
           })}
         </nav>
+
         <div className="p-4 px-3 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 text-sm cursor-pointer whitespace-nowrap hover:bg-red-50 transition-colors">
+          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 text-sm cursor-pointer whitespace-nowrap hover:bg-red-50 transition-colors bg-transparent border-none">
             <IconLogout />
             Cerrar Sesión
-          </div>
+          </button>
         </div>
       </div>
     </aside>
