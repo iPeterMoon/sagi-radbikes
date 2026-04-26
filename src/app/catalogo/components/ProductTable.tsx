@@ -23,15 +23,19 @@ export default function ProductTable({
 
   const thClass =
     "px-3.5 py-2.5 text-[11px] font-bold text-gray-400 tracking-[0.06em] text-center uppercase border-b border-gray-200";
+  const thLeftClass =
+    "px-3.5 py-2.5 text-[11px] font-bold text-gray-400 tracking-[0.06em] text-left uppercase border-b border-gray-200 sticky left-0 z-10 bg-gray-50";
   const tdClass =
     "p-3.5 text-[13px] text-gray-700 border-b border-gray-100 align-middle";
+  const tdStickyClass =
+    "p-3.5 text-[13px] text-gray-700 border-b border-gray-100 align-middle sticky left-0 z-10 bg-white";
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-gray-50">
-            <th className={thClass}>Producto</th>
+            <th className={thLeftClass}>Producto</th>
             <th className={thClass}>Categoría</th>
             <th className={thClass}>Marca</th>
             <th className={thClass}>Precio</th>
@@ -53,17 +57,17 @@ export default function ProductTable({
 
             return (
               <tr key={product.id} className="bg-white">
-                <td className={tdClass}>
-                  <div className="flex items-center justify-center gap-3">
+                {/* Sticky product column */}
+                <td className={tdStickyClass}>
+                  <div className="flex items-center gap-3">
                     <Image
                       src={product.image?.trim() ? product.image : "/placeholder.png"}
                       alt={product.name}
                       width={44}
                       height={44}
-                      className="rounded-lg object-cover border border-gray-200"
+                      className="rounded-lg object-cover border border-gray-200 shrink-0"
                     />
                     <div className="text-left">
-                      {" "}
                       <div className="font-semibold text-gray-900 text-sm">
                         {product.name}
                       </div>
@@ -73,6 +77,7 @@ export default function ProductTable({
                     </div>
                   </div>
                 </td>
+
                 <td className={`${tdClass} text-center`}>
                   <div>{product.category}</div>
                   <div className="text-[11px] text-gray-400">
@@ -83,19 +88,17 @@ export default function ProductTable({
                 <td className={`${tdClass} text-center font-semibold`}>
                   ${formatPrice(product.price)}
                 </td>
-                <td
-                  className={`${tdClass} text-center font-bold ${stockColor}`}
-                >
+                <td className={`${tdClass} text-center font-bold ${stockColor}`}>
                   {product.stock}
                 </td>
                 <td className={`${tdClass} text-center`}>
                   <Badge status={status} />
                 </td>
                 <td className={`${tdClass} text-center`}>
-                  <div 
+                  <div
                     id="estadoProducto"
                     className="flex justify-center"
-                    >
+                  >
                     <Toggle
                       checked={product.active}
                       onChange={() => onToggle(product.id)}
