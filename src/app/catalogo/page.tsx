@@ -356,6 +356,7 @@ export default function InventarioPage() {
       {modal?.type === "add" && (
         <ProductFormModal
           product={null}
+          existingProducts={products}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -363,6 +364,7 @@ export default function InventarioPage() {
       {modal?.type === "edit" && (
         <ProductFormModal
           product={modal.product}
+          existingProducts={products}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />

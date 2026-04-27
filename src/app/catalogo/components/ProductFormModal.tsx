@@ -58,6 +58,7 @@ type FormState = Omit<
 
 export default function ProductFormModal({
   product,
+  existingProducts,
   onClose,
   onSave,
 }: ProductFormModalProps) {
@@ -411,6 +412,28 @@ export default function ProductFormModal({
     if (!brandId) e.brand = "La marca es requerida";
     if (!categoryId) e.category = "La categoría es requerida";
     if (!subcategoryId) e.subcategory = "La subcategoría es requerida";
+
+    const normalizedName = form.name.trim().toLowerCase();
+    const normalizedBarcode = form.barcode.trim().toLowerCase();
+    const existingOtherProducts = existingProducts.filter(
+      (p) => p.id !== product?.id,
+    );
+
+    if (
+      existingOtherProducts.some(
+        (p) => p.name.trim().toLowerCase() === normalizedName,
+      )
+    ) {
+      e.name = "Ya existe un producto con ese nombre";
+    }
+
+    if (
+      existingOtherProducts.some(
+        (p) => p.barcode.trim().toLowerCase() === normalizedBarcode,
+      )
+    ) {
+      e.barcode = "Ya existe un producto con ese código de barras";
+    }
 
     if (
       form.price === "" ||

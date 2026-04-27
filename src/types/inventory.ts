@@ -69,6 +69,7 @@ export interface ProductTableProps {
 
 export interface ProductFormModalProps {
   product: Product | null;
+  existingProducts: Product[];
   onClose: () => void;
   onSave: (
     data: Product,
