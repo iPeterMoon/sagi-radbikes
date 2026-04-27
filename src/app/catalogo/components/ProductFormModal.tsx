@@ -256,6 +256,50 @@ export default function ProductFormModal({
       form.tags.filter((_, i) => i !== index),
     );
 
+  const handleValidateAttribute = (
+    value: string,
+    parentCat?: string,
+  ): string | undefined => {
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (activeSubModal === "brand") {
+      if (
+        localBrands.some(
+          (b) => b.nombre.trim().toLowerCase() === normalizedValue,
+        )
+      ) {
+        return "Ya existe una marca con ese nombre";
+      }
+    }
+
+    if (activeSubModal === "category") {
+      if (
+        localCategories.some(
+          (c) => c.nombre.trim().toLowerCase() === normalizedValue,
+        )
+      ) {
+        return "Ya existe una categoría con ese nombre";
+      }
+    }
+
+    if (activeSubModal === "subcategory") {
+      if (!parentCat) {
+        return "Debes seleccionar una categoría padre";
+      }
+      const category = localCategories.find((c) => c.nombre === parentCat);
+      if (
+        category &&
+        (localSubcategoriesWithIds[category.idCategoria] || []).some(
+          (s) => s.nombre.trim().toLowerCase() === normalizedValue,
+        )
+      ) {
+        return "Ya existe una subcategoría con ese nombre en esta categoría";
+      }
+    }
+
+    return undefined;
+  };
+
   const handleSaveAttribute = async (value: string, parentCat?: string) => {
     if (!value.trim()) return;
 
@@ -950,6 +994,7 @@ export default function ProductFormModal({
           initialParentCategory={form.category}
           onClose={() => setActiveSubModal(null)}
           onSave={handleSaveAttribute}
+          validate={handleValidateAttribute}
         />
       )}
     </>

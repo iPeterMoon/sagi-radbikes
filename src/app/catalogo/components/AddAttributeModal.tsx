@@ -11,6 +11,7 @@ interface AddAttributeModalProps {
   initialParentCategory: string;
   onClose: () => void;
   onSave: (value: string, parentCategory?: string) => void;
+  validate?: (value: string, parentCategory?: string) => string | undefined;
 }
 
 const twField =
@@ -23,15 +24,31 @@ export default function AddAttributeModal({
   initialParentCategory,
   onClose,
   onSave,
+  validate,
 }: AddAttributeModalProps) {
   const [value, setValue] = useState("");
   const [parentCat, setParentCat] = useState(initialParentCategory);
+  const [validationError, setValidationError] = useState("");
 
   if (!type) return null;
 
   const handleSave = () => {
-    if (!value.trim()) return;
-    onSave(value.trim(), type === "subcategory" ? parentCat : undefined);
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+      setValidationError("El nombre es requerido");
+      return;
+    }
+
+    const validationMessage = validate?.(
+      trimmedValue,
+      type === "subcategory" ? parentCat : undefined,
+    );
+    if (validationMessage) {
+      setValidationError(validationMessage);
+      return;
+    }
+
+    onSave(trimmedValue, type === "subcategory" ? parentCat : undefined);
   };
 
   const title =
@@ -90,11 +107,17 @@ export default function AddAttributeModal({
               id={title.toLowerCase() + "-input"}
               autoFocus
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e) => {
+                setValue(e.target.value);
+                if (validationError) setValidationError("");
+              }}
               onKeyDown={(e) => e.key === "Enter" && handleSave()}
               placeholder={`Ej. ${type === "brand" ? "Yamaha" : type === "category" ? "Electrónicos" : "Frenos ABS"}`}
               className={twField}
             />
+            {validationError && (
+              <p className="text-red-500 text-[11px] mt-2">{validationError}</p>
+            )}
           </div>
         </div>
 
