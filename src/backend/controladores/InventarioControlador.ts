@@ -159,6 +159,13 @@ export async function eliminarProducto(
     const result = await accesoDatos.eliminarProducto(params.id);
     return NextResponse.json({ success: result });
   } catch (error: any) {
+    // Verificar si es un error de restricción de clave foránea por compras
+    if (error.code === "P2014" || error.message.includes("Restrict")) {
+      return NextResponse.json(
+        { error: "No se puede eliminar este producto porque tiene compras asociadas. Elimina primero las compras relacionadas." },
+        { status: 400 }
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -54,6 +54,7 @@ export default function ProductFormModal({
 }: ProductFormModalProps) {
   const isEdit = !!product;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [form, setForm] = useState<Omit<Product, "id" | "hasSalesHistory">>(
     product
@@ -312,25 +313,31 @@ export default function ProductFormModal({
     return Object.keys(e).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    onSave(
-      {
-        ...form,
-        id: product?.id ?? Date.now(),
-        hasSalesHistory: product?.hasSalesHistory ?? false,
-        brand: form.brand, // nombre será actualizado por cambio de ID más arriba
-        category: form.category,
-        subcategory: form.subcategory,
-      },
-      selectedFiles.map((item) => item.file),
-      {
-        // Pasar también los IDs para el backend
-        brandId,
-        categoryId,
-        subcategoryId,
-      }
-    );
+    setIsLoading(true);
+    try {
+      await Promise.resolve(
+        onSave(
+          {
+            ...form,
+            id: product?.id ?? Date.now(),
+            hasSalesHistory: product?.hasSalesHistory ?? false,
+            brand: form.brand,
+            category: form.category,
+            subcategory: form.subcategory,
+          },
+          selectedFiles.map((item) => item.file),
+          {
+            brandId,
+            categoryId,
+            subcategoryId,
+          }
+        )
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
 
@@ -757,15 +764,17 @@ export default function ProductFormModal({
           <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2.5 bg-gray-50">
             <button
               onClick={onClose}
-              className="px-5 py-2 rounded-lg border border-gray-200 bg-white cursor-pointer text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+              disabled={isLoading}
+              className="px-5 py-2 rounded-lg border border-gray-200 bg-white cursor-pointer text-sm text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancelar
             </button>
             <button
               onClick={handleSave}
-              className="px-5 py-2 rounded-lg border-none bg-blue-600 text-white cursor-pointer text-sm font-semibold hover:bg-blue-700 transition-colors"
+              disabled={isLoading}
+              className="px-5 py-2 rounded-lg border-none bg-blue-600 text-white cursor-pointer text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isEdit ? "Guardar Cambios" : "Guardar Producto"}
+              {isLoading ? "Guardando..." : (isEdit ? "Guardar Cambios" : "Guardar Producto")}
             </button>
           </div>
         </div>

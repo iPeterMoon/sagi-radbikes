@@ -177,8 +177,11 @@ export default function InventarioPage() {
       await inventarioApi.eliminarProducto(modal.product.id.toString());
       setModal({ type: "success-delete" });
       loadProducts();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting product:", error);
+      const errorMessage = error.message || "No se pudo eliminar el producto";
+      alert(`Error: ${errorMessage}`);
+      setModal(null);
     }
   };
 
