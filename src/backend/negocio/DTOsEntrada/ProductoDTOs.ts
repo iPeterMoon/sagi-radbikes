@@ -2,6 +2,8 @@ export interface CrearProductoDTO {
   nombre: string;
   precio: number;
   stock: number;
+  codigoDeBarras?: string;
+  minStock?: number;
   descripcion: string;
   idCategoria: string;
   idMarca: string;
@@ -15,6 +17,8 @@ export interface ActualizarProductoDTO {
   nombre: string;
   precio: number;
   stock: number;
+  codigoDeBarras?: string;
+  minStock?: number;
   descripcion: string;
   idCategoria: string;
   imagenesNuevas: File[];
