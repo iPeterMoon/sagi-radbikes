@@ -1,4 +1,4 @@
 export interface RolDTO {
-  idRol: bigint;
+  idRol: string;
   nombre: string;
 }

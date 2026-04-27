@@ -4,14 +4,14 @@ import { RolDTO } from "../DTOsSalida/RolDTO";
 export class RolMapper {
   static toDTO(entity: roles): RolDTO {
     return {
-      idRol: entity.id,
+      idRol: String(entity.id),
       nombre: entity.name,
     };
   }
 
   static toEntity(dto: RolDTO): roles {
     return {
-      id: dto.idRol,
+      id: BigInt(dto.idRol),
       created_at: new Date(),
       name: dto.nombre,
       description: null,

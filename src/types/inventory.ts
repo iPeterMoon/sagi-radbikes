@@ -51,6 +51,7 @@ export interface ToggleProps {
 export interface SidebarProps {
   active: string;
   open: boolean;
+  onLogout?: () => void;
 }
 
 export interface TopbarProps {

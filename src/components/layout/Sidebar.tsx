@@ -22,7 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "reportes", label: "Reportes", Icon: IconReports },
 ];
 
-export default function Sidebar({ active, open }: SidebarProps) {
+export default function Sidebar({ active, open, onLogout }: SidebarProps) {
   return (
     <aside
       className={`min-h-[calc(100vh-56px)] bg-white flex flex-col shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
@@ -51,7 +51,10 @@ export default function Sidebar({ active, open }: SidebarProps) {
           })}
         </nav>
         <div className="p-4 px-3 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 text-sm cursor-pointer whitespace-nowrap hover:bg-red-50 transition-colors">
+          <div
+            onClick={onLogout}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 text-sm cursor-pointer whitespace-nowrap hover:bg-red-50 transition-colors"
+          >
             <IconLogout />
             Cerrar Sesión
           </div>

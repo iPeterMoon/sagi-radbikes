@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { TopbarProps } from "@/types/inventory";
 
 function HamburgerIcon({ open }: { open: boolean }) {
@@ -22,6 +23,19 @@ function HamburgerIcon({ open }: { open: boolean }) {
 }
 
 export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
+  const [usuario, setUsuario] = useState<{ username: string; roles: { nombre: string }[] } | null>(null);
+
+  useEffect(() => {
+    const usuarioStr = localStorage.getItem("usuario");
+    if (usuarioStr) {
+      setUsuario(JSON.parse(usuarioStr));
+    }
+  }, []);
+
+  const displayName = usuario?.username || "Usuario";
+  const roleName = usuario?.roles?.[0]?.nombre || "Rol";
+  const initials = usuario?.username ? usuario.username.slice(0, 2).toUpperCase() : "US";
+
   return (
     <header className="h-14 bg-blue-900 flex items-center px-5 gap-3.5 shrink-0 sticky top-0 z-50">
       {/* Hamburger button */}
@@ -53,11 +67,11 @@ export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
       {/* User info */}
       <div className="w-40 flex items-center justify-end gap-2.5 shrink-0">
         <div className="text-right hidden sm:block">
-          <div className="text-white text-[13px] font-semibold">Pedro Luna</div>
-          <div className="text-blue-300 text-[11px]">Administrador</div>
+          <div className="text-white text-[13px] font-semibold">{displayName}</div>
+          <div className="text-blue-300 text-[11px]">{roleName}</div>
         </div>
         <div className="w-8.5 h-8.5 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-          PL
+          {initials}
         </div>
       </div>
     </header>
