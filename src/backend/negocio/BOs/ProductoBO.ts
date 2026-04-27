@@ -1,6 +1,10 @@
 import { IAccesoDatos } from "../../datos/IAccesoDatos";
 import { IProductoBO } from "../interfaces/IProductoBO";
-import { CrearProductoDTO, ActualizarProductoDTO, FiltroProductoDTO } from "../DTOsEntrada/ProductoDTOs";
+import {
+  CrearProductoDTO,
+  ActualizarProductoDTO,
+  FiltroProductoDTO,
+} from "../DTOsEntrada/ProductoDTOs";
 import { ProductoDTO } from "../DTOsSalida/ProductoDTOs";
 import { ProductoMapper } from "../mappers/ProductoMapper";
 
@@ -15,20 +19,25 @@ export class ProductoBO implements IProductoBO {
       categoriaId,
       marcaId,
       filtro.precioMin || null,
-      filtro.precioMax || null
+      filtro.precioMax || null,
     );
     return productos.map((p) => ProductoMapper.toDTO(p as any));
   }
 
   async obtenerPorId(id: string): Promise<ProductoDTO | null> {
     const producto = await this.accesoDatos.productDAO.getById(BigInt(id), {
-      include: { product_images: true, subcategory: { include: { categories: true } }, brand: true, product_physical: true },
+      product_images: true,
+      subcategory: { include: { categories: true } },
+      brands: true,
+      product_physical: true,
     });
     return producto ? ProductoMapper.toDTO(producto as any) : null;
   }
 
   async obtenerPorCategoria(idCategoria: string): Promise<ProductoDTO[]> {
-    const productos = await this.accesoDatos.productDAO.getByCategory(BigInt(idCategoria));
+    const productos = await this.accesoDatos.productDAO.getByCategory(
+      BigInt(idCategoria),
+    );
     return productos.map((p) => ProductoMapper.toDTO(p as any));
   }
 
@@ -77,7 +86,10 @@ export class ProductoBO implements IProductoBO {
       brand_id: BigInt(dto.idMarca),
       subcategory_id: BigInt(dto.idSubCategoria),
     };
-    const updated = await this.accesoDatos.productDAO.update(BigInt(dto.idProducto), entity);
+    const updated = await this.accesoDatos.productDAO.update(
+      BigInt(dto.idProducto),
+      entity,
+    );
 
     if (dto.etiquetas) {
       await this.accesoDatos.labelDAO.deleteByProduct(BigInt(dto.idProducto));
@@ -100,12 +112,24 @@ export class ProductoBO implements IProductoBO {
   }
 
   async restarStock(id: string, cantidad: number): Promise<boolean> {
-    return await this.accesoDatos.productDAO.decreaseStock(BigInt(id), cantidad);
+    return await this.accesoDatos.productDAO.decreaseStock(
+      BigInt(id),
+      cantidad,
+    );
   }
 
-  async agregarImagenes(idProducto: string, archivos: File[]): Promise<void> {
-    for (const archivo of archivos) {
-      await this.accesoDatos.productImageDAO.create(archivo, BigInt(idProducto));
+  async agregarImagenes(
+    idProducto: string,
+    archivos: File[],
+    mainImageIndex?: number,
+  ): Promise<void> {
+    for (let i = 0; i < archivos.length; i++) {
+      const isMain = mainImageIndex !== undefined && i === mainImageIndex;
+      await this.accesoDatos.productImageDAO.create(
+        archivos[i],
+        BigInt(idProducto),
+        isMain,
+      );
     }
   }
 
@@ -121,7 +145,9 @@ export class ProductoBO implements IProductoBO {
   async actualizarEstado(id: string): Promise<boolean> {
     const producto = await this.accesoDatos.productDAO.getById(BigInt(id));
     if (!producto) return false;
-    await this.accesoDatos.productDAO.update(BigInt(id), { is_active: !producto.is_active } as any);
+    await this.accesoDatos.productDAO.update(BigInt(id), {
+      is_active: !producto.is_active,
+    } as any);
     return true;
   }
 }

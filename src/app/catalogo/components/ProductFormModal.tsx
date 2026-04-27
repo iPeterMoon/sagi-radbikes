@@ -61,6 +61,7 @@ export default function ProductFormModal({
       ? { ...product }
       : {
           name: "",
+          sku: "",
           barcode: "",
           brand: "",
           category: "",
@@ -82,13 +83,15 @@ export default function ProductFormModal({
 
   const [localBrands, setLocalBrands] = useState<BrandOption[]>([]);
   const [localCategories, setLocalCategories] = useState<CategoryOption[]>([]);
-  const [localSubcategories, setLocalSubcategories] =
-    useState<Record<string, string[]>>({});
-  const [localSubcategoriesWithIds, setLocalSubcategoriesWithIds] =
-    useState<Record<string, Array<{ id: string; nombre: string }>>>({});
+  const [localSubcategories, setLocalSubcategories] = useState<
+    Record<string, string[]>
+  >({});
+  const [localSubcategoriesWithIds, setLocalSubcategoriesWithIds] = useState<
+    Record<string, Array<{ id: string; nombre: string }>>
+  >({});
 
   useEffect(() => {
-    const loadAttributes = async () => {
+    const loadData = async () => {
       try {
         const [brands, categories, subcategories] = await Promise.all([
           inventarioApi.obtenerMarcas(),
@@ -106,14 +109,22 @@ export default function ProductFormModal({
           nombre: c.nombre,
         }));
 
-        const subcategoriesMap: Record<string, Array<{ id: string; nombre: string }>> = {};
+        const subcategoriesMap: Record<
+          string,
+          Array<{ id: string; nombre: string }>
+        > = {};
         subcategories.forEach((sc) => {
           const categoryId = sc.idCategoria;
           if (!subcategoriesMap[categoryId]) {
             subcategoriesMap[categoryId] = [];
           }
-          if (!subcategoriesMap[categoryId].some((s) => s.nombre === sc.nombre)) {
-            subcategoriesMap[categoryId].push({ id: sc.idSubCategoria, nombre: sc.nombre });
+          if (
+            !subcategoriesMap[categoryId].some((s) => s.nombre === sc.nombre)
+          ) {
+            subcategoriesMap[categoryId].push({
+              id: sc.idSubCategoria,
+              nombre: sc.nombre,
+            });
           }
         });
 
@@ -136,7 +147,7 @@ export default function ProductFormModal({
         });
         setLocalSubcategories(subcategoriesLegacy);
 
-        // Si estamos en modo edición, establecer los IDs
+        // Si estamos en modo edición, establecer los IDs y cargar imágenes
         if (product) {
           // Buscar ID de marca
           const brandMatch = brandsList.find((b) => b.nombre === product.brand);
@@ -145,16 +156,66 @@ export default function ProductFormModal({
           }
 
           // Buscar ID de categoría
-          const categoryMatch = categoriesList.find((c) => c.nombre === product.category);
+          const categoryMatch = categoriesList.find(
+            (c) => c.nombre === product.category,
+          );
           if (categoryMatch) {
             setCategoryId(categoryMatch.idCategoria);
-            
+
             // Buscar ID de subcategoría
             const subMatch = subcategoriesMap[categoryMatch.idCategoria]?.find(
-              (s) => s.nombre === product.subcategory
+              (s) => s.nombre === product.subcategory,
             );
             if (subMatch) {
               setSubcategoryId(subMatch.id);
+            }
+          }
+
+          // Cargar todas las imágenes del producto desde el backend
+          try {
+            const productDetail = await inventarioApi.obtenerProductoPorId(
+              product.id.toString(),
+            );
+            if (
+              productDetail &&
+              productDetail.imagenes &&
+              productDetail.imagenes.length > 0
+            ) {
+              // Ordenar imágenes: principal primero
+              const sortedImages = [...productDetail.imagenes].sort((a, b) => {
+                if (a.esPrincipal && !b.esPrincipal) return -1;
+                if (!a.esPrincipal && b.esPrincipal) return 1;
+                return 0;
+              });
+
+              const imageUrls = sortedImages.map((img) => img.url);
+              setOriginalImages(imageUrls);
+
+              // Guardar los datos de las imágenes (con IDs)
+              setProductImagesData(
+                sortedImages.map((img) => ({
+                  id: img.idImagen,
+                  url: img.url,
+                  esPrincipal: img.esPrincipal,
+                })),
+              );
+
+              // Establecer la imagen principal como la imagen del formulario
+              const mainImage = sortedImages.find((img) => img.esPrincipal);
+              if (mainImage) {
+                setOriginalMainImage(mainImage.url);
+                set("image", mainImage.url);
+              } else if (imageUrls.length > 0) {
+                setOriginalMainImage(imageUrls[0]);
+                set("image", imageUrls[0]);
+              }
+            }
+          } catch (imgError) {
+            console.error("Error loading product images:", imgError);
+            // Fallback to the single image from the product
+            if (product.image) {
+              setOriginalImages([product.image]);
+              setOriginalMainImage(product.image);
             }
           }
         }
@@ -163,17 +224,21 @@ export default function ProductFormModal({
       }
     };
 
-    loadAttributes();
+    loadData();
   }, [product]);
 
   // Estado del nuevo Modal Externo
   const [activeSubModal, setActiveSubModal] = useState<AttributeType>(null);
 
   const [imagesList, setImagesList] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<{ src: string; file: File }[]>([]);
-  const [originalImages] = useState<string[]>(
-    form.image ? [form.image] : [],
-  );
+  const [selectedFiles, setSelectedFiles] = useState<
+    { src: string; file: File }[]
+  >([]);
+  const [originalImages, setOriginalImages] = useState<string[]>([]);
+  const [originalMainImage, setOriginalMainImage] = useState<string>("");
+  const [productImagesData, setProductImagesData] = useState<
+    Array<{ id: string; url: string; esPrincipal: boolean }>
+  >([]);
 
   const [tagName, setTagName] = useState("");
   const [tagValue, setTagValue] = useState("");
@@ -205,7 +270,9 @@ export default function ProductFormModal({
 
     try {
       if (activeSubModal === "brand") {
-        const created = await inventarioApi.crearMarca({ nombre: value.trim() });
+        const created = await inventarioApi.crearMarca({
+          nombre: value.trim(),
+        });
         setLocalBrands((prev) => {
           if (prev.some((b) => b.nombre === created.nombre)) return prev;
           return [...prev, created];
@@ -246,7 +313,9 @@ export default function ProductFormModal({
         }
 
         if (!category) {
-          throw new Error("No se pudo determinar la categoría para la subcategoría");
+          throw new Error(
+            "No se pudo determinar la categoría para la subcategoría",
+          );
         }
 
         const created = await inventarioApi.crearSubCategoria({
@@ -265,7 +334,10 @@ export default function ProductFormModal({
           if (existing.some((s) => s.nombre === created.nombre)) return prev;
           return {
             ...prev,
-            [category!.idCategoria]: [...existing, { id: created.idSubCategoria, nombre: created.nombre }],
+            [category!.idCategoria]: [
+              ...existing,
+              { id: created.idSubCategoria, nombre: created.nombre },
+            ],
           };
         });
 
@@ -299,7 +371,9 @@ export default function ProductFormModal({
     const imageUrlToRemove = imagesList[indexToRemove];
     const newList = imagesList.filter((_, index) => index !== indexToRemove);
     setImagesList(newList);
-    setSelectedFiles((prev) => prev.filter((item) => item.src !== imageUrlToRemove));
+    setSelectedFiles((prev) =>
+      prev.filter((item) => item.src !== imageUrlToRemove),
+    );
     if (form.image === imageUrlToRemove)
       set("image", newList.length > 0 ? newList[0] : "");
   };
@@ -315,6 +389,33 @@ export default function ProductFormModal({
     if (!validate()) return;
     setIsLoading(true);
     try {
+      // Calculate the main image index among new images
+      // The main image is stored in form.image
+      // We need to find which index in selectedFiles corresponds to the main image
+      let mainImageIndex: number | undefined;
+      if (selectedFiles.length > 0 && form.image) {
+        const mainIndex = selectedFiles.findIndex(
+          (item) => item.src === form.image,
+        );
+        if (mainIndex >= 0) {
+          mainImageIndex = mainIndex;
+        }
+      }
+
+      // Check if the main image changed from an original image to another original image
+      // In this case, we need to pass the ID of the new main image
+      let newMainImageId: string | undefined;
+      if (isEdit && form.image && form.image !== originalMainImage) {
+        // The user selected a different image as main
+        // Check if the new main image is an original image (not a new file)
+        const newMainImageData = productImagesData.find(
+          (img) => img.url === form.image,
+        );
+        if (newMainImageData) {
+          newMainImageId = newMainImageData.id;
+        }
+      }
+
       await Promise.resolve(
         onSave(
           {
@@ -330,15 +431,15 @@ export default function ProductFormModal({
             brandId,
             categoryId,
             subcategoryId,
-          }
-        )
+            mainImageIndex,
+            newMainImageId, // ID of the new main image (if changing from original images)
+          },
+        ),
       );
     } finally {
       setIsLoading(false);
     }
   };
-
-
 
   return (
     <>
@@ -418,7 +519,7 @@ export default function ProductFormModal({
                     value={brandId}
                     onChange={(e) => {
                       const selectedBrand = localBrands.find(
-                        (b) => b.idMarca === e.target.value
+                        (b) => b.idMarca === e.target.value,
                       );
                       if (selectedBrand) {
                         setBrandId(selectedBrand.idMarca);
@@ -457,7 +558,7 @@ export default function ProductFormModal({
                       value={categoryId}
                       onChange={(e) => {
                         const selectedCategory = localCategories.find(
-                          (c) => c.idCategoria === e.target.value
+                          (c) => c.idCategoria === e.target.value,
                         );
                         if (selectedCategory) {
                           setCategoryId(selectedCategory.idCategoria);
@@ -495,9 +596,9 @@ export default function ProductFormModal({
                       id="subcategoria"
                       value={subcategoryId}
                       onChange={(e) => {
-                        const selectedSubcategory = (localSubcategoriesWithIds[categoryId] || []).find(
-                          (s) => s.id === e.target.value
-                        );
+                        const selectedSubcategory = (
+                          localSubcategoriesWithIds[categoryId] || []
+                        ).find((s) => s.id === e.target.value);
                         if (selectedSubcategory) {
                           setSubcategoryId(selectedSubcategory.id);
                           set("subcategory", selectedSubcategory.nombre);
@@ -507,11 +608,13 @@ export default function ProductFormModal({
                       disabled={!categoryId}
                     >
                       <option value="">Seleccionar...</option>
-                      {(localSubcategoriesWithIds[categoryId] || []).map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.nombre}
-                        </option>
-                      ))}
+                      {(localSubcategoriesWithIds[categoryId] || []).map(
+                        (s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.nombre}
+                          </option>
+                        ),
+                      )}
                     </select>
                   </FieldWithIcon>
                   <button
@@ -755,7 +858,11 @@ export default function ProductFormModal({
               disabled={isLoading}
               className="px-5 py-2 rounded-lg border-none bg-blue-600 text-white cursor-pointer text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Guardando..." : (isEdit ? "Guardar Cambios" : "Guardar Producto")}
+              {isLoading
+                ? "Guardando..."
+                : isEdit
+                  ? "Guardar Cambios"
+                  : "Guardar Producto"}
             </button>
           </div>
         </div>

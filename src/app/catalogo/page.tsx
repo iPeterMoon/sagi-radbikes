@@ -17,7 +17,9 @@ import { IconSearch, IconPlus } from "@/components/ui/Icons";
 const PER_PAGE = 5;
 
 function mapDtoToProduct(dto: any): Product {
-  const imageUrl = dto.imagenes?.[0]?.url;
+  // Find the main image (esPrincipal = true), or fall back to the first image
+  const mainImage = dto.imagenes?.find((img: any) => img.esPrincipal);
+  const imageUrl = mainImage?.url || dto.imagenes?.[0]?.url || "";
 
   return {
     id: Number(dto.idProducto),
@@ -36,7 +38,7 @@ function mapDtoToProduct(dto: any): Product {
       value: etiqueta.valor,
     })),
     active: dto.activo ?? true,
-    image: imageUrl || "",
+    image: imageUrl,
     hasSalesHistory: false, // TODO: This should come from the backend
   };
 }
@@ -109,7 +111,13 @@ export default function InventarioPage() {
   const handleSave = async (
     data: Product,
     newImages: File[],
-    attributeIds?: { brandId: string; categoryId: string; subcategoryId: string }
+    attributeIds?: {
+      brandId: string;
+      categoryId: string;
+      subcategoryId: string;
+      mainImageIndex?: number;
+      newMainImageId?: string;
+    },
   ) => {
     try {
       if (modal?.type === "edit") {
@@ -131,7 +139,18 @@ export default function InventarioPage() {
         });
 
         if (newImages.length > 0) {
-          await inventarioApi.agregarImagenes(updatedProduct.idProducto, newImages);
+          await inventarioApi.agregarImagenes(
+            updatedProduct.idProducto,
+            newImages,
+            attributeIds?.mainImageIndex,
+          );
+        }
+
+        // If the user changed the main image to an existing image, set it as main
+        if (attributeIds?.newMainImageId) {
+          await inventarioApi.establecerImagenPrincipal(
+            attributeIds.newMainImageId,
+          );
         }
 
         setModal(null);
@@ -152,10 +171,17 @@ export default function InventarioPage() {
         });
 
         if (newImages.length > 0) {
-          await inventarioApi.agregarImagenes(createdProduct.idProducto, newImages);
+          await inventarioApi.agregarImagenes(
+            createdProduct.idProducto,
+            newImages,
+            attributeIds?.mainImageIndex,
+          );
         }
 
-        setModal({ type: "success-add" });
+        setModal({
+          type: "success-add",
+          productImage: data.image || undefined,
+        });
         loadProducts();
       }
     } catch (error) {
@@ -354,6 +380,7 @@ export default function InventarioPage() {
       {modal?.type === "success-add" && (
         <StatusFeedbackModal
           type="add"
+          productImage={modal.productImage}
           onClose={() => setModal(null)}
           onContinue={() => setModal({ type: "add" })}
         />

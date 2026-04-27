@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { SuccessModalProps } from "@/types/inventory";
 import {
   IconCheck,
   IconArrowRight,
@@ -9,11 +8,19 @@ import {
   IconGrid,
 } from "@/components/ui/Icons";
 
+interface StatusFeedbackModalProps {
+  type: "add" | "delete";
+  onClose: () => void;
+  onContinue?: () => void;
+  productImage?: string;
+}
+
 export default function StatusFeedbackModal({
   type,
   onClose,
   onContinue,
-}: SuccessModalProps) {
+  productImage,
+}: StatusFeedbackModalProps) {
   const isAdd = type === "add";
 
   return (
@@ -28,11 +35,19 @@ export default function StatusFeedbackModal({
         {isAdd && (
           <div className="h-45 overflow-hidden relative">
             <Image
-              src="https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=400&h=200&fit=crop"
+              src={
+                productImage ||
+                "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=400&h=200&fit=crop"
+              }
               alt="Producto agregado"
               className="w-full h-full object-cover"
               width={400}
               height={200}
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                img.src =
+                  "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=400&h=200&fit=crop";
+              }}
             />
             <div className="absolute inset-0 bg-linear-to-b from-black/10 to-black/40 flex items-center justify-center">
               <div className="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center text-white shadow-[0_0_0_8px_rgba(34,197,94,0.3)]">

@@ -95,12 +95,24 @@ export class ServicioInventario implements IServicioInventario {
     return this.subCategoriaBO.obtenerPorCategoria(idCategoria);
   }
 
-  async agregarImagenes(idProducto: string, archivos: File[]): Promise<void> {
-    return this.productoBO.agregarImagenes(idProducto, archivos);
+  async agregarImagenes(
+    idProducto: string,
+    archivos: File[],
+    mainImageIndex?: number,
+  ): Promise<void> {
+    return this.productoBO.agregarImagenes(
+      idProducto,
+      archivos,
+      mainImageIndex,
+    );
   }
 
   async eliminarImagen(idImagen: string): Promise<boolean> {
     return this.productoBO.eliminarImagen(idImagen);
+  }
+
+  async establecerImagenPrincipal(idImagen: string): Promise<boolean> {
+    return this.productoBO.establecerImagenPrincipal(idImagen);
   }
 
   async obtenerEtiquetas(idProducto: string): Promise<EtiquetaDTO[]> {

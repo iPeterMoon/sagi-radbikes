@@ -1,5 +1,15 @@
-import { ProductoDTO, CategoriaDTO, MarcaDTO, SubCategoriaDTO, EtiquetaDTO } from "@/backend/negocio/DTOsSalida/ProductoDTOs";
-import { CrearProductoDTO, ActualizarProductoDTO, FiltroProductoDTO } from "@/backend/negocio/DTOsEntrada/ProductoDTOs";
+import {
+  ProductoDTO,
+  CategoriaDTO,
+  MarcaDTO,
+  SubCategoriaDTO,
+  EtiquetaDTO,
+} from "@/backend/negocio/DTOsSalida/ProductoDTOs";
+import {
+  CrearProductoDTO,
+  ActualizarProductoDTO,
+  FiltroProductoDTO,
+} from "@/backend/negocio/DTOsEntrada/ProductoDTOs";
 
 const API_BASE = "/api/inventario";
 
@@ -19,12 +29,15 @@ export const inventarioApi = {
     if (filtro?.idCategoria) params.set("idCategoria", filtro.idCategoria);
     if (filtro?.idMarca) params.set("idMarca", filtro.idMarca);
     if (filtro?.estadoStock) params.set("estadoStock", filtro.estadoStock);
-    if (filtro?.idSubCategoria) params.set("idSubCategoria", filtro.idSubCategoria);
+    if (filtro?.idSubCategoria)
+      params.set("idSubCategoria", filtro.idSubCategoria);
     if (filtro?.precioMin) params.set("precioMin", filtro.precioMin.toString());
     if (filtro?.precioMax) params.set("precioMax", filtro.precioMax.toString());
-    
+
     const query = params.toString();
-    return fetchApi<ProductoDTO[]>(`${API_BASE}/productos${query ? `?${query}` : ""}`);
+    return fetchApi<ProductoDTO[]>(
+      `${API_BASE}/productos${query ? `?${query}` : ""}`,
+    );
   },
 
   async obtenerProductoPorId(id: string): Promise<ProductoDTO> {
@@ -39,7 +52,9 @@ export const inventarioApi = {
     });
   },
 
-  async actualizarProducto(producto: ActualizarProductoDTO): Promise<ProductoDTO> {
+  async actualizarProducto(
+    producto: ActualizarProductoDTO,
+  ): Promise<ProductoDTO> {
     return fetchApi<ProductoDTO>(`${API_BASE}/productos`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -48,7 +63,9 @@ export const inventarioApi = {
   },
 
   async eliminarProducto(id: string): Promise<boolean> {
-    return fetchApi<boolean>(`${API_BASE}/productos/${id}`, { method: "DELETE" });
+    return fetchApi<boolean>(`${API_BASE}/productos/${id}`, {
+      method: "DELETE",
+    });
   },
 
   async ajustarStock(id: string, cantidad: number): Promise<boolean> {
@@ -80,7 +97,9 @@ export const inventarioApi = {
     return fetchApi<SubCategoriaDTO[]>(`${API_BASE}/subcategorias${params}`);
   },
 
-  async crearCategoria(categoria: Omit<CategoriaDTO, "idCategoria">): Promise<CategoriaDTO> {
+  async crearCategoria(
+    categoria: Omit<CategoriaDTO, "idCategoria">,
+  ): Promise<CategoriaDTO> {
     return fetchApi<CategoriaDTO>(`${API_BASE}/categorias`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -96,7 +115,9 @@ export const inventarioApi = {
     });
   },
 
-  async crearSubCategoria(subCategoria: Omit<SubCategoriaDTO, "idSubCategoria">): Promise<SubCategoriaDTO> {
+  async crearSubCategoria(
+    subCategoria: Omit<SubCategoriaDTO, "idSubCategoria">,
+  ): Promise<SubCategoriaDTO> {
     return fetchApi<SubCategoriaDTO>(`${API_BASE}/subcategorias`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -104,10 +125,17 @@ export const inventarioApi = {
     });
   },
 
-  async agregarImagenes(idProducto: string, archivos: File[]): Promise<void> {
+  async agregarImagenes(
+    idProducto: string,
+    archivos: File[],
+    mainImageIndex?: number,
+  ): Promise<void> {
     const formData = new FormData();
     formData.append("idProducto", idProducto);
     archivos.forEach((file) => formData.append("archivos", file));
+    if (mainImageIndex !== undefined) {
+      formData.append("mainImageIndex", mainImageIndex.toString());
+    }
     await fetchApi<void>(`${API_BASE}/productos/${idProducto}/imagenes`, {
       method: "POST",
       body: formData,
@@ -115,14 +143,25 @@ export const inventarioApi = {
   },
 
   async eliminarImagen(idImagen: string): Promise<boolean> {
-    return fetchApi<boolean>(`${API_BASE}/imagenes/${idImagen}`, { method: "DELETE" });
+    return fetchApi<boolean>(`${API_BASE}/imagenes/${idImagen}`, {
+      method: "DELETE",
+    });
+  },
+
+  async establecerImagenPrincipal(idImagen: string): Promise<boolean> {
+    return fetchApi<boolean>(`${API_BASE}/imagenes/${idImagen}/principal`, {
+      method: "PATCH",
+    });
   },
 
   async obtenerEtiquetas(idProducto: string): Promise<EtiquetaDTO[]> {
     return fetchApi<EtiquetaDTO[]>(`${API_BASE}/etiquetas/${idProducto}`);
   },
 
-  async crearEtiqueta(etiqueta: EtiquetaDTO, idProducto: string): Promise<EtiquetaDTO> {
+  async crearEtiqueta(
+    etiqueta: EtiquetaDTO,
+    idProducto: string,
+  ): Promise<EtiquetaDTO> {
     return fetchApi<EtiquetaDTO>(`${API_BASE}/etiquetas`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -131,6 +170,8 @@ export const inventarioApi = {
   },
 
   async eliminarEtiqueta(idEtiqueta: string): Promise<boolean> {
-    return fetchApi<boolean>(`${API_BASE}/etiquetas/${idEtiqueta}`, { method: "DELETE" });
+    return fetchApi<boolean>(`${API_BASE}/etiquetas/${idEtiqueta}`, {
+      method: "DELETE",
+    });
   },
 };
