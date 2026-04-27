@@ -8,6 +8,7 @@ export interface IServicioInventario {
   actualizarProducto(producto: ActualizarProductoDTO): Promise<ProductoDTO>;
   eliminarProducto(id: string): Promise<boolean>;
   ajustarStock(id: string, cantidad: number): Promise<boolean>;
+  actualizarEstado(id: string): Promise<boolean>;
   obtenerCategorias(): Promise<CategoriaDTO[]>;
   obtenerMarcas(): Promise<MarcaDTO[]>;
   obtenerSubCategorias(): Promise<SubCategoriaDTO[]>;

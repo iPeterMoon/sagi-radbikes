@@ -39,6 +39,7 @@ export class ProductoMapper {
         ? SubCategoriaMapper.toDTO(entity.subcategory)
         : { idSubCategoria: "", nombre: "", idCategoria: "" },
       estadoStock: this.calcularEstadoStock(entity.stock || 0, entity.min_stock || 0),
+      activo: entity.is_active ?? true,
       etiquetas: (entity.product_physical || []).map(EtiquetaMapper.toDTO),
     };
   }

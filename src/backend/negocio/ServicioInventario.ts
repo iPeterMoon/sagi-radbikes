@@ -59,6 +59,10 @@ export class ServicioInventario implements IServicioInventario {
     return this.productoBO.restarStock(id, cantidad);
   }
 
+  async actualizarEstado(id: string): Promise<boolean> {
+    return this.productoBO.actualizarEstado(id);
+  }
+
   async obtenerCategorias(): Promise<CategoriaDTO[]> {
     return this.categoriaBO.obtenerTodas();
   }

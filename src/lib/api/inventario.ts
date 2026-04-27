@@ -52,10 +52,18 @@ export const inventarioApi = {
   },
 
   async ajustarStock(id: string, cantidad: number): Promise<boolean> {
-    return fetchApi<boolean>(`${API_BASE}/productos/${id}/stock`, {
+    return fetchApi<boolean>(`${API_BASE}/productos`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cantidad }),
+      body: JSON.stringify({ id, cantidad }),
+    });
+  },
+
+  async actualizarEstado(id: string): Promise<boolean> {
+    return fetchApi<boolean>(`${API_BASE}/productos`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, toggleActive: true }),
     });
   },
 

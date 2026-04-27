@@ -172,8 +172,26 @@ export async function eliminarProducto(
 
 export async function ajustarStock(req: NextRequest) {
   try {
-    const { id, cantidad } = await req.json();
-    const result = await accesoDatos.ajustarStock(id, cantidad);
+    const payload = await req.json();
+    const id = payload.id as string;
+
+    if (!id) {
+      return NextResponse.json({ error: "Se requiere el id del producto" }, { status: 400 });
+    }
+
+    let result = false;
+
+    if (typeof payload.cantidad === "number") {
+      result = await accesoDatos.ajustarStock(id, payload.cantidad);
+    } else if (payload.toggleActive) {
+      result = await accesoDatos.actualizarEstado(id);
+    } else {
+      return NextResponse.json(
+        { error: "Payload inválido para la operación PATCH" },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json({ success: result });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -42,5 +42,6 @@ export interface ProductoDTO {
   marca: MarcaDTO;
   subcategoria: SubCategoriaDTO;
   estadoStock: EstadoStock;
+  activo: boolean;
   etiquetas: EtiquetaDTO[];
 }

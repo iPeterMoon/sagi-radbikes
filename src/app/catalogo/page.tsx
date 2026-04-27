@@ -35,7 +35,7 @@ function mapDtoToProduct(dto: any): Product {
       name: etiqueta.nombre,
       value: etiqueta.valor,
     })),
-    active: true, // TODO: This should come from the backend
+    active: dto.activo ?? true,
     image: imageUrl || "",
     hasSalesHistory: false, // TODO: This should come from the backend
   };
@@ -187,7 +187,7 @@ export default function InventarioPage() {
 
   const handleToggle = async (id: number) => {
     try {
-      await inventarioApi.ajustarStock(id.toString(), 0);
+      await inventarioApi.actualizarEstado(id.toString());
       loadProducts();
     } catch (error) {
       console.error("Error toggling product:", error);
