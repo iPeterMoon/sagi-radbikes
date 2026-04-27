@@ -61,7 +61,6 @@ export default function ProductFormModal({
       ? { ...product }
       : {
           name: "",
-          sku: "",
           barcode: "",
           brand: "",
           category: "",
@@ -308,7 +307,6 @@ export default function ProductFormModal({
   const validate = (): boolean => {
     const e: typeof errors = {};
     if (!form.name.trim()) e.name = "El nombre es requerido";
-    if (!form.sku.trim()) e.sku = "El SKU es requerido";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -398,34 +396,17 @@ export default function ProductFormModal({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className={twLabel}>SKU</label>
-                <FieldWithIcon icon={<IconTag />}>
-                  <input
-                    id="sku"
-                    value={form.sku}
-                    onChange={(e) => set("sku", e.target.value)}
-                    placeholder="RAD-001"
-                    className={`${twField} pl-8 ${errors.sku ? "border-red-500" : ""}`}
-                  />
-                </FieldWithIcon>
-                {errors.sku && (
-                  <p className="text-red-500 text-[11px] mt-1">{errors.sku}</p>
-                )}
-              </div>
-              <div>
-                <label className={twLabel}>Código de barras</label>
-                <FieldWithIcon icon={<IconBarcode />}>
-                  <input
-                    id="codigoBarras"
-                    value={form.barcode}
-                    onChange={(e) => set("barcode", e.target.value)}
-                    placeholder="7501000..."
-                    className={`${twField} pl-8`}
-                  />
-                </FieldWithIcon>
-              </div>
+            <div className="mb-3">
+              <label className={twLabel}>Código de barras</label>
+              <FieldWithIcon icon={<IconBarcode />}>
+                <input
+                  id="codigoBarras"
+                  value={form.barcode}
+                  onChange={(e) => set("barcode", e.target.value)}
+                  placeholder="7501000..."
+                  className={`${twField} pl-8`}
+                />
+              </FieldWithIcon>
             </div>
 
             <div className="mb-3">

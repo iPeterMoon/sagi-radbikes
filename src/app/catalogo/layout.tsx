@@ -15,6 +15,9 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // Cambiar el título de la pestaña
+    document.title = "Catálogo - RAD Bikes";
+
     const checkSession = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
