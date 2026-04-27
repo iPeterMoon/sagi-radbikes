@@ -47,6 +47,15 @@ function FieldWithIcon({
   );
 }
 
+type FormState = Omit<
+  Product,
+  "id" | "hasSalesHistory" | "price" | "stock" | "minStock"
+> & {
+  price: number | string;
+  stock: number | string;
+  minStock: number | string;
+};
+
 export default function ProductFormModal({
   product,
   onClose,
@@ -56,7 +65,7 @@ export default function ProductFormModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [form, setForm] = useState<Omit<Product, "id" | "hasSalesHistory">>(
+  const [form, setForm] = useState<FormState>(
     product
       ? { ...product }
       : {
@@ -66,8 +75,8 @@ export default function ProductFormModal({
           brand: "",
           category: "",
           subcategory: "",
-          price: 0,
-          stock: 0,
+          price: "",
+          stock: "",
           minStock: 5,
           description: "",
           tags: [],
@@ -83,9 +92,6 @@ export default function ProductFormModal({
 
   const [localBrands, setLocalBrands] = useState<BrandOption[]>([]);
   const [localCategories, setLocalCategories] = useState<CategoryOption[]>([]);
-  const [localSubcategories, setLocalSubcategories] = useState<
-    Record<string, string[]>
-  >({});
   const [localSubcategoriesWithIds, setLocalSubcategoriesWithIds] = useState<
     Record<string, Array<{ id: string; nombre: string }>>
   >({});
@@ -131,21 +137,6 @@ export default function ProductFormModal({
         setLocalBrands(brandsList);
         setLocalCategories(categoriesList);
         setLocalSubcategoriesWithIds(subcategoriesMap);
-
-        // Legacy map for backward compatibility
-        const subcategoriesLegacy: Record<string, string[]> = {};
-        subcategories.forEach((sc) => {
-          const categoryName =
-            categories.find((c) => c.idCategoria === sc.idCategoria)?.nombre ||
-            sc.idCategoria;
-          if (!subcategoriesLegacy[categoryName]) {
-            subcategoriesLegacy[categoryName] = [];
-          }
-          if (!subcategoriesLegacy[categoryName].includes(sc.nombre)) {
-            subcategoriesLegacy[categoryName].push(sc.nombre);
-          }
-        });
-        setLocalSubcategories(subcategoriesLegacy);
 
         // Si estamos en modo edición, establecer los IDs y cargar imágenes
         if (product) {
@@ -242,11 +233,11 @@ export default function ProductFormModal({
 
   const [tagName, setTagName] = useState("");
   const [tagValue, setTagValue] = useState("");
-  const [errors, setErrors] = useState<Partial<Record<keyof Product, string>>>(
-    {},
-  );
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormState, string>>
+  >({});
 
-  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const addTag = () => {
@@ -288,10 +279,6 @@ export default function ProductFormModal({
           if (prev.some((c) => c.nombre === created.nombre)) return prev;
           return [...prev, created];
         });
-        setLocalSubcategories((prev) => ({
-          ...prev,
-          [created.nombre]: prev[created.nombre] ?? [],
-        }));
         setLocalSubcategoriesWithIds((prev) => ({
           ...prev,
           [created.idCategoria]: prev[created.idCategoria] ?? [],
@@ -321,12 +308,6 @@ export default function ProductFormModal({
         const created = await inventarioApi.crearSubCategoria({
           nombre: value.trim(),
           idCategoria: category.idCategoria,
-        });
-
-        setLocalSubcategories((prev) => {
-          const existing = prev[parentCat] || [];
-          if (existing.includes(created.nombre)) return prev;
-          return { ...prev, [parentCat]: [...existing, created.nombre] };
         });
 
         setLocalSubcategoriesWithIds((prev) => {
@@ -379,8 +360,48 @@ export default function ProductFormModal({
   };
 
   const validate = (): boolean => {
-    const e: typeof errors = {};
+    const e: Partial<Record<keyof FormState, string>> = {};
+
     if (!form.name.trim()) e.name = "El nombre es requerido";
+    if (!form.barcode.trim()) e.barcode = "El código de barras es requerido";
+    if (!brandId) e.brand = "La marca es requerida";
+    if (!categoryId) e.category = "La categoría es requerida";
+    if (!subcategoryId) e.subcategory = "La subcategoría es requerida";
+
+    if (
+      form.price === "" ||
+      form.price === null ||
+      Number.isNaN(Number(form.price))
+    ) {
+      e.price = "El precio es requerido";
+    } else if (typeof form.price === "number" && form.price < 0) {
+      e.price = "El precio no puede ser negativo";
+    }
+
+    if (
+      form.stock === "" ||
+      form.stock === null ||
+      Number.isNaN(Number(form.stock))
+    ) {
+      e.stock = "El stock es requerido";
+    } else if (typeof form.stock === "number" && form.stock < 0) {
+      e.stock = "El stock no puede ser negativo";
+    }
+
+    if (
+      form.minStock === "" ||
+      form.minStock === null ||
+      Number.isNaN(Number(form.minStock))
+    ) {
+      e.minStock = "El stock mínimo es requerido";
+    } else if (typeof form.minStock === "number" && form.minStock < 0) {
+      e.minStock = "El stock mínimo no puede ser negativo";
+    }
+
+    if (!form.image.trim()) {
+      e.image = "Debes seleccionar al menos una imagen principal";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -425,6 +446,9 @@ export default function ProductFormModal({
             brand: form.brand,
             category: form.category,
             subcategory: form.subcategory,
+            price: Number(form.price),
+            stock: Number(form.stock),
+            minStock: Number(form.minStock),
           },
           selectedFiles.map((item) => item.file),
           {
@@ -505,9 +529,14 @@ export default function ProductFormModal({
                   value={form.barcode}
                   onChange={(e) => set("barcode", e.target.value)}
                   placeholder="7501000..."
-                  className={`${twField} pl-8`}
+                  className={`${twField} pl-8 ${errors.barcode ? "border-red-500" : ""}`}
                 />
               </FieldWithIcon>
+              {errors.barcode && (
+                <p className="text-red-500 text-[11px] mt-1">
+                  {errors.barcode}
+                </p>
+              )}
             </div>
 
             <div className="mb-3">
@@ -526,7 +555,7 @@ export default function ProductFormModal({
                         set("brand", selectedBrand.nombre);
                       }
                     }}
-                    className={`${twField} pl-8 appearance-none cursor-pointer`}
+                    className={`${twField} pl-8 appearance-none cursor-pointer ${errors.brand ? "border-red-500" : ""}`}
                   >
                     <option value="">Seleccionar...</option>
                     {localBrands.map((b) => (
@@ -546,6 +575,9 @@ export default function ProductFormModal({
                   <IconPlus />
                 </button>
               </div>
+              {errors.brand && (
+                <p className="text-red-500 text-[11px] mt-1">{errors.brand}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-3">
@@ -567,7 +599,7 @@ export default function ProductFormModal({
                           set("subcategory", "");
                         }
                       }}
-                      className={`${twField} pl-8 appearance-none cursor-pointer`}
+                      className={`${twField} pl-8 appearance-none cursor-pointer ${errors.category ? "border-red-500" : ""}`}
                     >
                       <option value="">Seleccionar...</option>
                       {localCategories.map((c) => (
@@ -587,6 +619,11 @@ export default function ProductFormModal({
                     <IconPlus />
                   </button>
                 </div>
+                {errors.category && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.category}
+                  </p>
+                )}
               </div>
               <div>
                 <label className={twLabel}>Subcategoría</label>
@@ -604,7 +641,7 @@ export default function ProductFormModal({
                           set("subcategory", selectedSubcategory.nombre);
                         }
                       }}
-                      className={`${twField} pl-8 appearance-none cursor-pointer`}
+                      className={`${twField} pl-8 appearance-none cursor-pointer ${errors.subcategory ? "border-red-500" : ""}`}
                       disabled={!categoryId}
                     >
                       <option value="">Seleccionar...</option>
@@ -627,6 +664,11 @@ export default function ProductFormModal({
                     <IconPlus />
                   </button>
                 </div>
+                {errors.subcategory && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.subcategory}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -641,11 +683,21 @@ export default function ProductFormModal({
                     id="precio"
                     type="number"
                     min={0}
-                    value={form.price || ""}
-                    onChange={(e) => set("price", Number(e.target.value))}
-                    className={`${twField} pl-6`}
+                    value={form.price}
+                    onChange={(e) =>
+                      set(
+                        "price",
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className={`${twField} pl-6 ${errors.price ? "border-red-500" : ""}`}
                   />
                 </div>
+                {errors.price && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.price}
+                  </p>
+                )}
               </div>
               <div>
                 <label className={twLabel}>
@@ -656,11 +708,21 @@ export default function ProductFormModal({
                     id="stock"
                     type="number"
                     min={0}
-                    value={form.stock || ""}
-                    onChange={(e) => set("stock", Number(e.target.value))}
-                    className={`${twField} pl-8`}
+                    value={form.stock}
+                    onChange={(e) =>
+                      set(
+                        "stock",
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className={`${twField} pl-8 ${errors.stock ? "border-red-500" : ""}`}
                   />
                 </FieldWithIcon>
+                {errors.stock && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.stock}
+                  </p>
+                )}
               </div>
               <div>
                 <label className={twLabel}>Stock mín. aceptable</label>
@@ -669,11 +731,21 @@ export default function ProductFormModal({
                     id="stockMin"
                     type="number"
                     min={0}
-                    value={form.minStock || ""}
-                    onChange={(e) => set("minStock", Number(e.target.value))}
-                    className={`${twField} pl-8`}
+                    value={form.minStock}
+                    onChange={(e) =>
+                      set(
+                        "minStock",
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className={`${twField} pl-8 ${errors.minStock ? "border-red-500" : ""}`}
                   />
                 </FieldWithIcon>
+                {errors.minStock && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.minStock}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -838,6 +910,9 @@ export default function ProductFormModal({
                   </span>
                 </div>
               </div>
+              {errors.image && (
+                <p className="text-red-500 text-[11px] mt-2">{errors.image}</p>
+              )}
               <p className="text-[11px] text-gray-400 mt-2.5">
                 ⓘ Formatos sugeridos: JPG, PNG, WEBP (Máx. 5MB). Clic en la foto
                 para establecer como principal.
