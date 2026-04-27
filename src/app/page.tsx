@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     console.log("handleSubmit called");
@@ -26,7 +27,10 @@ export default function LoginPage() {
 
     try {
       console.log("Calling login API...");
-      const sesion = await authApi.login({ username: username, password: password });
+      const sesion = await authApi.login({
+        username: username,
+        password: password,
+      });
       console.log("Login successful, sesion:", sesion);
       localStorage.setItem("token", sesion.token);
       localStorage.setItem("usuario", JSON.stringify(sesion.usuario));
@@ -52,8 +56,8 @@ export default function LoginPage() {
             <Image
               width={64}
               height={64}
-              src={'/Ohare.jpeg'}
-              alt= "Logo"
+              src={"/Ohare.jpeg"}
+              alt="Logo"
               className="object-cover"
             />
             <h2 className="text-2xl text-black ml-4 font-bold">RAD Bikes</h2>
@@ -67,7 +71,14 @@ export default function LoginPage() {
         </div>
 
         {/* Formulario */}
-        <form onSubmit={(e) => { e.preventDefault(); console.log("Form submitted"); handleSubmit(e); }} className="space-y-5">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            console.log("Form submitted");
+            handleSubmit(e);
+          }}
+          className="space-y-5"
+        >
           {/* Campo Usuario */}
           <div>
             <label
@@ -172,12 +183,13 @@ export default function LoginPage() {
 
           {/* Enlace Olvidó contraseña */}
           <div className="text-center">
-            <a
-              href="#"
+            <button
+              type="button"
+              onClick={() => setShowForgotPasswordModal(true)}
               className="text-sm text-primary hover:text-blue-800 hover:underline transition-colors"
             >
               ¿Olvidó su contraseña?
-            </a>
+            </button>
           </div>
         </form>
 
@@ -193,6 +205,30 @@ export default function LoginPage() {
         Este sistema es para uso exclusivo del personal autorizado de RAD Bikes.
         El acceso no autorizado está estrictamente prohibido.
       </span>
+
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              Solicitud de contraseña
+            </h2>
+            <p className="text-sm text-slate-600 mb-6">
+              Para restablecer su contraseña, por favor contacte al
+              administrador del sistema. Si necesita ayuda inmediata, pida
+              asistencia al equipo de soporte interno.
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordModal(false)}
+                className="rounded-full bg-blue-800 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
