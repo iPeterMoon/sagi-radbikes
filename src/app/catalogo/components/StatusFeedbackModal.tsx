@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/Icons";
 
 interface StatusFeedbackModalProps {
-  type: "add" | "delete";
+  type: "add" | "edit" | "delete";
   onClose: () => void;
   onContinue?: () => void;
   productImage?: string;
@@ -22,6 +22,7 @@ export default function StatusFeedbackModal({
   productImage,
 }: StatusFeedbackModalProps) {
   const isAdd = type === "add";
+  const isEdit = type === "edit";
 
   return (
     <div
@@ -32,7 +33,7 @@ export default function StatusFeedbackModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-white rounded-2xl w-[min(96vw,380px)] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
       >
-        {isAdd && (
+        {isAdd ? (
           <div className="h-45 overflow-hidden relative">
             <Image
               src={
@@ -55,9 +56,7 @@ export default function StatusFeedbackModal({
               </div>
             </div>
           </div>
-        )}
-
-        {!isAdd && (
+        ) : (
           <div className="pt-8 flex justify-center">
             <div className="w-18 h-18 rounded-full bg-green-50 border-[3px] border-green-200 flex items-center justify-center text-green-500">
               <IconCheck />
@@ -67,7 +66,11 @@ export default function StatusFeedbackModal({
 
         <div className="px-7 pb-7 pt-6 text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-1.5">
-            {isAdd ? "¡Producto Agregado!" : "Producto Eliminado"}
+            {isAdd
+              ? "¡Producto Agregado!"
+              : isEdit
+                ? "¡Cambios Guardados!"
+                : "Producto Eliminado"}
           </h2>
 
           {isAdd ? (

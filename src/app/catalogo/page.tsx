@@ -153,7 +153,10 @@ export default function InventarioPage() {
           );
         }
 
-        setModal(null);
+        setModal({
+          type: "success-edit",
+          productImage: data.image || undefined,
+        });
         loadProducts();
       } else {
         const createdProduct = await inventarioApi.crearProducto({
@@ -383,6 +386,13 @@ export default function InventarioPage() {
           productImage={modal.productImage}
           onClose={() => setModal(null)}
           onContinue={() => setModal({ type: "add" })}
+        />
+      )}
+      {modal?.type === "success-edit" && (
+        <StatusFeedbackModal
+          type="edit"
+          productImage={modal.productImage}
+          onClose={() => setModal(null)}
         />
       )}
       {modal?.type === "success-delete" && (

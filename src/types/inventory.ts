@@ -6,6 +6,7 @@ export type ModalType =
   | { type: "delete"; product: Product }
   | { type: "sales-error"; product: Product }
   | { type: "success-add"; productImage?: string }
+  | { type: "success-edit"; productImage?: string }
   | { type: "success-delete" }
   | null;
 
