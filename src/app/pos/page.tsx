@@ -8,6 +8,12 @@ import CategoryTabs from "./components/CategoryTabs";
 import ProductGrid from "./components/ProductGrid";
 import CartPanel from "./components/CartPanel";
 
+/**
+ * Página principal del Punto de Venta (POS).
+ * Gestiona el estado del carrito, los filtros de búsqueda/categoría
+ * y el método de pago. Usa datos de prueba (`MOCK_PRODUCTS`) hasta que
+ * se integre con el backend de ventas.
+ */
 export default function POSPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<POSCategory>("Todas");

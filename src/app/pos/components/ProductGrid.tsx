@@ -9,6 +9,10 @@ interface ProductGridProps {
   onAdd: (product: POSProduct) => void;
 }
 
+/**
+ * Cuadrícula de productos del POS.
+ * Renderiza una tarjeta por producto o un mensaje vacío si no hay resultados.
+ */
 export default function ProductGrid({ products, onAdd }: ProductGridProps) {
   if (products.length === 0) {
     return (

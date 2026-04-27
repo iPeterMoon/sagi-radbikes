@@ -9,6 +9,7 @@ import { GridCircleDiagonalLeft,
          Spanner     
  } from "@boxicons/react";
 
+/** Iconos asociados a cada categoría del POS. */
 const CATEGORY_ICONS: Record<POSCategory, React.ReactNode> = {
   Todas: <GridCircleDiagonalLeft />,
   Bicicletas: <Cycling />,
@@ -22,6 +23,10 @@ interface CategoryTabsProps {
   onChange: (cat: POSCategory) => void;
 }
 
+/**
+ * Tabs de filtrado por categoría en el POS.
+ * La categoría activa se resalta con fondo azul oscuro.
+ */
 export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">

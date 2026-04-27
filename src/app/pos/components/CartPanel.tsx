@@ -13,10 +13,17 @@ interface CartPanelProps {
   onPaymentChange: (method: PaymentMethod) => void;
   onIncrement: (id: number) => void;
   onDecrement: (id: number) => void;
+  /** Vacía todos los ítems del carrito. */
   onClear: () => void;
+  /** Procesa el cobro de la venta. */
   onCheckout: () => void;
 }
 
+/**
+ * Panel lateral del carrito en el POS.
+ * Muestra los productos agregados, subtotal, IVA, total,
+ * selector de método de pago y botón de cobrar.
+ */
 export default function CartPanel({
   cart,
   paymentMethod,

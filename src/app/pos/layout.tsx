@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Punto de venta para RAD Bikes",
 };
  
+/**
+ * Layout del módulo POS (Punto de Venta).
+ * Componente servidor que define los metadatos de la sección
+ * y delega el render del shell interactivo a {@link POSLayoutClient}.
+ */
 export default function POSLayout({
   children,
 }: {

@@ -4,9 +4,18 @@ import { CrearProductoDTO, ActualizarProductoDTO, FiltroProductoDTO } from "../D
 import { ProductoDTO } from "../DTOsSalida/ProductoDTOs";
 import { ProductoMapper } from "../mappers/ProductoMapper";
 
+/**
+ * Business Object de producto.
+ * Encapsula toda la lógica de negocio relacionada con el catálogo de productos:
+ * consulta, creación, actualización, eliminación, imágenes y stock.
+ */
 export class ProductoBO implements IProductoBO {
   constructor(private accesoDatos: IAccesoDatos) {}
 
+  /**
+   * Obtiene todos los productos aplicando filtros opcionales.
+   * @param filtro - Criterios de búsqueda (texto, categoría, marca, rango de precios)
+   */
   async obtenerTodos(filtro: FiltroProductoDTO): Promise<ProductoDTO[]> {
     const categoriaId = filtro.idCategoria ? BigInt(filtro.idCategoria) : null;
     const marcaId = filtro.idMarca ? BigInt(filtro.idMarca) : null;
@@ -20,6 +29,10 @@ export class ProductoBO implements IProductoBO {
     return productos.map((p) => ProductoMapper.toDTO(p as any));
   }
 
+  /**
+   * Obtiene un producto por su identificador, incluyendo imágenes y relaciones.
+   * @param id - ID del producto como string
+   */
   async obtenerPorId(id: string): Promise<ProductoDTO | null> {
     const producto = await this.accesoDatos.productDAO.getById(BigInt(id), {
       include: { product_images: true, subcategory: { include: { categories: true } }, brand: true, product_physical: true },
@@ -37,6 +50,11 @@ export class ProductoBO implements IProductoBO {
     return productos.map((p) => ProductoMapper.toDTO(p as any));
   }
 
+  /**
+   * Crea un nuevo producto generando un SKU único automáticamente.
+   * Si el DTO incluye etiquetas, las asocia al producto creado.
+   * @param dto - Datos del nuevo producto
+   */
   async crear(dto: CrearProductoDTO): Promise<ProductoDTO> {
     const sku = `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const entity = {
@@ -64,6 +82,11 @@ export class ProductoBO implements IProductoBO {
     return ProductoMapper.toDTO(created as any);
   }
 
+  /**
+   * Actualiza los datos de un producto existente.
+   * Reemplaza completamente las etiquetas si se proveen en el DTO.
+   * @param dto - Datos actualizados del producto, incluyendo su ID
+   */
   async actualizar(dto: ActualizarProductoDTO): Promise<ProductoDTO> {
     const entity = {
       name: dto.nombre,
@@ -89,6 +112,10 @@ export class ProductoBO implements IProductoBO {
     return ProductoMapper.toDTO(updated as any);
   }
 
+  /**
+   * Elimina un producto y todas sus imágenes asociadas.
+   * @param id - ID del producto a eliminar
+   */
   async eliminar(id: string): Promise<boolean> {
     await this.accesoDatos.productImageDAO.deleteByProduct(BigInt(id));
     await this.accesoDatos.productDAO.delete(BigInt(id));
@@ -99,6 +126,11 @@ export class ProductoBO implements IProductoBO {
     return await this.accesoDatos.productDAO.decreaseStock(BigInt(id), cantidad);
   }
 
+  /**
+   * Sube y asocia nuevas imágenes a un producto en Supabase Storage.
+   * @param idProducto - ID del producto destino
+   * @param archivos - Archivos de imagen a subir
+   */
   async agregarImagenes(idProducto: string, archivos: File[]): Promise<void> {
     for (const archivo of archivos) {
       await this.accesoDatos.productImageDAO.create(archivo, BigInt(idProducto));

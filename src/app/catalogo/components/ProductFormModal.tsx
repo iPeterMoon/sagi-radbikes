@@ -21,6 +21,7 @@ import {
   IconUpload,
 } from "@/components/ui/Icons";
 
+/** Clases Tailwind reutilizables para los campos del formulario. */
 const twField =
   "w-full py-[9px] px-3 border border-gray-200 rounded-lg text-[13px] text-gray-900 outline-none bg-white box-border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
 const twLabel = "text-xs font-semibold text-gray-700 mb-1 block";

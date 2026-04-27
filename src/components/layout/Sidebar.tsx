@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { SidebarProps } from "@/types/inventory";
+import { authApi } from "@/lib/api/auth";
 import {
-  IconDashboard,
   IconCatalog,
   IconPOS,
-  IconReports,
   IconLogout,
 } from "@/components/ui/Icons";
 
@@ -17,12 +17,33 @@ interface NavItem {
   Icon: React.FC;
 }
 
+/** Elementos de navegación principal del sistema. */
 const NAV_ITEMS: NavItem[] = [
   { id: "catalogo",  label: "Catálogo",         href: "/catalogo", Icon: IconCatalog   },
   { id: "pos",       label: "Punto de Venta",   href: "/pos",    Icon: IconPOS       },
 ];
 
+/**
+ * Barra lateral de navegación.
+ * Muestra los enlaces principales y el botón de cerrar sesión.
+ * Se oculta/expande según la prop `open`.
+ */
 export default function Sidebar({ active, open }: SidebarProps) {
+  const router = useRouter();
+
+  /**
+   * Ejecuta el logout a través de la API y redirige a la página de login.
+   * El bloque `finally` garantiza la redirección incluso si la llamada falla.
+   */
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      router.replace("/login");
+      router.refresh();
+    }
+  };
+
   return (
     <aside
       className={`min-h-[calc(100vh-56px)] bg-white flex flex-col shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
@@ -51,7 +72,10 @@ export default function Sidebar({ active, open }: SidebarProps) {
         </nav>
 
         <div className="p-4 px-3 border-t border-gray-100">
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 text-sm cursor-pointer whitespace-nowrap hover:bg-red-50 transition-colors bg-transparent border-none">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 text-sm cursor-pointer whitespace-nowrap hover:bg-red-50 transition-colors bg-transparent border-none"
+          >
             <IconLogout />
             Cerrar Sesión
           </button>

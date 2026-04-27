@@ -15,15 +15,23 @@ import {
 } from "../negocio/DTOsSalida/ProductoDTOs";
 import { PrismaFactory } from "../datos/PrismaFactory";
 
+/** Instancia singleton del servicio de inventario para todas las rutas. */
 const accesoDatos: IServicioInventario = new ServicioInventario(
   new AccesoDatos(),
 );
 
-// Parche global para serializar BigInt a JSON sin que Next.js lance error
+/**
+ * Parche global para serializar BigInt a JSON sin que Next.js lance error.
+ * Necesario porque Prisma retorna IDs como BigInt y JSON.stringify no los soporta nativeamente.
+ */
 (BigInt.prototype as any).toJSON = function () {
   return this.toString();
 };
 
+/**
+ * Manejador HTTP GET para obtener el listado de productos con filtros opcionales.
+ * Lee parámetros de búsqueda desde la URL query string.
+ */
 export async function obtenerProductos(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -43,6 +51,7 @@ export async function obtenerProductos(req: NextRequest) {
   }
 }
 
+/** Manejador HTTP GET para obtener un producto por su ID. */
 export async function obtenerPorId(
   req: NextRequest,
   { params }: { params: { id: string } },
@@ -61,6 +70,10 @@ export async function obtenerPorId(
   }
 }
 
+/**
+ * Manejador HTTP POST para crear un nuevo producto.
+ * Resuelve nombres de marca, categoría y subcategoría a sus IDs si se proveen como strings.
+ */
 export async function crearProducto(req: NextRequest) {
   try {
     const dto: CrearProductoDTO = await req.json();
@@ -106,6 +119,10 @@ export async function crearProducto(req: NextRequest) {
   }
 }
 
+/**
+ * Manejador HTTP PUT para actualizar un producto existente.
+ * Resuelve nombres de marca, categoría y subcategoría a sus IDs si se proveen como strings.
+ */
 export async function actualizarProducto(req: NextRequest) {
   try {
     const dto: ActualizarProductoDTO = await req.json();
@@ -151,6 +168,7 @@ export async function actualizarProducto(req: NextRequest) {
   }
 }
 
+/** Manejador HTTP DELETE para eliminar un producto por su ID. */
 export async function eliminarProducto(
   req: NextRequest,
   { params }: { params: { id: string } },
@@ -163,6 +181,7 @@ export async function eliminarProducto(
   }
 }
 
+/** Manejador HTTP PATCH para ajustar (restar) el stock de un producto. */
 export async function ajustarStock(req: NextRequest) {
   try {
     const { id, cantidad } = await req.json();
@@ -173,6 +192,7 @@ export async function ajustarStock(req: NextRequest) {
   }
 }
 
+/** Manejador HTTP GET para obtener todas las categorías. */
 export async function obtenerCategorias() {
   try {
     const categorias = await accesoDatos.obtenerCategorias();
@@ -182,6 +202,7 @@ export async function obtenerCategorias() {
   }
 }
 
+/** Manejador HTTP POST para crear una nueva categoría. */
 export async function crearCategoria(req: NextRequest) {
   try {
     const categoria: CategoriaDTO = await req.json();
@@ -192,6 +213,7 @@ export async function crearCategoria(req: NextRequest) {
   }
 }
 
+/** Manejador HTTP POST para crear una nueva marca. */
 export async function crearMarca(req: NextRequest) {
   try {
     const marca: MarcaDTO = await req.json();
@@ -202,6 +224,7 @@ export async function crearMarca(req: NextRequest) {
   }
 }
 
+/** Manejador HTTP POST para crear una nueva subcategoría. */
 export async function crearSubCategoria(req: NextRequest) {
   try {
     const payload: { nombre: string; idCategoria: string } = await req.json();
@@ -223,6 +246,7 @@ export async function crearSubCategoria(req: NextRequest) {
   }
 }
 
+/** Manejador HTTP GET para obtener todas las marcas. */
 export async function obtenerMarcas() {
   try {
     const marcas = await accesoDatos.obtenerMarcas();
@@ -232,6 +256,10 @@ export async function obtenerMarcas() {
   }
 }
 
+/**
+ * Manejador HTTP GET para obtener subcategorías.
+ * Si se proporciona `idCategoria` en la query string, filtra por categoría padre.
+ */
 export async function obtenerSubCategorias(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

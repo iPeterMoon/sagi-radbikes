@@ -8,7 +8,7 @@ const servicio = new ServicioInicioSesion(accesoDatos);
 const controlador = new SesionControlador(servicio);
 
 export async function POST(req: NextRequest) {
-  return await controlador.cerrarSesion(req);
+  return await controlador.validar(req);
 }
 
 export async function GET(req: NextRequest) {

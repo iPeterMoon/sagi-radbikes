@@ -8,6 +8,10 @@ import {
 } from "@/types/inventory";
 import { IconDeleteBig, IconWarning } from "@/components/ui/Icons";
 
+/**
+ * Envoltorio de overlay semi-transparente compartido por los modales de esta sección.
+ * Cierra el modal al hacer clic fuera del contenido.
+ */
 function Overlay({
   children,
   onClose,
@@ -25,6 +29,10 @@ function Overlay({
   );
 }
 
+/**
+ * Modal de confirmación para eliminar un producto.
+ * Muestra los datos del producto y solicita confirmación antes de proceder.
+ */
 export function DeleteConfirmationModal({
   product,
   onClose,

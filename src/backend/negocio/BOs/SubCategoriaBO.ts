@@ -3,14 +3,23 @@ import { ISubCategoriaBO } from "../interfaces/ISubCategoriaBO";
 import { SubCategoriaDTO } from "../DTOsSalida/ProductoDTOs";
 import { SubCategoriaMapper } from "../mappers/SubCategoriaMapper";
 
+/**
+ * Business Object de subcategoría de producto.
+ * Gestiona las operaciones CRUD sobre subcategorías, que pertenecen a una categoría padre.
+ */
 export class SubCategoriaBO implements ISubCategoriaBO {
   constructor(private accesoDatos: IAccesoDatos) {}
 
+  /** Obtiene todas las subcategorías sin importar su categoría padre. */
   async obtenerTodas(): Promise<SubCategoriaDTO[]> {
     const subCategorias = await this.accesoDatos.subCategoryDAO.getAll();
     return subCategorias.map(SubCategoriaMapper.toDTO);
   }
 
+  /**
+   * Obtiene las subcategorías filtradas por categoría padre.
+   * @param idCategoria - ID de la categoría padre
+   */
   async obtenerPorCategoria(idCategoria: string): Promise<SubCategoriaDTO[]> {
     const subCategorias = await this.accesoDatos.subCategoryDAO.getByCategory(BigInt(idCategoria));
     return subCategorias.map(SubCategoriaMapper.toDTO);

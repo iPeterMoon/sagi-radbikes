@@ -8,6 +8,11 @@ interface SearchBarProps {
   onChange: (value: string) => void;
 }
 
+/**
+ * Barra de búsqueda del POS.
+ * Permite buscar por nombre, SKU o categoría.
+ * El botón de código de barras hace foco en el input para facilitar el escaneo.
+ */
 export default function SearchBar({ value, onChange }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 

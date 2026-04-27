@@ -13,10 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Iniciar Sesión - RAD Bikes",
-  description: "Portal seguro de inicio de sesión para RAD Bikes",
+  title: "RAD Bikes",
+  description: "Sistema interno de gestion para RAD Bikes",
 };
 
+/**
+ * Layout raíz de la aplicación.
+ * Aplica las fuentes Geist Sans y Geist Mono globalmente
+ * y define los metadatos por defecto del sitio.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

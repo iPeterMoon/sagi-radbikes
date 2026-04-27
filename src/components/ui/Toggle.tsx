@@ -1,5 +1,9 @@
 import { ToggleProps } from "@/types/inventory";
 
+/**
+ * Interruptor (toggle switch) accesible que usa `role="switch"` y `aria-checked`.
+ * Cambia entre estado activo (azul) e inactivo (gris).
+ */
 export default function Toggle({ checked, onChange }: ToggleProps) {
   return (
     <div

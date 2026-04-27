@@ -1,11 +1,18 @@
 import { SelectHTMLAttributes, ReactNode } from "react";
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  /** Icono opcional a mostrar en el lado izquierdo del selector. */
   icon?: ReactNode;
+  /** Lista de opciones a renderizar. */
   options: string[];
+  /** Texto del placeholder mostrado cuando ningún valor está seleccionado. */
   placeholder?: string;
 }
 
+/**
+ * Selector desplegable estilizado con soporte para icono izquierdo y placeholder.
+ * Incluye un chevron SVG personalizado que reemplaza el indicador nativo del navegador.
+ */
 export default function Select({
   icon,
   options,

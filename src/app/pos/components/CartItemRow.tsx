@@ -10,6 +10,10 @@ interface CartItemRowProps {
   onDecrement: () => void;
 }
 
+/**
+ * Fila de ítem dentro del carrito del POS.
+ * Muestra imagen, nombre, precio unitario, controles de cantidad y subtotal.
+ */
 export default function CartItemRow({
   item,
   onIncrement,

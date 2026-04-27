@@ -10,6 +10,11 @@ interface ProductCardProps {
   onAdd: (product: POSProduct) => void;
 }
 
+/**
+ * Tarjeta de producto en la cuadrícula del POS.
+ * Muestra la imagen, nombre, categoría, precio y botón de agregar al carrito.
+ * Si el stock es 0, la tarjeta se muestra deshabilitada.
+ */
 export default function ProductCard({ product, onAdd }: ProductCardProps) {
   const outOfStock = product.stock !== null && product.stock === 0;
   const stockLabel = product.stock === null ? "∞" : `${product.stock}`;

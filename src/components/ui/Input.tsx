@@ -1,10 +1,15 @@
 import { InputHTMLAttributes, ReactNode } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  /** Icono opcional a mostrar en el lado izquierdo del campo. */
   icon?: ReactNode;
+  /** Mensaje de error que se muestra debajo del campo con estilo rojo. */
   error?: string;
 }
 
+/**
+ * Campo de texto estilizado con soporte para icono izquierdo y mensaje de error.
+ */
 export default function Input({
   icon,
   error,

@@ -6,6 +6,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
 }
 
+/** Mapa de clases Tailwind por variante de botón. */
 const VARIANTS: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary:
     "bg-blue-600 text-white border-transparent shadow-[0_4px_12px_rgba(37,99,235,0.35)] hover:bg-blue-700",
@@ -15,11 +16,17 @@ const VARIANTS: Record<NonNullable<ButtonProps["variant"]>, string> = {
     "bg-transparent text-gray-500 border-gray-200 hover:bg-gray-50 hover:text-gray-700",
 };
 
+/** Mapa de clases Tailwind por tamaño de botón. */
 const SIZES: Record<NonNullable<ButtonProps["size"]>, string> = {
   sm: "px-3 py-1.5 text-xs",
   md: "px-5 py-2.5 text-sm",
 };
 
+/**
+ * Botón reutilizable con soporte para variantes de estilo y tamaños.
+ * @param variant - "primary" (azul), "secondary" (blanco), "danger" (rojo), "ghost" (transparente)
+ * @param size - "sm" (pequeño) o "md" (mediano, valor por defecto)
+ */
 export default function Button({
   variant = "primary",
   size = "md",

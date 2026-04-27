@@ -9,6 +9,11 @@ import {
   IconGrid,
 } from "@/components/ui/Icons";
 
+/**
+ * Modal de retroalimentación de estado.
+ * Se muestra tras agregar o eliminar un producto exitosamente.
+ * El tipo "add" incluye una imagen de portada; el tipo "delete" usa un icono simple.
+ */
 export default function StatusFeedbackModal({
   type,
   onClose,

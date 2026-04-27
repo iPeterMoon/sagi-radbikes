@@ -3,13 +3,22 @@
 import { useState } from "react";
 import { IconX } from "@/components/ui/Icons";
 
+/** Tipo de atributo que se puede agregar desde el modal. */
 export type AttributeType = "brand" | "category" | "subcategory" | null;
 
 interface AddAttributeModalProps {
+  /** Tipo de atributo a crear (determina el título y los campos del formulario). */
   type: AttributeType;
+  /** Lista de nombres de categorías disponibles para el selector de subcategoría. */
   categories: string[];
+  /** Categoría padre pre-seleccionada al abrir el modal. */
   initialParentCategory: string;
   onClose: () => void;
+  /**
+   * Callback al guardar el nuevo atributo.
+   * @param value - Nombre del nuevo atributo
+   * @param parentCategory - Categoría padre seleccionada (solo para subcategorías)
+   */
   onSave: (value: string, parentCategory?: string) => void;
 }
 
@@ -17,6 +26,11 @@ const twField =
   "w-full py-[9px] px-3 border border-gray-200 rounded-lg text-[13px] text-gray-900 outline-none bg-white box-border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all";
 const twLabel = "text-xs font-semibold text-gray-700 mb-1 block";
 
+/**
+ * Modal para agregar un nuevo atributo de producto (marca, categoría o subcategoría).
+ * El formulario se adapta dinámicamente según el tipo de atributo.
+ * Para subcategorías incluye un selector de categoría padre.
+ */
 export default function AddAttributeModal({
   type,
   categories,

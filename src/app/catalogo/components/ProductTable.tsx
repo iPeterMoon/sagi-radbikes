@@ -6,6 +6,11 @@ import Toggle from "@/components/ui/Toggle";
 import { IconEdit, IconTrash, IconSearch } from "@/components/ui/Icons";
 import { ProductTableProps } from "@/types/inventory";
 
+/**
+ * Tabla de productos del catálogo.
+ * Muestra imagen, nombre, SKU, categoría, marca, precio, stock, estado y controles.
+ * Si no hay productos muestra un mensaje de lista vacía.
+ */
 export default function ProductTable({
   products,
   onEdit,

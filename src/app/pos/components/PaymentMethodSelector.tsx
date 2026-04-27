@@ -5,12 +5,14 @@ import { CurrencyNotes,
          CreditCardAlt,
          SwapDiagonal,           
  } from "@boxicons/react";  
+
 interface PaymentOption {
   key: PaymentMethod;
   label: string;
   icon: React.ReactNode;
 }
 
+/** Opciones de pago disponibles con sus etiquetas e iconos. */
 const PAYMENT_OPTIONS: PaymentOption[] = [
   { key: "efectivo", label: "EFECTIVO", icon: <CurrencyNotes size="md" /> },
   { key: "tarjeta", label: "TARJETA", icon: <CreditCardAlt size="md" /> },
@@ -22,6 +24,10 @@ interface PaymentMethodSelectorProps {
   onChange: (method: PaymentMethod) => void;
 }
 
+/**
+ * Selector de método de pago en el panel del carrito.
+ * Muestra tres opciones en una cuadrícula: efectivo, tarjeta y transferencia.
+ */
 export default function PaymentMethodSelector({
   selected,
   onChange,

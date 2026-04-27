@@ -7,6 +7,7 @@ import { MarcaMapper } from "./MarcaMapper";
 import { SubCategoriaMapper } from "./SubCategoriaMapper";
 import { EtiquetaMapper } from "./EtiquetaMapper";
 
+/** Tipo extendido de producto que incluye todas las relaciones necesarias para el DTO. */
 type ProductEntity = products & {
   product_images?: product_images[];
   subcategory?: subcategory & {
@@ -16,7 +17,16 @@ type ProductEntity = products & {
   product_physical?: product_physical[];
 };
 
+/**
+ * Mapper de producto.
+ * Transforma la entidad Prisma `products` (con relaciones) al DTO completo `ProductoDTO`.
+ */
 export class ProductoMapper {
+  /**
+   * Convierte una entidad de producto con relaciones a DTO.
+   * @param entity - Entidad `products` con imágenes, subcategoría, marca y etiquetas incluidas
+   * @returns ProductoDTO listo para el cliente
+   */
   static toDTO(
     entity: ProductEntity
   ): ProductoDTO {
@@ -43,6 +53,15 @@ export class ProductoMapper {
     };
   }
 
+  /**
+   * Calcula el estado de stock según la relación entre stock actual y stock mínimo.
+   * - CRITICO: stock ≤ 50% del mínimo
+   * - BAJO: stock ≤ mínimo
+   * - NORMAL: stock > mínimo
+   * @param stock - Stock actual
+   * @param minStock - Stock mínimo configurado
+   * @returns EstadoStock calculado
+   */
   static calcularEstadoStock(stock: number, minStock: number): EstadoStock {
     if (minStock === 0) return EstadoStock.NORMAL;
     if (stock <= minStock * 0.5) return EstadoStock.CRITICO;

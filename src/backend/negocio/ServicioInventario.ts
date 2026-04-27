@@ -18,6 +18,12 @@ import { MarcaBO } from "./BOs/MarcaBO";
 import { SubCategoriaBO } from "./BOs/SubCategoriaBO";
 import { EtiquetaBO } from "./BOs/EtiquetaBO";
 
+/**
+ * Servicio de inventario.
+ * Orquesta todas las operaciones del catálogo delegando en los Business Objects
+ * correspondientes: {@link ProductoBO}, {@link CategoriaBO}, {@link MarcaBO},
+ * {@link SubCategoriaBO} y {@link EtiquetaBO}.
+ */
 export class ServicioInventario implements IServicioInventario {
   private productoBO: ProductoBO;
   private categoriaBO: CategoriaBO;

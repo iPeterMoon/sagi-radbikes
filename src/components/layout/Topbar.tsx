@@ -2,6 +2,10 @@
 
 import { TopbarProps } from "@/types/inventory";
 
+/**
+ * Ícono de menú hamburgesa animado.
+ * Las tres líneas se transforman en una "X" cuando `open` es `true`.
+ */
 function HamburgerIcon({ open }: { open: boolean }) {
   const baseBar =
     "block h-[2px] bg-white rounded-sm absolute transition-all duration-250 ease-out";
@@ -21,6 +25,11 @@ function HamburgerIcon({ open }: { open: boolean }) {
   );
 }
 
+/**
+ * Barra superior de la aplicación.
+ * Contiene el botón de menú hamburguesa, el logo de RAD Bikes,
+ * el título de sección y la información del usuario activo.
+ */
 export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
   return (
     <header className="h-14 bg-blue-900 flex items-center px-5 gap-3.5 shrink-0 sticky top-0 z-50">

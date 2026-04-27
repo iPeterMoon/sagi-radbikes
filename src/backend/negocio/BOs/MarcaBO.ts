@@ -3,9 +3,14 @@ import { IMarcaBO } from "../interfaces/IMarcaBO";
 import { MarcaDTO } from "../DTOsSalida/ProductoDTOs";
 import { MarcaMapper } from "../mappers/MarcaMapper";
 
+/**
+ * Business Object de marca de producto.
+ * Gestiona las operaciones CRUD sobre las marcas del catálogo.
+ */
 export class MarcaBO implements IMarcaBO {
   constructor(private accesoDatos: IAccesoDatos) {}
 
+  /** Obtiene todas las marcas registradas. */
   async obtenerTodas(): Promise<MarcaDTO[]> {
     const marcas = await this.accesoDatos.brandDAO.getAll();
     return marcas.map(MarcaMapper.toDTO);

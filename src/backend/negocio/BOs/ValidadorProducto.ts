@@ -2,9 +2,18 @@ import { CrearProductoDTO, ActualizarProductoDTO } from "../DTOsEntrada/Producto
 import { IValidadorProducto } from "../interfaces/IValidadorProducto";
 import { IAccesoDatos } from "../../datos/IAccesoDatos";
 
+/**
+ * Validador de reglas de negocio para productos.
+ * Centraliza las validaciones de campos obligatorios y restricciones de valores.
+ */
 export class ValidadorProducto implements IValidadorProducto {
   constructor(private accesoDatos: IAccesoDatos) {}
 
+  /**
+   * Valida los campos obligatorios para la creación de un producto.
+   * @param dto - DTO de creación a validar
+   * @returns `true` si todos los campos requeridos son válidos
+   */
   validarCreacion(dto: CrearProductoDTO): boolean {
     if (!dto.nombre || dto.nombre.trim() === "") return false;
     if (!dto.precio || dto.precio < 0) return false;
@@ -36,6 +45,11 @@ export class ValidadorProducto implements IValidadorProducto {
     return stock >= 0;
   }
 
+  /**
+   * Verifica que un SKU no esté ya en uso en la base de datos.
+   * @param sku - Código SKU a verificar
+   * @returns `true` si el SKU está disponible
+   */
   async validarSKU(sku: string): Promise<boolean> {
     if (!sku || sku.trim() === "") return false;
     const producto = await this.accesoDatos.productDAO.getBySKU(sku);

@@ -1,28 +1,20 @@
-"use client";
+import type { Metadata } from "next";
+import CatalogoLayoutClient from "./components/CatalogoLayoutClient";
 
-import { useState } from "react";
-import Sidebar from "@/components/layout/Sidebar";
-import Topbar from "@/components/layout/Topbar";
+export const metadata: Metadata = {
+  title: "Catalogo - RAD Bikes",
+  description: "Gestion de catalogo e inventario para RAD Bikes",
+};
 
-export default function DashboardLayout({
+/**
+ * Layout del módulo de catálogo.
+ * Componente servidor que define los metadatos de la sección
+ * y delega el render del shell interactivo a {@link CatalogoLayoutClient}.
+ */
+export default function CatalogoLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Topbar
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-      />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar active="catalogo" open={sidebarOpen} />
-        <main className="flex-1 py-7 px-8 overflow-x-hidden overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  return <CatalogoLayoutClient>{children}</CatalogoLayoutClient>;
 }

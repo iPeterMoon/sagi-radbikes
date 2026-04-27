@@ -14,8 +14,13 @@ import {
 import StatusFeedbackModal from "./components/StatusFeedbackModal";
 import { IconSearch, IconPlus } from "@/components/ui/Icons";
 
+/** Número de productos por página en la tabla. */
 const PER_PAGE = 5;
 
+/**
+ * Convierte un `ProductoDTO` del backend al modelo `Product` de la capa de presentación.
+ * Algunos campos sin equivalente en el backend se inicializan con valores por defecto (TODO).
+ */
 function mapDtoToProduct(dto: any): Product {
   const imageUrl = dto.imagenes?.[0]?.url;
 
