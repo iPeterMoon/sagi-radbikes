@@ -1,7 +1,11 @@
 import { product_images } from "@prisma/client";
 
 export interface IProductImageDAO {
-  create(img: File, productId: bigint): Promise<product_images>;
+  create(
+    img: File,
+    productId: bigint,
+    isMain?: boolean,
+  ): Promise<product_images>;
   getById(id: bigint): Promise<product_images | null>;
   delete(id: bigint): Promise<product_images>;
   getByProduct(productId: bigint): Promise<product_images[]>;

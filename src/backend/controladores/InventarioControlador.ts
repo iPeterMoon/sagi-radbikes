@@ -177,6 +177,16 @@ export async function eliminarProducto(
     const result = await accesoDatos.eliminarProducto(params.id);
     return NextResponse.json({ success: result });
   } catch (error: any) {
+    // Verificar si es un error de restricción de clave foránea por compras
+    if (error.code === "P2014" || error.message.includes("Restrict")) {
+      return NextResponse.json(
+        {
+          error:
+            "No se puede eliminar este producto porque tiene compras asociadas. Elimina primero las compras relacionadas.",
+        },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -184,8 +194,29 @@ export async function eliminarProducto(
 /** Manejador HTTP PATCH para ajustar (restar) el stock de un producto. */
 export async function ajustarStock(req: NextRequest) {
   try {
-    const { id, cantidad } = await req.json();
-    const result = await accesoDatos.ajustarStock(id, cantidad);
+    const payload = await req.json();
+    const id = payload.id as string;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Se requiere el id del producto" },
+        { status: 400 },
+      );
+    }
+
+    let result = false;
+
+    if (typeof payload.cantidad === "number") {
+      result = await accesoDatos.ajustarStock(id, payload.cantidad);
+    } else if (payload.toggleActive) {
+      result = await accesoDatos.actualizarEstado(id);
+    } else {
+      return NextResponse.json(
+        { error: "Payload inválido para la operación PATCH" },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json({ success: result });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -280,6 +311,7 @@ export async function agregarImagenes(
   try {
     let idProducto = params?.idProducto || "";
     let archivos: File[] = [];
+    let mainImageIndex: number | undefined;
 
     const contentType = req.headers.get("content-type") || "";
     if (contentType.includes("multipart/form-data")) {
@@ -289,13 +321,29 @@ export async function agregarImagenes(
         idProducto = idFromBody;
       }
       const archivoEntries = formData.getAll("archivos");
-      archivos = archivoEntries.filter((item): item is File => item instanceof File);
+      archivos = archivoEntries.filter(
+        (item): item is File => item instanceof File,
+      );
+
+      // Get main image index from form data
+      const mainIndexBody = formData.get("mainImageIndex");
+      if (typeof mainIndexBody === "string") {
+        mainImageIndex = parseInt(mainIndexBody, 10);
+        if (isNaN(mainImageIndex)) {
+          mainImageIndex = undefined;
+        }
+      }
     } else {
       const body = await req.json();
       if (!idProducto && body?.idProducto) {
         idProducto = body.idProducto;
       }
       archivos = body?.archivos || [];
+
+      // Get main image index from JSON body
+      if (typeof body?.mainImageIndex === "number") {
+        mainImageIndex = body.mainImageIndex;
+      }
     }
 
     if (!idProducto) {
@@ -305,7 +353,7 @@ export async function agregarImagenes(
       throw new Error("No se encontraron archivos para subir");
     }
 
-    await accesoDatos.agregarImagenes(idProducto, archivos);
+    await accesoDatos.agregarImagenes(idProducto, archivos, mainImageIndex);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -352,6 +400,18 @@ export async function eliminarEtiqueta(
 ) {
   try {
     const result = await accesoDatos.eliminarEtiqueta(params.id);
+    return NextResponse.json({ success: result });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function establecerImagenPrincipal(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  try {
+    const result = await accesoDatos.establecerImagenPrincipal(params.id);
     return NextResponse.json({ success: result });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -22,7 +22,9 @@ const PER_PAGE = 5;
  * Algunos campos sin equivalente en el backend se inicializan con valores por defecto (TODO).
  */
 function mapDtoToProduct(dto: any): Product {
-  const imageUrl = dto.imagenes?.[0]?.url;
+  // Find the main image (esPrincipal = true), or fall back to the first image
+  const mainImage = dto.imagenes?.find((img: any) => img.esPrincipal);
+  const imageUrl = mainImage?.url || dto.imagenes?.[0]?.url || "";
 
   return {
     id: Number(dto.idProducto),
@@ -40,8 +42,8 @@ function mapDtoToProduct(dto: any): Product {
       name: etiqueta.nombre,
       value: etiqueta.valor,
     })),
-    active: true, // TODO: This should come from the backend
-    image: imageUrl || "",
+    active: dto.activo ?? true,
+    image: imageUrl,
     hasSalesHistory: false, // TODO: This should come from the backend
   };
 }
@@ -114,7 +116,13 @@ export default function InventarioPage() {
   const handleSave = async (
     data: Product,
     newImages: File[],
-    attributeIds?: { brandId: string; categoryId: string; subcategoryId: string }
+    attributeIds?: {
+      brandId: string;
+      categoryId: string;
+      subcategoryId: string;
+      mainImageIndex?: number;
+      newMainImageId?: string;
+    },
   ) => {
     try {
       if (modal?.type === "edit") {
@@ -123,6 +131,8 @@ export default function InventarioPage() {
           nombre: data.name,
           precio: data.price,
           stock: data.stock,
+          codigoDeBarras: data.barcode,
+          minStock: data.minStock,
           descripcion: data.description,
           idCategoria: attributeIds?.categoryId ?? "",
           imagenesNuevas: [],
@@ -134,16 +144,32 @@ export default function InventarioPage() {
         });
 
         if (newImages.length > 0) {
-          await inventarioApi.agregarImagenes(updatedProduct.idProducto, newImages);
+          await inventarioApi.agregarImagenes(
+            updatedProduct.idProducto,
+            newImages,
+            attributeIds?.mainImageIndex,
+          );
         }
 
-        setModal(null);
+        // If the user changed the main image to an existing image, set it as main
+        if (attributeIds?.newMainImageId) {
+          await inventarioApi.establecerImagenPrincipal(
+            attributeIds.newMainImageId,
+          );
+        }
+
+        setModal({
+          type: "success-edit",
+          productImage: data.image || undefined,
+        });
         loadProducts();
       } else {
         const createdProduct = await inventarioApi.crearProducto({
           nombre: data.name,
           precio: data.price,
           stock: data.stock,
+          codigoDeBarras: data.barcode,
+          minStock: data.minStock,
           descripcion: data.description,
           idCategoria: attributeIds?.categoryId ?? "",
           idMarca: attributeIds?.brandId ?? "",
@@ -153,10 +179,17 @@ export default function InventarioPage() {
         });
 
         if (newImages.length > 0) {
-          await inventarioApi.agregarImagenes(createdProduct.idProducto, newImages);
+          await inventarioApi.agregarImagenes(
+            createdProduct.idProducto,
+            newImages,
+            attributeIds?.mainImageIndex,
+          );
         }
 
-        setModal({ type: "success-add" });
+        setModal({
+          type: "success-add",
+          productImage: data.image || undefined,
+        });
         loadProducts();
       }
     } catch (error) {
@@ -178,14 +211,17 @@ export default function InventarioPage() {
       await inventarioApi.eliminarProducto(modal.product.id.toString());
       setModal({ type: "success-delete" });
       loadProducts();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting product:", error);
+      const errorMessage = error.message || "No se pudo eliminar el producto";
+      alert(`Error: ${errorMessage}`);
+      setModal(null);
     }
   };
 
   const handleToggle = async (id: number) => {
     try {
-      await inventarioApi.ajustarStock(id.toString(), 0);
+      await inventarioApi.actualizarEstado(id.toString());
       loadProducts();
     } catch (error) {
       console.error("Error toggling product:", error);
@@ -325,6 +361,7 @@ export default function InventarioPage() {
       {modal?.type === "add" && (
         <ProductFormModal
           product={null}
+          existingProducts={products}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -332,6 +369,7 @@ export default function InventarioPage() {
       {modal?.type === "edit" && (
         <ProductFormModal
           product={modal.product}
+          existingProducts={products}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -352,8 +390,16 @@ export default function InventarioPage() {
       {modal?.type === "success-add" && (
         <StatusFeedbackModal
           type="add"
+          productImage={modal.productImage}
           onClose={() => setModal(null)}
           onContinue={() => setModal({ type: "add" })}
+        />
+      )}
+      {modal?.type === "success-edit" && (
+        <StatusFeedbackModal
+          type="edit"
+          productImage={modal.productImage}
+          onClose={() => setModal(null)}
         />
       )}
       {modal?.type === "success-delete" && (

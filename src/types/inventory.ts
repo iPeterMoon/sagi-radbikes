@@ -10,7 +10,8 @@ export type ModalType =
   | { type: "edit"; product: Product }
   | { type: "delete"; product: Product }
   | { type: "sales-error"; product: Product }
-  | { type: "success-add" }
+  | { type: "success-add"; productImage?: string }
+  | { type: "success-edit"; productImage?: string }
   | { type: "success-delete" }
   | null;
 
@@ -68,6 +69,7 @@ export interface SidebarProps {
   active: string;
   /** Si el sidebar está expandido. */
   open: boolean;
+  onLogout?: () => void;
 }
 
 /** Props del componente `Topbar`. */
@@ -87,11 +89,18 @@ export interface ProductTableProps {
 /** Props del modal de creación/edición de producto. */
 export interface ProductFormModalProps {
   product: Product | null;
+  existingProducts: Product[];
   onClose: () => void;
   onSave: (
     data: Product,
     newImages: File[],
-    attributeIds?: { brandId: string; categoryId: string; subcategoryId: string }
+    attributeIds?: {
+      brandId: string;
+      categoryId: string;
+      subcategoryId: string;
+      mainImageIndex?: number;
+      newMainImageId?: string; // ID of the new main image (when changing from original images)
+    },
   ) => void;
 }
 

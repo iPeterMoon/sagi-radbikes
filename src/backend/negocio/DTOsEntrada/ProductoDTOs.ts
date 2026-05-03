@@ -6,6 +6,8 @@ export interface CrearProductoDTO {
   precio: number;
   /** Cantidad inicial en inventario. */
   stock: number;
+  codigoDeBarras?: string;
+  minStock?: number;
   /** Descripción detallada del producto. */
   descripcion: string;
   /** ID de la categoría a la que pertenece. */
@@ -30,6 +32,8 @@ export interface ActualizarProductoDTO {
   precio: number;
   /** Nueva cantidad en inventario. */
   stock: number;
+  codigoDeBarras?: string;
+  minStock?: number;
   /** Nueva descripción del producto. */
   descripcion: string;
   /** Nuevo ID de categoría. */

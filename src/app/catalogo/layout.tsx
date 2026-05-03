@@ -1,20 +1,64 @@
-import type { Metadata } from "next";
-import CatalogoLayoutClient from "./components/CatalogoLayoutClient";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Catalogo - RAD Bikes",
-  description: "Gestion de catalogo e inventario para RAD Bikes",
-};
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Sidebar from "@/components/layout/Sidebar";
+import Topbar from "@/components/layout/Topbar";
+import { authApi } from "@/lib/api/auth";
 
-/**
- * Layout del módulo de catálogo.
- * Componente servidor que define los metadatos de la sección
- * y delega el render del shell interactivo a {@link CatalogoLayoutClient}.
- */
 export default function CatalogoLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <CatalogoLayoutClient>{children}</CatalogoLayoutClient>;
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Al no poder usar 'metadata' en componentes de cliente,
+    // manejamos el título de la pestaña directamente aquí.
+    document.title = "Catálogo - RAD Bikes";
+
+    const checkSession = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/");
+        return;
+      }
+      try {
+        await authApi.validate();
+      } catch (error) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        router.push("/");
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      router.push("/");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      router.push("/");
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Topbar
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+      />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar active="catalogo" open={sidebarOpen} onLogout={handleLogout} />
+        <main className="flex-1 py-7 px-8 overflow-x-hidden overflow-y-auto">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
 }

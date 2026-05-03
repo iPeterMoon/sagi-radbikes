@@ -16,7 +16,11 @@ export class ProductImageDAO implements IProductImageDAO {
     this.supabase = supabase;
   }
 
-  async create(img: File, productId: bigint): Promise<product_images> {
+  async create(
+    img: File,
+    productId: bigint,
+    isMain: boolean = false,
+  ): Promise<product_images> {
     const fileName = `${productId}/${Date.now()}_${img.name}`;
 
     const { error: uploadError } = await this.supabase.storage
@@ -29,11 +33,19 @@ export class ProductImageDAO implements IProductImageDAO {
       .from(this.BUCKET_NAME)
       .getPublicUrl(fileName);
 
+    // If this image should be the main image, unset other main images first
+    if (isMain) {
+      await this.db.updateMany({
+        where: { product_id: productId, is_main_image: true },
+        data: { is_main_image: false },
+      });
+    }
+
     return await this.db.create({
       data: {
         product_id: productId,
         image_url: urlData.publicUrl,
-        is_main_image: false,
+        is_main_image: isMain,
       },
     });
   }

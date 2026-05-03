@@ -74,6 +74,7 @@ export interface ProductoDTO {
   subcategoria: SubCategoriaDTO;
   /** Estado calculado del stock (NORMAL, BAJO, CRITICO). */
   estadoStock: EstadoStock;
+  activo: boolean;
   /** Atributos adicionales del producto. */
   etiquetas: EtiquetaDTO[];
 }

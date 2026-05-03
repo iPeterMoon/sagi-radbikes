@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { SidebarProps } from "@/types/inventory";
 import { authApi } from "@/lib/api/auth";
 import {
+  IconDashboard,
   IconCatalog,
   IconPOS,
+  IconReports,
   IconLogout,
 } from "@/components/ui/Icons";
 
@@ -19,8 +21,15 @@ interface NavItem {
 
 /** Elementos de navegación principal del sistema. */
 const NAV_ITEMS: NavItem[] = [
-  { id: "catalogo",  label: "Catálogo",         href: "/catalogo", Icon: IconCatalog   },
-  { id: "pos",       label: "Punto de Venta",   href: "/pos",    Icon: IconPOS       },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    href: "/dashboard",
+    Icon: IconDashboard,
+  },
+  { id: "catalogo", label: "Catálogo", href: "/catalogo", Icon: IconCatalog },
+  { id: "pos", label: "Punto de Venta", href: "/pos", Icon: IconPOS },
+  { id: "reportes", label: "Reportes", href: "/reportes", Icon: IconReports },
 ];
 
 /**
@@ -28,18 +37,24 @@ const NAV_ITEMS: NavItem[] = [
  * Muestra los enlaces principales y el botón de cerrar sesión.
  * Se oculta/expande según la prop `open`.
  */
-export default function Sidebar({ active, open }: SidebarProps) {
+export default function Sidebar({ active, open, onLogout }: SidebarProps) {
   const router = useRouter();
 
   /**
-   * Ejecuta el logout a través de la API y redirige a la página de login.
-   * El bloque `finally` garantiza la redirección incluso si la llamada falla.
+   * Maneja el cierre de sesión. Si el Layout padre provee la función onLogout,
+   * se utiliza esa. Si no, el Sidebar ejecuta su propia lógica de API y redirección.
    */
   const handleLogout = async () => {
+    if (onLogout) {
+      onLogout();
+      return;
+    }
+
     try {
       await authApi.logout();
     } finally {
-      router.replace("/login");
+      // Usamos "/" asumiendo que tu página raíz es el login
+      router.replace("/");
       router.refresh();
     }
   };

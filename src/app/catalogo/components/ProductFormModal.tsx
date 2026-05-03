@@ -48,15 +48,26 @@ function FieldWithIcon({
   );
 }
 
+type FormState = Omit<
+  Product,
+  "id" | "hasSalesHistory" | "price" | "stock" | "minStock"
+> & {
+  price: number | string;
+  stock: number | string;
+  minStock: number | string;
+};
+
 export default function ProductFormModal({
   product,
+  existingProducts,
   onClose,
   onSave,
 }: ProductFormModalProps) {
   const isEdit = !!product;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [form, setForm] = useState<Omit<Product, "id" | "hasSalesHistory">>(
+  const [form, setForm] = useState<FormState>(
     product
       ? { ...product }
       : {
@@ -66,8 +77,8 @@ export default function ProductFormModal({
           brand: "",
           category: "",
           subcategory: "",
-          price: 0,
-          stock: 0,
+          price: "",
+          stock: "",
           minStock: 5,
           description: "",
           tags: [],
@@ -83,13 +94,12 @@ export default function ProductFormModal({
 
   const [localBrands, setLocalBrands] = useState<BrandOption[]>([]);
   const [localCategories, setLocalCategories] = useState<CategoryOption[]>([]);
-  const [localSubcategories, setLocalSubcategories] =
-    useState<Record<string, string[]>>({});
-  const [localSubcategoriesWithIds, setLocalSubcategoriesWithIds] =
-    useState<Record<string, Array<{ id: string; nombre: string }>>>({});
+  const [localSubcategoriesWithIds, setLocalSubcategoriesWithIds] = useState<
+    Record<string, Array<{ id: string; nombre: string }>>
+  >({});
 
   useEffect(() => {
-    const loadAttributes = async () => {
+    const loadData = async () => {
       try {
         const [brands, categories, subcategories] = await Promise.all([
           inventarioApi.obtenerMarcas(),
@@ -107,14 +117,22 @@ export default function ProductFormModal({
           nombre: c.nombre,
         }));
 
-        const subcategoriesMap: Record<string, Array<{ id: string; nombre: string }>> = {};
+        const subcategoriesMap: Record<
+          string,
+          Array<{ id: string; nombre: string }>
+        > = {};
         subcategories.forEach((sc) => {
           const categoryId = sc.idCategoria;
           if (!subcategoriesMap[categoryId]) {
             subcategoriesMap[categoryId] = [];
           }
-          if (!subcategoriesMap[categoryId].some((s) => s.nombre === sc.nombre)) {
-            subcategoriesMap[categoryId].push({ id: sc.idSubCategoria, nombre: sc.nombre });
+          if (
+            !subcategoriesMap[categoryId].some((s) => s.nombre === sc.nombre)
+          ) {
+            subcategoriesMap[categoryId].push({
+              id: sc.idSubCategoria,
+              nombre: sc.nombre,
+            });
           }
         });
 
@@ -122,22 +140,7 @@ export default function ProductFormModal({
         setLocalCategories(categoriesList);
         setLocalSubcategoriesWithIds(subcategoriesMap);
 
-        // Legacy map for backward compatibility
-        const subcategoriesLegacy: Record<string, string[]> = {};
-        subcategories.forEach((sc) => {
-          const categoryName =
-            categories.find((c) => c.idCategoria === sc.idCategoria)?.nombre ||
-            sc.idCategoria;
-          if (!subcategoriesLegacy[categoryName]) {
-            subcategoriesLegacy[categoryName] = [];
-          }
-          if (!subcategoriesLegacy[categoryName].includes(sc.nombre)) {
-            subcategoriesLegacy[categoryName].push(sc.nombre);
-          }
-        });
-        setLocalSubcategories(subcategoriesLegacy);
-
-        // Si estamos en modo edición, establecer los IDs
+        // Si estamos en modo edición, establecer los IDs y cargar imágenes
         if (product) {
           // Buscar ID de marca
           const brandMatch = brandsList.find((b) => b.nombre === product.brand);
@@ -146,16 +149,66 @@ export default function ProductFormModal({
           }
 
           // Buscar ID de categoría
-          const categoryMatch = categoriesList.find((c) => c.nombre === product.category);
+          const categoryMatch = categoriesList.find(
+            (c) => c.nombre === product.category,
+          );
           if (categoryMatch) {
             setCategoryId(categoryMatch.idCategoria);
-            
+
             // Buscar ID de subcategoría
             const subMatch = subcategoriesMap[categoryMatch.idCategoria]?.find(
-              (s) => s.nombre === product.subcategory
+              (s) => s.nombre === product.subcategory,
             );
             if (subMatch) {
               setSubcategoryId(subMatch.id);
+            }
+          }
+
+          // Cargar todas las imágenes del producto desde el backend
+          try {
+            const productDetail = await inventarioApi.obtenerProductoPorId(
+              product.id.toString(),
+            );
+            if (
+              productDetail &&
+              productDetail.imagenes &&
+              productDetail.imagenes.length > 0
+            ) {
+              // Ordenar imágenes: principal primero
+              const sortedImages = [...productDetail.imagenes].sort((a, b) => {
+                if (a.esPrincipal && !b.esPrincipal) return -1;
+                if (!a.esPrincipal && b.esPrincipal) return 1;
+                return 0;
+              });
+
+              const imageUrls = sortedImages.map((img) => img.url);
+              setOriginalImages(imageUrls);
+
+              // Guardar los datos de las imágenes (con IDs)
+              setProductImagesData(
+                sortedImages.map((img) => ({
+                  id: img.idImagen,
+                  url: img.url,
+                  esPrincipal: img.esPrincipal,
+                })),
+              );
+
+              // Establecer la imagen principal como la imagen del formulario
+              const mainImage = sortedImages.find((img) => img.esPrincipal);
+              if (mainImage) {
+                setOriginalMainImage(mainImage.url);
+                set("image", mainImage.url);
+              } else if (imageUrls.length > 0) {
+                setOriginalMainImage(imageUrls[0]);
+                set("image", imageUrls[0]);
+              }
+            }
+          } catch (imgError) {
+            console.error("Error loading product images:", imgError);
+            // Fallback to the single image from the product
+            if (product.image) {
+              setOriginalImages([product.image]);
+              setOriginalMainImage(product.image);
             }
           }
         }
@@ -164,25 +217,29 @@ export default function ProductFormModal({
       }
     };
 
-    loadAttributes();
+    loadData();
   }, [product]);
 
   // Estado del nuevo Modal Externo
   const [activeSubModal, setActiveSubModal] = useState<AttributeType>(null);
 
   const [imagesList, setImagesList] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<{ src: string; file: File }[]>([]);
-  const [originalImages] = useState<string[]>(
-    form.image ? [form.image] : [],
-  );
+  const [selectedFiles, setSelectedFiles] = useState<
+    { src: string; file: File }[]
+  >([]);
+  const [originalImages, setOriginalImages] = useState<string[]>([]);
+  const [originalMainImage, setOriginalMainImage] = useState<string>("");
+  const [productImagesData, setProductImagesData] = useState<
+    Array<{ id: string; url: string; esPrincipal: boolean }>
+  >([]);
 
   const [tagName, setTagName] = useState("");
   const [tagValue, setTagValue] = useState("");
-  const [errors, setErrors] = useState<Partial<Record<keyof Product, string>>>(
-    {},
-  );
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormState, string>>
+  >({});
 
-  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const addTag = () => {
@@ -201,12 +258,58 @@ export default function ProductFormModal({
       form.tags.filter((_, i) => i !== index),
     );
 
+  const handleValidateAttribute = (
+    value: string,
+    parentCat?: string,
+  ): string | undefined => {
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (activeSubModal === "brand") {
+      if (
+        localBrands.some(
+          (b) => b.nombre.trim().toLowerCase() === normalizedValue,
+        )
+      ) {
+        return "Ya existe una marca con ese nombre";
+      }
+    }
+
+    if (activeSubModal === "category") {
+      if (
+        localCategories.some(
+          (c) => c.nombre.trim().toLowerCase() === normalizedValue,
+        )
+      ) {
+        return "Ya existe una categoría con ese nombre";
+      }
+    }
+
+    if (activeSubModal === "subcategory") {
+      if (!parentCat) {
+        return "Debes seleccionar una categoría padre";
+      }
+      const category = localCategories.find((c) => c.nombre === parentCat);
+      if (
+        category &&
+        (localSubcategoriesWithIds[category.idCategoria] || []).some(
+          (s) => s.nombre.trim().toLowerCase() === normalizedValue,
+        )
+      ) {
+        return "Ya existe una subcategoría con ese nombre en esta categoría";
+      }
+    }
+
+    return undefined;
+  };
+
   const handleSaveAttribute = async (value: string, parentCat?: string) => {
     if (!value.trim()) return;
 
     try {
       if (activeSubModal === "brand") {
-        const created = await inventarioApi.crearMarca({ nombre: value.trim() });
+        const created = await inventarioApi.crearMarca({
+          nombre: value.trim(),
+        });
         setLocalBrands((prev) => {
           if (prev.some((b) => b.nombre === created.nombre)) return prev;
           return [...prev, created];
@@ -222,10 +325,6 @@ export default function ProductFormModal({
           if (prev.some((c) => c.nombre === created.nombre)) return prev;
           return [...prev, created];
         });
-        setLocalSubcategories((prev) => ({
-          ...prev,
-          [created.nombre]: prev[created.nombre] ?? [],
-        }));
         setLocalSubcategoriesWithIds((prev) => ({
           ...prev,
           [created.idCategoria]: prev[created.idCategoria] ?? [],
@@ -247,7 +346,9 @@ export default function ProductFormModal({
         }
 
         if (!category) {
-          throw new Error("No se pudo determinar la categoría para la subcategoría");
+          throw new Error(
+            "No se pudo determinar la categoría para la subcategoría",
+          );
         }
 
         const created = await inventarioApi.crearSubCategoria({
@@ -255,18 +356,15 @@ export default function ProductFormModal({
           idCategoria: category.idCategoria,
         });
 
-        setLocalSubcategories((prev) => {
-          const existing = prev[parentCat] || [];
-          if (existing.includes(created.nombre)) return prev;
-          return { ...prev, [parentCat]: [...existing, created.nombre] };
-        });
-
         setLocalSubcategoriesWithIds((prev) => {
           const existing = prev[category!.idCategoria] || [];
           if (existing.some((s) => s.nombre === created.nombre)) return prev;
           return {
             ...prev,
-            [category!.idCategoria]: [...existing, { id: created.idSubCategoria, nombre: created.nombre }],
+            [category!.idCategoria]: [
+              ...existing,
+              { id: created.idSubCategoria, nombre: created.nombre },
+            ],
           };
         });
 
@@ -300,41 +398,140 @@ export default function ProductFormModal({
     const imageUrlToRemove = imagesList[indexToRemove];
     const newList = imagesList.filter((_, index) => index !== indexToRemove);
     setImagesList(newList);
-    setSelectedFiles((prev) => prev.filter((item) => item.src !== imageUrlToRemove));
+    setSelectedFiles((prev) =>
+      prev.filter((item) => item.src !== imageUrlToRemove),
+    );
     if (form.image === imageUrlToRemove)
       set("image", newList.length > 0 ? newList[0] : "");
   };
 
   const validate = (): boolean => {
-    const e: typeof errors = {};
+    const e: Partial<Record<keyof FormState, string>> = {};
+
     if (!form.name.trim()) e.name = "El nombre es requerido";
-    if (!form.sku.trim()) e.sku = "El SKU es requerido";
+    if (!form.barcode.trim()) e.barcode = "El código de barras es requerido";
+    if (!brandId) e.brand = "La marca es requerida";
+    if (!categoryId) e.category = "La categoría es requerida";
+    if (!subcategoryId) e.subcategory = "La subcategoría es requerida";
+
+    const normalizedName = form.name.trim().toLowerCase();
+    const normalizedBarcode = form.barcode.trim().toLowerCase();
+    const existingOtherProducts = existingProducts.filter(
+      (p) => p.id !== product?.id,
+    );
+
+    if (
+      existingOtherProducts.some(
+        (p) => p.name.trim().toLowerCase() === normalizedName,
+      )
+    ) {
+      e.name = "Ya existe un producto con ese nombre";
+    }
+
+    if (
+      existingOtherProducts.some(
+        (p) => p.barcode.trim().toLowerCase() === normalizedBarcode,
+      )
+    ) {
+      e.barcode = "Ya existe un producto con ese código de barras";
+    }
+
+    if (
+      form.price === "" ||
+      form.price === null ||
+      Number.isNaN(Number(form.price))
+    ) {
+      e.price = "El precio es requerido";
+    } else if (typeof form.price === "number" && form.price < 0) {
+      e.price = "El precio no puede ser negativo";
+    }
+
+    if (
+      form.stock === "" ||
+      form.stock === null ||
+      Number.isNaN(Number(form.stock))
+    ) {
+      e.stock = "El stock es requerido";
+    } else if (typeof form.stock === "number" && form.stock < 0) {
+      e.stock = "El stock no puede ser negativo";
+    }
+
+    if (
+      form.minStock === "" ||
+      form.minStock === null ||
+      Number.isNaN(Number(form.minStock))
+    ) {
+      e.minStock = "El stock mínimo es requerido";
+    } else if (typeof form.minStock === "number" && form.minStock < 0) {
+      e.minStock = "El stock mínimo no puede ser negativo";
+    }
+
+    if (!form.image.trim()) {
+      e.image = "Debes seleccionar al menos una imagen principal";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    onSave(
-      {
-        ...form,
-        id: product?.id ?? Date.now(),
-        hasSalesHistory: product?.hasSalesHistory ?? false,
-        brand: form.brand, // nombre será actualizado por cambio de ID más arriba
-        category: form.category,
-        subcategory: form.subcategory,
-      },
-      selectedFiles.map((item) => item.file),
-      {
-        // Pasar también los IDs para el backend
-        brandId,
-        categoryId,
-        subcategoryId,
+    setIsLoading(true);
+    try {
+      // Calculate the main image index among new images
+      // The main image is stored in form.image
+      // We need to find which index in selectedFiles corresponds to the main image
+      let mainImageIndex: number | undefined;
+      if (selectedFiles.length > 0 && form.image) {
+        const mainIndex = selectedFiles.findIndex(
+          (item) => item.src === form.image,
+        );
+        if (mainIndex >= 0) {
+          mainImageIndex = mainIndex;
+        }
       }
-    );
+
+      // Check if the main image changed from an original image to another original image
+      // In this case, we need to pass the ID of the new main image
+      let newMainImageId: string | undefined;
+      if (isEdit && form.image && form.image !== originalMainImage) {
+        // The user selected a different image as main
+        // Check if the new main image is an original image (not a new file)
+        const newMainImageData = productImagesData.find(
+          (img) => img.url === form.image,
+        );
+        if (newMainImageData) {
+          newMainImageId = newMainImageData.id;
+        }
+      }
+
+      await Promise.resolve(
+        onSave(
+          {
+            ...form,
+            id: product?.id ?? Date.now(),
+            hasSalesHistory: product?.hasSalesHistory ?? false,
+            brand: form.brand,
+            category: form.category,
+            subcategory: form.subcategory,
+            price: Number(form.price),
+            stock: Number(form.stock),
+            minStock: Number(form.minStock),
+          },
+          selectedFiles.map((item) => item.file),
+          {
+            brandId,
+            categoryId,
+            subcategoryId,
+            mainImageIndex,
+            newMainImageId, // ID of the new main image (if changing from original images)
+          },
+        ),
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-
 
   return (
     <>
@@ -392,34 +589,22 @@ export default function ProductFormModal({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className={twLabel}>SKU</label>
-                <FieldWithIcon icon={<IconTag />}>
-                  <input
-                    id="sku"
-                    value={form.sku}
-                    onChange={(e) => set("sku", e.target.value)}
-                    placeholder="RAD-001"
-                    className={`${twField} pl-8 ${errors.sku ? "border-red-500" : ""}`}
-                  />
-                </FieldWithIcon>
-                {errors.sku && (
-                  <p className="text-red-500 text-[11px] mt-1">{errors.sku}</p>
-                )}
-              </div>
-              <div>
-                <label className={twLabel}>Código de barras</label>
-                <FieldWithIcon icon={<IconBarcode />}>
-                  <input
-                    id="codigoBarras"
-                    value={form.barcode}
-                    onChange={(e) => set("barcode", e.target.value)}
-                    placeholder="7501000..."
-                    className={`${twField} pl-8`}
-                  />
-                </FieldWithIcon>
-              </div>
+            <div className="mb-3">
+              <label className={twLabel}>Código de barras</label>
+              <FieldWithIcon icon={<IconBarcode />}>
+                <input
+                  id="codigoBarras"
+                  value={form.barcode}
+                  onChange={(e) => set("barcode", e.target.value)}
+                  placeholder="7501000..."
+                  className={`${twField} pl-8 ${errors.barcode ? "border-red-500" : ""}`}
+                />
+              </FieldWithIcon>
+              {errors.barcode && (
+                <p className="text-red-500 text-[11px] mt-1">
+                  {errors.barcode}
+                </p>
+              )}
             </div>
 
             <div className="mb-3">
@@ -431,14 +616,14 @@ export default function ProductFormModal({
                     value={brandId}
                     onChange={(e) => {
                       const selectedBrand = localBrands.find(
-                        (b) => b.idMarca === e.target.value
+                        (b) => b.idMarca === e.target.value,
                       );
                       if (selectedBrand) {
                         setBrandId(selectedBrand.idMarca);
                         set("brand", selectedBrand.nombre);
                       }
                     }}
-                    className={`${twField} pl-8 appearance-none cursor-pointer`}
+                    className={`${twField} pl-8 appearance-none cursor-pointer ${errors.brand ? "border-red-500" : ""}`}
                   >
                     <option value="">Seleccionar...</option>
                     {localBrands.map((b) => (
@@ -458,6 +643,9 @@ export default function ProductFormModal({
                   <IconPlus />
                 </button>
               </div>
+              {errors.brand && (
+                <p className="text-red-500 text-[11px] mt-1">{errors.brand}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-3">
@@ -470,7 +658,7 @@ export default function ProductFormModal({
                       value={categoryId}
                       onChange={(e) => {
                         const selectedCategory = localCategories.find(
-                          (c) => c.idCategoria === e.target.value
+                          (c) => c.idCategoria === e.target.value,
                         );
                         if (selectedCategory) {
                           setCategoryId(selectedCategory.idCategoria);
@@ -479,7 +667,7 @@ export default function ProductFormModal({
                           set("subcategory", "");
                         }
                       }}
-                      className={`${twField} pl-8 appearance-none cursor-pointer`}
+                      className={`${twField} pl-8 appearance-none cursor-pointer ${errors.category ? "border-red-500" : ""}`}
                     >
                       <option value="">Seleccionar...</option>
                       {localCategories.map((c) => (
@@ -499,6 +687,11 @@ export default function ProductFormModal({
                     <IconPlus />
                   </button>
                 </div>
+                {errors.category && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.category}
+                  </p>
+                )}
               </div>
               <div>
                 <label className={twLabel}>Subcategoría</label>
@@ -508,23 +701,25 @@ export default function ProductFormModal({
                       id="subcategoria"
                       value={subcategoryId}
                       onChange={(e) => {
-                        const selectedSubcategory = (localSubcategoriesWithIds[categoryId] || []).find(
-                          (s) => s.id === e.target.value
-                        );
+                        const selectedSubcategory = (
+                          localSubcategoriesWithIds[categoryId] || []
+                        ).find((s) => s.id === e.target.value);
                         if (selectedSubcategory) {
                           setSubcategoryId(selectedSubcategory.id);
                           set("subcategory", selectedSubcategory.nombre);
                         }
                       }}
-                      className={`${twField} pl-8 appearance-none cursor-pointer`}
+                      className={`${twField} pl-8 appearance-none cursor-pointer ${errors.subcategory ? "border-red-500" : ""}`}
                       disabled={!categoryId}
                     >
                       <option value="">Seleccionar...</option>
-                      {(localSubcategoriesWithIds[categoryId] || []).map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.nombre}
-                        </option>
-                      ))}
+                      {(localSubcategoriesWithIds[categoryId] || []).map(
+                        (s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.nombre}
+                          </option>
+                        ),
+                      )}
                     </select>
                   </FieldWithIcon>
                   <button
@@ -537,6 +732,11 @@ export default function ProductFormModal({
                     <IconPlus />
                   </button>
                 </div>
+                {errors.subcategory && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.subcategory}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -551,11 +751,21 @@ export default function ProductFormModal({
                     id="precio"
                     type="number"
                     min={0}
-                    value={form.price || ""}
-                    onChange={(e) => set("price", Number(e.target.value))}
-                    className={`${twField} pl-6`}
+                    value={form.price}
+                    onChange={(e) =>
+                      set(
+                        "price",
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className={`${twField} pl-6 ${errors.price ? "border-red-500" : ""}`}
                   />
                 </div>
+                {errors.price && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.price}
+                  </p>
+                )}
               </div>
               <div>
                 <label className={twLabel}>
@@ -566,11 +776,21 @@ export default function ProductFormModal({
                     id="stock"
                     type="number"
                     min={0}
-                    value={form.stock || ""}
-                    onChange={(e) => set("stock", Number(e.target.value))}
-                    className={`${twField} pl-8`}
+                    value={form.stock}
+                    onChange={(e) =>
+                      set(
+                        "stock",
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className={`${twField} pl-8 ${errors.stock ? "border-red-500" : ""}`}
                   />
                 </FieldWithIcon>
+                {errors.stock && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.stock}
+                  </p>
+                )}
               </div>
               <div>
                 <label className={twLabel}>Stock mín. aceptable</label>
@@ -579,11 +799,21 @@ export default function ProductFormModal({
                     id="stockMin"
                     type="number"
                     min={0}
-                    value={form.minStock || ""}
-                    onChange={(e) => set("minStock", Number(e.target.value))}
-                    className={`${twField} pl-8`}
+                    value={form.minStock}
+                    onChange={(e) =>
+                      set(
+                        "minStock",
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className={`${twField} pl-8 ${errors.minStock ? "border-red-500" : ""}`}
                   />
                 </FieldWithIcon>
+                {errors.minStock && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.minStock}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -748,6 +978,9 @@ export default function ProductFormModal({
                   </span>
                 </div>
               </div>
+              {errors.image && (
+                <p className="text-red-500 text-[11px] mt-2">{errors.image}</p>
+              )}
               <p className="text-[11px] text-gray-400 mt-2.5">
                 ⓘ Formatos sugeridos: JPG, PNG, WEBP (Máx. 5MB). Clic en la foto
                 para establecer como principal.
@@ -758,15 +991,21 @@ export default function ProductFormModal({
           <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2.5 bg-gray-50">
             <button
               onClick={onClose}
-              className="px-5 py-2 rounded-lg border border-gray-200 bg-white cursor-pointer text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+              disabled={isLoading}
+              className="px-5 py-2 rounded-lg border border-gray-200 bg-white cursor-pointer text-sm text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancelar
             </button>
             <button
               onClick={handleSave}
-              className="px-5 py-2 rounded-lg border-none bg-blue-600 text-white cursor-pointer text-sm font-semibold hover:bg-blue-700 transition-colors"
+              disabled={isLoading}
+              className="px-5 py-2 rounded-lg border-none bg-blue-600 text-white cursor-pointer text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isEdit ? "Guardar Cambios" : "Guardar Producto"}
+              {isLoading
+                ? "Guardando..."
+                : isEdit
+                  ? "Guardar Cambios"
+                  : "Guardar Producto"}
             </button>
           </div>
         </div>
@@ -779,6 +1018,7 @@ export default function ProductFormModal({
           initialParentCategory={form.category}
           onClose={() => setActiveSubModal(null)}
           onSave={handleSaveAttribute}
+          validate={handleValidateAttribute}
         />
       )}
     </>
