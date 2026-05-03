@@ -1,6 +1,7 @@
 import { IServicioInicioSesion } from "../negocio/IServicioInicioSesion";
 import { LoginDTO } from "../negocio/DTOsEntrada/LoginDTO";
 import { NextRequest, NextResponse } from "next/server";
+import { serializarJsonSeguro } from "../utils/serializarJson";
 
 /** Duración de sesión leída de la variable de entorno SESSION_TIMEOUT_HOURS. */
 const SESSION_TIMEOUT_HOURS = Number(process.env.SESSION_TIMEOUT_HOURS || "24");
@@ -33,7 +34,7 @@ export class SesionControlador {
     try {
       const dto: LoginDTO = await req.json();
       const sesion = await this.servicio.iniciarSesion(dto);
-      const response = NextResponse.json(sesion);
+      const response = NextResponse.json(serializarJsonSeguro(sesion));
       response.cookies.set("token", sesion.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -87,7 +88,7 @@ export class SesionControlador {
       }
 
       const usuario = await this.servicio.validarToken(token);
-      return NextResponse.json(usuario);
+      return NextResponse.json(serializarJsonSeguro(usuario));
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
