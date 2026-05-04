@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@boxicons/react": "^1.0.3",
-    "@prisma/adapter-pg": "^7.5.0",
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.5.0",
     "@supabase/supabase-js": "^2.99.3",
     "bcrypt": "^6.0.0",

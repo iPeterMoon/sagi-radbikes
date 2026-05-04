@@ -1,36 +1,28 @@
 "use client";
 
-import { POSCategory } from "@/types/pos";
-import { POS_CATEGORIES } from "@/lib/mockProducts";
-import { GridCircleDiagonalLeft,
-         Cycling,
-         Cog,   
-         ShoppingBag,
-         Spanner     
- } from "@boxicons/react";
+import { GridCircleDiagonalLeft, Cycling, Cog, ShoppingBag, Spanner } from "@boxicons/react";
 
-/** Iconos asociados a cada categoría del POS. */
-const CATEGORY_ICONS: Record<POSCategory, React.ReactNode> = {
+/** Icono por nombre de categoría (fallback a bolsa de compras). */
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   Todas: <GridCircleDiagonalLeft />,
   Bicicletas: <Cycling />,
+  Bicicleta: <Cycling />,
   Componentes: <Cog />,
   Accesorios: <ShoppingBag />,
   Taller: <Spanner />,
 };
 
 interface CategoryTabsProps {
-  active: POSCategory;
-  onChange: (cat: POSCategory) => void;
+  active: string;
+  onChange: (cat: string) => void;
+  /** Lista dinámica de categorías; si no se pasa se muestra solo "Todas". */
+  categories?: string[];
 }
 
-/**
- * Tabs de filtrado por categoría en el POS.
- * La categoría activa se resalta con fondo azul oscuro.
- */
-export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
+export default function CategoryTabs({ active, onChange, categories = ["Todas"] }: CategoryTabsProps) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-      {POS_CATEGORIES.map((cat) => {
+      {categories.map((cat) => {
         const isActive = active === cat;
         return (
           <button
@@ -43,7 +35,7 @@ export default function CategoryTabs({ active, onChange }: CategoryTabsProps) {
             }`}
           >
             <span className={isActive ? "text-white/80" : "text-gray-400"}>
-              {CATEGORY_ICONS[cat]}
+              {CATEGORY_ICONS[cat] ?? <ShoppingBag />}
             </span>
             {cat}
           </button>
