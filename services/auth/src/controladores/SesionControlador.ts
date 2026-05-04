@@ -25,6 +25,7 @@ export class SesionControlador {
         })
         .json(serializarJsonSeguro(sesion));
     } catch (error: any) {
+      console.error("[iniciarSesion] ERROR:", error);
       res.status(401).json({ error: error.message });
     }
   }
@@ -37,6 +38,7 @@ export class SesionControlador {
       if (token) await this.servicio.cerrarSesion(token);
       res.clearCookie("token").json({ message: "Logout exitoso" });
     } catch (error: any) {
+      console.error("[cerrarSesion] ERROR:", error);
       res.status(500).json({ error: error.message });
     }
   }
@@ -53,6 +55,7 @@ export class SesionControlador {
       const usuario = await this.servicio.validarToken(token);
       res.json(usuario);
     } catch (error: any) {
+      console.error("[validar] ERROR:", error);
       res.status(401).json({ error: error.message });
     }
   }
