@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { obtenerEtiquetas, crearEtiqueta, eliminarEtiqueta } from "@/backend/controladores/InventarioControlador";
-
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<any> }
-) {
+const CATALOG = process.env.CATALOG_SERVICE_URL || "http://localhost:3002";
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ productoId: string }> }) {
   const { productoId } = await params;
-  return obtenerEtiquetas(req, { params: { id: productoId } });
+  const res = await fetch(`${CATALOG}/etiquetas/${productoId}`);
+  return new NextResponse(await res.text(), { status: res.status });
 }
-
 export async function POST(req: NextRequest) {
-  return crearEtiqueta(req);
+  const res = await fetch(`${CATALOG}/etiquetas`, { method: "POST", headers: { "Content-Type": "application/json" }, body: await req.text() });
+  return new NextResponse(await res.text(), { status: res.status });
 }
-
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<any> }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ productoId: string }> }) {
   const { productoId } = await params;
-  return eliminarEtiqueta(req, { params: { id: productoId } });
+  const res = await fetch(`${CATALOG}/etiquetas/${productoId}`, { method: "DELETE" });
+  return new NextResponse(await res.text(), { status: res.status });
 }

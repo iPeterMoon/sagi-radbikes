@@ -1,28 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { obtenerPorId, eliminarProducto, actualizarProducto } from "@/backend/controladores/InventarioControlador";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<any> }
-) {
+const CATALOG = process.env.CATALOG_SERVICE_URL || "http://localhost:3002";
+
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return obtenerPorId(req, { params: { id } });
+  const res = await fetch(`${CATALOG}/productos/${id}`);
+  return new NextResponse(await res.text(), { status: res.status });
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<any> }
-) {
-  const dto = await req.json();
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  dto.idProducto = id;
-  return actualizarProducto(req);
+  const body = await req.json();
+  body.idProducto = id;
+  const res = await fetch(`${CATALOG}/productos`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return new NextResponse(await res.text(), { status: res.status });
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<any> }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return eliminarProducto(req, { params: { id } });
+  const res = await fetch(`${CATALOG}/productos/${id}`, { method: "DELETE" });
+  return new NextResponse(await res.text(), { status: res.status });
 }

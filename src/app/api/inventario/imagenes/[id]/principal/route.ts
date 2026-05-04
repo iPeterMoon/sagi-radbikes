@@ -1,23 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { IServicioInventario } from "@/backend/negocio/interfaces/IServicioInventario";
-import { ServicioInventario } from "@/backend/negocio/ServicioInventario";
-import { AccesoDatos } from "@/backend/datos/AccesoDatos";
-
-const accesoDatos: IServicioInventario = new ServicioInventario(
-  new AccesoDatos(),
-);
-
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
-    const result = await accesoDatos.establecerImagenPrincipal(id);
-    return NextResponse.json({ success: result });
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to set main image";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+const CATALOG = process.env.CATALOG_SERVICE_URL || "http://localhost:3002";
+export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const res = await fetch(`${CATALOG}/imagenes/${id}/principal`, { method: "PATCH" });
+  return new NextResponse(await res.text(), { status: res.status });
 }
