@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const AUTH_SERVICE = process.env.AUTH_SERVICE_URL || "http://localhost:3001";
-
 export async function POST(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
-  const res = await fetch(`${AUTH_SERVICE}/logout`, {
+  const res = await fetch(`${process.env.AUTH_SERVICE_URL}/logout`, {
     method: "POST",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

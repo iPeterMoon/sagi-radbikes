@@ -92,18 +92,18 @@ export const inventarioApi = {
    * @param cantidad - Cantidad a restar
    */
   async ajustarStock(id: string, cantidad: number): Promise<boolean> {
-    return fetchApi<boolean>(`${API_BASE}/productos`, {
+    return fetchApi<boolean>(`${API_BASE}/productos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, cantidad }),
+      body: JSON.stringify({ cantidad }),
     });
   },
 
   async actualizarEstado(id: string): Promise<boolean> {
-    return fetchApi<boolean>(`${API_BASE}/productos`, {
+    return fetchApi<boolean>(`${API_BASE}/productos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, toggleActive: true }),
+      body: JSON.stringify({ toggleActive: true }),
     });
   },
 

@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { EyeClosed, EyeAlt, ArrowInRightSquareHalf, Lock } from "@boxicons/react";
+import {
+  EyeClosed,
+  EyeAlt,
+  ArrowInRightSquareHalf,
+  Lock,
+} from "@boxicons/react";
 import Image from "next/image";
 import { authApi } from "@/lib/api/auth";
 
@@ -13,6 +18,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +52,9 @@ export default function LoginPage() {
             />
             <h2 className="text-2xl text-black ml-4 font-bold">RAD Bikes</h2>
           </div>
-          <h1 className="text-xl font-semibold text-gray-800 mb-2">Iniciar Sesion</h1>
+          <h1 className="text-xl font-semibold text-gray-800 mb-2">
+            Iniciar Sesion
+          </h1>
           <span className="text-gray-500 text-md">
             Acceso al sistema interno de gestion
           </span>
@@ -90,7 +98,9 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                aria-label={showPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+                aria-label={
+                  showPassword ? "Ocultar contrasena" : "Mostrar contrasena"
+                }
               >
                 {showPassword ? <EyeAlt size="sm" /> : <EyeClosed size="sm" />}
               </button>
@@ -150,12 +160,13 @@ export default function LoginPage() {
           </button>
 
           <div className="text-center">
-            <a
-              href="#"
-              className="text-sm text-primary hover:text-blue-800 hover:underline transition-colors"
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="text-sm text-primary hover:text-blue-800 hover:underline transition-colors cursor-pointer"
             >
               Olvido su contrasena?
-            </a>
+            </button>
           </div>
         </form>
 
@@ -170,6 +181,32 @@ export default function LoginPage() {
         Este sistema es para uso exclusivo del personal autorizado de RAD Bikes.
         El acceso no autorizado esta estrictamente prohibido.
       </span>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center mx-auto mb-4">
+                <Lock size="md" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Restablecer Contrasena
+              </h3>
+              <p className="text-gray-600 text-sm mb-6">
+                Por favor, contacte al administrador del sistema para
+                restablecer su contrasena.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="w-full bg-blue-800 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

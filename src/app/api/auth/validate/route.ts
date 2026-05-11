@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const AUTH_SERVICE = process.env.AUTH_SERVICE_URL || "http://localhost:3001";
-
 async function validate(req: NextRequest) {
-  const token = 
+  const token =
     req.headers.get("authorization")?.replace("Bearer ", "") ||
     req.cookies.get("token")?.value;
 
-  const res = await fetch(`${AUTH_SERVICE}/validate`, {
+  const res = await fetch(`${process.env.AUTH_SERVICE_URL}/validate`, {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },

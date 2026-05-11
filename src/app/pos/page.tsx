@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { CartItem, PaymentMethod, POSProduct, VentaResumenDTO } from "@/types/pos";
+import {
+  CartItem,
+  PaymentMethod,
+  POSProduct,
+  VentaResumenDTO,
+} from "@/types/pos";
 import SearchBar from "./components/SearchBar";
 import CategoryTabs from "./components/CategoryTabs";
 import ProductGrid from "./components/ProductGrid";
@@ -17,37 +22,46 @@ export default function POSPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
   const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [ventaResumen, setVentaResumen] = useState<VentaResumenDTO | null>(null);
+  const [ventaResumen, setVentaResumen] = useState<VentaResumenDTO | null>(
+    null,
+  );
 
   // ── Fetch products from POS service ──
   useEffect(() => {
     fetch("/api/pos/productos")
       .then((r) => r.json())
-      .then((data: Array<{
-        idProducto: string;
-        nombre: string;
-        precio: number;
-        stock: number;
-        urlImagen: string;
-        SKU: string;
-        categoria: { nombre: string };
-      }>) => {
-        const mapped: POSProduct[] = data.map((p) => ({
-          id: Number(p.idProducto),
-          name: p.nombre,
-          price: p.precio,
-          stock: p.stock,
-          image: p.urlImagen,
-          sku: p.SKU,
-          category: p.categoria?.nombre ?? "Sin categoría",
-        }));
-        setProducts(mapped);
-      })
+      .then(
+        (
+          data: Array<{
+            idProducto: string;
+            nombre: string;
+            precio: number;
+            stock: number;
+            urlImagen: string;
+            SKU: string;
+            categoria: { nombre: string };
+          }>,
+        ) => {
+          const mapped: POSProduct[] = data.map((p) => ({
+            id: Number(p.idProducto),
+            name: p.nombre,
+            price: p.precio,
+            stock: p.stock,
+            image: p.urlImagen || "/placeholder.png",
+            sku: p.SKU,
+            category: p.categoria?.nombre ?? "Sin categoría",
+          }));
+          setProducts(mapped);
+        },
+      )
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  const categories = ["Todas", ...Array.from(new Set(products.map((p) => p.category)))];
+  const categories = [
+    "Todas",
+    ...Array.from(new Set(products.map((p) => p.category))),
+  ];
 
   const filtered = products.filter((p) => {
     const q = search.toLowerCase().trim();
@@ -66,7 +80,7 @@ export default function POSPage() {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i
+          i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i,
         );
       }
       return [...prev, { product, qty: 1 }];
@@ -75,7 +89,7 @@ export default function POSPage() {
 
   const increment = useCallback((id: number) => {
     setCart((prev) =>
-      prev.map((i) => (i.product.id === id ? { ...i, qty: i.qty + 1 } : i))
+      prev.map((i) => (i.product.id === id ? { ...i, qty: i.qty + 1 } : i)),
     );
   }, []);
 
@@ -83,7 +97,7 @@ export default function POSPage() {
     setCart((prev) =>
       prev
         .map((i) => (i.product.id === id ? { ...i, qty: i.qty - 1 } : i))
-        .filter((i) => i.qty > 0)
+        .filter((i) => i.qty > 0),
     );
   }, []);
 
@@ -94,7 +108,7 @@ export default function POSPage() {
     setProducts((prev) =>
       prev.map((product) => {
         const decrementItem = productsToDecrement.find(
-          (item) => item.product.id === product.id
+          (item) => item.product.id === product.id,
         );
         if (decrementItem) {
           return {
@@ -106,7 +120,7 @@ export default function POSPage() {
           };
         }
         return product;
-      })
+      }),
     );
   }, []);
 
@@ -116,7 +130,8 @@ export default function POSPage() {
     try {
       const body = {
         idUsuario: "1", // TODO: leer del token de sesión
-        metodoPago: paymentMethod === "tarjeta" ? "tarjeta_debito" : paymentMethod,
+        metodoPago:
+          paymentMethod === "tarjeta" ? "tarjeta_debito" : paymentMethod,
         porcentajeImpuesto: 16,
         productos: cart.map((i) => ({
           idProducto: String(i.product.id),
@@ -137,10 +152,10 @@ export default function POSPage() {
         return;
       }
       const resumen: VentaResumenDTO = await res.json();
-      
+
       // ── Actualizar inventario de forma reactiva ──
       updateProductsStock(cart);
-      
+
       // ── Mostrar modal de éxito ──
       setVentaResumen(resumen);
       setModalOpen(true);
@@ -162,11 +177,11 @@ export default function POSPage() {
     try {
       // Crear contenido del recibo
       const receiptContent = generateReceiptHTML(resumen);
-      
+
       // Crear un blob con el contenido HTML
       const blob = new Blob([receiptContent], { type: "text/html" });
       const url = URL.createObjectURL(blob);
-      
+
       // Abrir en nueva ventana para imprimir
       const printWindow = window.open(url, "_blank");
       if (printWindow) {
@@ -182,7 +197,7 @@ export default function POSPage() {
   /** Genera el HTML del recibo para imprimir */
   const generateReceiptHTML = (resumen: VentaResumenDTO): string => {
     const formattedDate = new Date(resumen.fecha).toLocaleString("es-MX");
-    
+
     return `
       <!DOCTYPE html>
       <html>
@@ -331,7 +346,9 @@ export default function POSPage() {
         {/* Scrollable product grid */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           {loading ? (
-            <p className="text-gray-400 mt-10 text-center text-sm">Cargando productos…</p>
+            <p className="text-gray-400 mt-10 text-center text-sm">
+              Cargando productos…
+            </p>
           ) : (
             <ProductGrid products={filtered} onAdd={addToCart} />
           )}

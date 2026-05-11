@@ -1,27 +1,79 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const CATALOG = process.env.CATALOG_SERVICE_URL || "http://localhost:3002";
+async function proxyWithId(req: NextRequest, method: string, id: string) {
+  const search = req.nextUrl.search;
+  
+  const headers: HeadersInit = {};
+  const contentType = req.headers.get("content-type");
+  if (contentType) headers["Content-Type"] = contentType;
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const res = await fetch(`${CATALOG}/productos/${id}`);
-  return new NextResponse(await res.text(), { status: res.status });
-}
+  const hasBody = method !== "GET" && method !== "HEAD";
+  let bodyStr: string | undefined = undefined;
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const body = await req.json();
-  body.idProducto = id;
-  const res = await fetch(`${CATALOG}/productos`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+  if (hasBody) {
+    const text = await req.text();
+    if (text) {
+      try {
+        const bodyObj = JSON.parse(text);
+        bodyObj.id = id;
+        bodyStr = JSON.stringify(bodyObj);
+      } catch {
+        bodyStr = text;
+      }
+    }
+  }
+
+  // PATCH, PUT go to /productos in catalog service according to backend index.ts mappings
+  // Except DELETE goes to /productos/:id
+  const targetUrl = method === "GET" || method === "DELETE" 
+    ? `${process.env.CATALOG_SERVICE_URL}/productos/${id}${search}`
+    : `${process.env.CATALOG_SERVICE_URL}/productos${search}`;
+
+  const res = await fetch(targetUrl, {
+    method,
+    headers,
+    body: bodyStr,
+    cache: "no-store",
   });
-  return new NextResponse(await res.text(), { status: res.status });
+
+  const resHeaders: HeadersInit = {};
+  const resContentType = res.headers.get("content-type");
+  if (resContentType) resHeaders["Content-Type"] = resContentType;
+
+  return new NextResponse(await res.arrayBuffer(), {
+    status: res.status,
+    headers: resHeaders,
+  });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
-  const res = await fetch(`${CATALOG}/productos/${id}`, { method: "DELETE" });
-  return new NextResponse(await res.text(), { status: res.status });
+  return proxyWithId(req, "GET", id);
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  return proxyWithId(req, "PUT", id);
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  return proxyWithId(req, "PATCH", id);
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  return proxyWithId(req, "DELETE", id);
 }

@@ -19,6 +19,7 @@ app.get("/productos",      (req, res) => controlador.obtenerProductos(req, res))
 app.get("/productos/:id",  (req, res) => controlador.obtenerPorId(req, res));
 app.post("/productos",     (req, res) => controlador.crearProducto(req, res));
 app.put("/productos",      (req, res) => controlador.actualizarProducto(req, res));
+app.patch("/productos",    (req, res) => controlador.ajustarStock(req, res));
 app.delete("/productos/:id",(req, res) => controlador.eliminarProducto(req, res));
 
 // Catálogos
