@@ -55,7 +55,9 @@ export class ServicioVenta implements IServicioVenta {
 
     const erroresStock = await this.ventaBO.verificarStock(dto.productos);
     if (erroresStock.length > 0) {
-      throw new Error(`Stock insuficiente: ${erroresStock.join(", ")}`);
+      const error: any = new Error("STOCK_INSUFICIENTE");
+      error.detalles = erroresStock;
+      throw error;
     }
 
     const resumen = await this.ventaBO.registrarVenta(dto);

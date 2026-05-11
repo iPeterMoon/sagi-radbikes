@@ -33,6 +33,14 @@ export class POSControlador {
       const resumen = await this.servicio.registrarVenta(dto);
       res.status(201).json(resumen);
     } catch (error: any) {
+      if (error.message === "STOCK_INSUFICIENTE") {
+        res.status(409).json({
+          error: "STOCK_INSUFICIENTE",
+          detalles: error.detalles 
+        });
+        return;
+      }
+
       const status = error.message?.startsWith("Validación") ? 400 : 500;
       res.status(status).json({ error: error.message });
     }

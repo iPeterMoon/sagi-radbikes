@@ -50,3 +50,8 @@ export interface VentaResumenDTO {
   porcentajeImpuesto: number;
   pago: PagoDTO;
 }
+
+export interface CheckoutError {
+  error: string;
+  detalles?: { producto: string; solicitado: number; disponible: number }[];
+}

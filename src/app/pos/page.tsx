@@ -6,6 +6,7 @@ import {
   PaymentMethod,
   POSProduct,
   VentaResumenDTO,
+  CheckoutError,
 } from "@/types/pos";
 import SearchBar from "./components/SearchBar";
 import CategoryTabs from "./components/CategoryTabs";
@@ -20,7 +21,9 @@ export default function POSPage() {
   const [activeCategory, setActiveCategory] = useState("Todas");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
-  const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<CheckoutError | null>(
+    null,
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [ventaResumen, setVentaResumen] = useState<VentaResumenDTO | null>(
     null,
@@ -126,7 +129,6 @@ export default function POSPage() {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    setCheckoutStatus("procesando");
     try {
       const body = {
         idUsuario: "1", // TODO: leer del token de sesión
@@ -148,7 +150,7 @@ export default function POSPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        setCheckoutStatus(`error: ${err.error}`);
+        setCheckoutError(err);
         return;
       }
       const resumen: VentaResumenDTO = await res.json();
@@ -159,10 +161,10 @@ export default function POSPage() {
       // ── Mostrar modal de éxito ──
       setVentaResumen(resumen);
       setModalOpen(true);
-      setCheckoutStatus(null);
+      setCheckoutError(null);
       setCart([]);
     } catch {
-      setCheckoutStatus("error: no se pudo conectar con el servidor");
+      setCheckoutError({ error: "error: no se pudo conectar con el servidor" });
     }
   };
 
@@ -336,10 +338,30 @@ export default function POSPage() {
           />
         </div>
 
-        {/* Feedback de checkout - mostrar solo errores */}
-        {checkoutStatus && checkoutStatus.startsWith("error") && (
-          <div className="mx-6 mb-2 px-4 py-2 rounded text-sm font-medium bg-red-100 text-red-700">
-            {checkoutStatus}
+        {/* Feedback de checkout */}
+        {checkoutError && (
+          <div className="mx-6 mb-3 px-4 py-3 rounded-md text-sm bg-red-50 border border-red-200 text-red-800 shadow-sm">
+            {checkoutError.error === "STOCK_INSUFICIENTE" &&
+            checkoutError.detalles ? (
+              <div className="flex flex-col gap-1.5">
+                <p className="font-bold text-red-900">
+                  Revisa el stock de los siguientes productos:
+                </p>
+                <ul className="list-disc pl-5 space-y-1">
+                  {checkoutError.detalles.map((item, idx) => (
+                    <li key={idx}>
+                      <span className="font-semibold">{item.producto}</span>
+                      <span className="text-red-700 ml-1">
+                        (Disponible: {item.disponible} | Solicitado:{" "}
+                        {item.solicitado})
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <span className="font-medium">{checkoutError.error}</span>
+            )}
           </div>
         )}
 

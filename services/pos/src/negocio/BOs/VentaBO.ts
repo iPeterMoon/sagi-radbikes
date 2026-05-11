@@ -3,16 +3,8 @@ import { VentaResumenDTO } from "../DTOsSalida/VentaResumenDTO";
 import { CrearVentaDTO } from "../DTOsEntrada/CrearVentaDTO";
 import { IPOSAccesoDatos } from "../../datos/daos/interfaces/IPOSAccesoDatos";
 import { VentaMapper } from "../mappers/VentaMapper";
-
-export interface IVentaBO {
-  validarVenta(dto: CrearVentaDTO): string[];
-  verificarStock(productos: ProductoCarritoDTO[]): Promise<string[]>;
-  calcularTotal(
-    productos: ProductoCarritoDTO[],
-    porcentajeImpuesto: number,
-  ): { subtotal: number; importeIVA: number; total: number };
-  registrarVenta(dto: CrearVentaDTO): Promise<VentaResumenDTO>;
-}
+import { IVentaBO } from "../interfaces/IVentaBO";
+import { DetalleStockDTO } from "../DTOsSalida/DetalleStockDTO";
 
 export class VentaBO implements IVentaBO {
 
@@ -29,16 +21,16 @@ export class VentaBO implements IVentaBO {
     return errores;
   }
 
-  async verificarStock(productos: ProductoCarritoDTO[]): Promise<string[]> {
-    const errores: string[] = [];
+  async verificarStock(productos: ProductoCarritoDTO[]): Promise<DetalleStockDTO[]> {
+    const errores: DetalleStockDTO[] = [];
     for (const item of productos) {
       const producto = await this.accesoDatos.productoDAO.getById(BigInt(item.idProducto));
-      if (!producto) {
-        errores.push(`Producto ${item.idProducto} no encontrado`);
-      } else if ((producto.stock ?? 0) < item.cantidad) {
-        errores.push(
-          `Stock insuficiente para "${(producto as any).name}": disponible ${producto.stock}, solicitado ${item.cantidad}`,
-        );
+      if (!producto || (producto.stock ?? 0) < item.cantidad) {
+        errores.push(new DetalleStockDTO(
+          (producto as any)?.name || `ID: ${item.idProducto}`,
+          item.cantidad,
+          producto?.stock ?? 0
+        ));
       }
     }
     return errores;
