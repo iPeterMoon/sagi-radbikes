@@ -1,7 +1,8 @@
 import { PrismaClient, sale_details } from "@prisma/client";
 import { GenericDAO } from "./GenericDAO";
+import { IDetalleVentaDAO } from "../interfaces/IDetalleVentaDAO";
 
-export class DetalleVentaDAO extends GenericDAO<sale_details> {
+export class DetalleVentaDAO extends GenericDAO<sale_details> implements IDetalleVentaDAO {
   constructor(prisma: PrismaClient) {
     super(prisma, "sale_details");
   }

@@ -1,4 +1,4 @@
-import { ProductoCarritoDTO } from "../DTOsEntrada/VentaDTOs";
+import { ProductoCarritoDTO } from "../DTOsEntrada/ProductoCarritoDTO";
 
 export interface ICarritoBO {
   agregar(producto: ProductoCarritoDTO): void;

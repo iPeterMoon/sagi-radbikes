@@ -1,6 +1,8 @@
-import { POSAccesoDatos } from "../../datos/POSAccesoDatos";
-import { CrearVentaDTO, ProductoCarritoDTO } from "../DTOsEntrada/VentaDTOs";
-import { PagoDTO, VentaResumenDTO } from "../DTOsSalida/VentaDTOs";
+import { ProductoCarritoDTO } from "../DTOsEntrada/ProductoCarritoDTO";
+import { VentaResumenDTO } from "../DTOsSalida/VentaResumenDTO";
+import { PagoDTO } from "../DTOsSalida/PagoDTO";
+import { CrearVentaDTO } from "../DTOsEntrada/CrearVentaDTO";
+import { IPOSAccesoDatos } from "../../datos/daos/interfaces/IPOSAccesoDatos";
 
 export interface IVentaBO {
   validarVenta(dto: CrearVentaDTO): string[];
@@ -13,7 +15,8 @@ export interface IVentaBO {
 }
 
 export class VentaBO implements IVentaBO {
-  constructor(private accesoDatos: POSAccesoDatos) {}
+
+  constructor(private accesoDatos: IPOSAccesoDatos) {}
 
   validarVenta(dto: CrearVentaDTO): string[] {
     const errores: string[] = [];

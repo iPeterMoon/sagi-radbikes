@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
+import { IGenericDAO } from "../interfaces/IGenericDAO";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export abstract class GenericDAO<T, TCreate = any, TUpdate = any> {
+export abstract class GenericDAO<T, TCreate = any, TUpdate = any> implements IGenericDAO<T, TCreate, TUpdate> {
   constructor(
     protected prisma: PrismaClient,
     protected modelName: keyof PrismaClient,

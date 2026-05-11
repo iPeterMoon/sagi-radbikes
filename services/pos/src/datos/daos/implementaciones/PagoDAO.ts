@@ -1,7 +1,8 @@
 import { PrismaClient, payments } from "@prisma/client";
 import { GenericDAO } from "./GenericDAO";
+import { IPagoDAO } from "../interfaces/IPagoDAO";
 
-export class PagoDAO extends GenericDAO<payments> {
+export class PagoDAO extends GenericDAO<payments> implements IPagoDAO {
   constructor(prisma: PrismaClient) {
     super(prisma, "payments");
   }

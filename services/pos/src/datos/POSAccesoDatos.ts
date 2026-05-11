@@ -1,16 +1,21 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaFactory } from "./PrismaFactory";
-import { VentaDAO } from "./daos/VentaDAO";
-import { DetalleVentaDAO } from "./daos/DetalleVentaDAO";
-import { PagoDAO } from "./daos/PagoDAO";
-import { ProductoDAO } from "./daos/ProductoDAO";
+import { VentaDAO } from "./daos/implementaciones/VentaDAO";
+import { DetalleVentaDAO } from "./daos/implementaciones/DetalleVentaDAO";
+import { PagoDAO } from "./daos/implementaciones/PagoDAO";
+import { ProductoDAO } from "./daos/implementaciones/ProductoDAO";
+import { IPOSAccesoDatos } from "./daos/interfaces/IPOSAccesoDatos";
+import { IVentaDAO } from "./daos/interfaces/IVentaDAO";
+import { IDetalleVentaDAO } from "./daos/interfaces/IDetalleVentaDAO";
+import { IPagoDAO } from "./daos/interfaces/IPagoDAO";
+import { IProductoDAO } from "./daos/interfaces/IProductoDAO";
 
-export class POSAccesoDatos {
+export class POSAccesoDatos implements IPOSAccesoDatos {
   public readonly prisma: PrismaClient;
-  public readonly ventaDAO: VentaDAO;
-  public readonly detalleVentaDAO: DetalleVentaDAO;
-  public readonly pagoDAO: PagoDAO;
-  public readonly productoDAO: ProductoDAO;
+  public readonly ventaDAO: IVentaDAO;
+  public readonly detalleVentaDAO: IDetalleVentaDAO;
+  public readonly pagoDAO: IPagoDAO;
+  public readonly productoDAO: IProductoDAO;
 
   constructor() {
     this.prisma = PrismaFactory.getCliente();

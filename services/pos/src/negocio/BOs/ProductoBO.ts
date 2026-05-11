@@ -1,5 +1,5 @@
-import { POSAccesoDatos } from "../../datos/POSAccesoDatos";
-import { ProductoVentaDTO } from "../DTOsSalida/VentaDTOs";
+import { ProductoVentaDTO } from "../DTOsSalida/ProductoVentaDTO";
+import { IPOSAccesoDatos } from "../../datos/daos/interfaces/IPOSAccesoDatos";
 
 export interface IProductoBO {
   filtrarCatalogo(busqueda?: string): Promise<ProductoVentaDTO[]>;
@@ -7,7 +7,7 @@ export interface IProductoBO {
 }
 
 export class ProductoBO implements IProductoBO {
-  constructor(private accesoDatos: POSAccesoDatos) {}
+  constructor(private accesoDatos: IPOSAccesoDatos) {}
 
   async filtrarCatalogo(busqueda?: string): Promise<ProductoVentaDTO[]> {
     const productos = busqueda
