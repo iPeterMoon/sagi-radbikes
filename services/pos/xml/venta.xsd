@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+  <!-- ===== CrearVentaDTO ===== -->
+  <xs:element name="crearVenta" type="CrearVentaDTO"/>
+
+  <xs:complexType name="CrearVentaDTO">
+    <xs:sequence>
+      <xs:element name="idUsuario"          type="xs:string"/>
+      <xs:element name="metodoPago"         type="MetodoPagoEnum"/>
+      <xs:element name="porcentajeImpuesto" type="PorcentajeType"/>
+      <xs:element name="productos">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="producto" type="ProductoCarritoDTO"
+                        minOccurs="1" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ===== ProductoCarritoDTO ===== -->
+  <xs:complexType name="ProductoCarritoDTO">
+    <xs:sequence>
+      <xs:element name="idProducto"     type="xs:string"/>
+      <xs:element name="nombre"         type="xs:string"/>
+      <xs:element name="cantidad">
+        <xs:simpleType>
+          <xs:restriction base="xs:integer">
+            <xs:minInclusive value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="precioUnitario" type="PrecioType"/>
+      <xs:element name="subtotal"       type="PrecioType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ===== Tipos simples reutilizables ===== -->
+  <xs:simpleType name="MetodoPagoEnum">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="efectivo"/>
+      <xs:enumeration value="tarjeta_credito"/>
+      <xs:enumeration value="tarjeta_debito"/>
+      <xs:enumeration value="transferencia"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PorcentajeType">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PrecioType">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

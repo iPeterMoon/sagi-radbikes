@@ -3,6 +3,7 @@ import express from "express";
 import { CatalogoAccesoDatos } from "./datos/CatalogoAccesoDatos";
 import { ServicioInventario } from "./negocio/ServicioInventario";
 import { InventarioControlador } from "./controladores/InventarioControlador";
+import { startStockWorker } from "./queue/stockWorker";
 
 const app = express();
 app.use(express.json());
@@ -26,4 +27,7 @@ app.get("/marcas",        (req, res) => controlador.obtenerMarcas(req, res));
 app.get("/subcategorias", (req, res) => controlador.obtenerSubCategorias(req, res));
 app.get("/etiquetas",     (req, res) => controlador.obtenerEtiquetas(req, res));
 
-app.listen(3002, () => console.log("Catalog service running on :3002"));
+app.listen(3002, () => {
+  console.log("Catalog service running on :3002");
+  startStockWorker();
+});
