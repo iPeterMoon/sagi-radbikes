@@ -27,3 +27,26 @@ export type POSCategory =
   | "Componentes"
   | "Accesorios"
   | "Taller";
+
+/** DTO de información de pago en la respuesta de venta. */
+export interface PagoDTO {
+  idPago: string;
+  metodoPago: string;
+  monto: number;
+  fechaHora: Date;
+  idVenta: string;
+}
+
+/** DTO de resumen de venta después del checkout exitoso. */
+export interface VentaResumenDTO {
+  idVenta: string;
+  total: number;
+  mensaje: string;
+  estado: string;
+  fecha: Date;
+  folio: string;
+  subtotal: number;
+  importeIVA: number;
+  porcentajeImpuesto: number;
+  pago: PagoDTO;
+}

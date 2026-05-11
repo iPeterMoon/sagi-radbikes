@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { CartItem, PaymentMethod, POSProduct } from "@/types/pos";
+import { CartItem, PaymentMethod, POSProduct, VentaResumenDTO } from "@/types/pos";
 import SearchBar from "./components/SearchBar";
 import CategoryTabs from "./components/CategoryTabs";
 import ProductGrid from "./components/ProductGrid";
 import CartPanel from "./components/CartPanel";
+import SuccessModal from "./components/SuccessModal";
 
 export default function POSPage() {
   const [products, setProducts] = useState<POSProduct[]>([]);
@@ -15,6 +16,8 @@ export default function POSPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
   const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [ventaResumen, setVentaResumen] = useState<VentaResumenDTO | null>(null);
 
   // ── Fetch products from POS service ──
   useEffect(() => {
@@ -86,6 +89,27 @@ export default function POSPage() {
 
   const clearCart = useCallback(() => setCart([]), []);
 
+  /** Actualiza el stock de los productos de forma reactiva sin hacer un fetch completo */
+  const updateProductsStock = useCallback((productsToDecrement: CartItem[]) => {
+    setProducts((prev) =>
+      prev.map((product) => {
+        const decrementItem = productsToDecrement.find(
+          (item) => item.product.id === product.id
+        );
+        if (decrementItem) {
+          return {
+            ...product,
+            stock:
+              product.stock === null
+                ? null
+                : Math.max(0, product.stock - decrementItem.qty),
+          };
+        }
+        return product;
+      })
+    );
+  }, []);
+
   const handleCheckout = async () => {
     if (cart.length === 0) return;
     setCheckoutStatus("procesando");
@@ -112,27 +136,171 @@ export default function POSPage() {
         setCheckoutStatus(`error: ${err.error}`);
         return;
       }
-      const resumen = await res.json();
-      setCheckoutStatus(`✓ Venta ${resumen.folio} registrada`);
+      const resumen: VentaResumenDTO = await res.json();
+      
+      // ── Actualizar inventario de forma reactiva ──
+      updateProductsStock(cart);
+      
+      // ── Mostrar modal de éxito ──
+      setVentaResumen(resumen);
+      setModalOpen(true);
+      setCheckoutStatus(null);
       setCart([]);
-      // Refresh stock counts
-      fetch("/api/pos/productos")
-        .then((r) => r.json())
-        .then((data: Array<{ idProducto: string; nombre: string; precio: number; stock: number; urlImagen: string; SKU: string; categoria: { nombre: string } }>) =>
-          setProducts(data.map((p) => ({
-            id: Number(p.idProducto),
-            name: p.nombre,
-            price: p.precio,
-            stock: p.stock,
-            image: p.urlImagen,
-            sku: p.SKU,
-            category: p.categoria?.nombre ?? "Sin categoría",
-          })))
-        )
-        .catch(console.error);
     } catch {
       setCheckoutStatus("error: no se pudo conectar con el servidor");
     }
+  };
+
+  /** Manejador para limpiar carrito y cerrar modal */
+  const handleNewSale = useCallback(() => {
+    clearCart();
+    setVentaResumen(null);
+  }, [clearCart]);
+
+  /** Manejador para imprimir recibo */
+  const handlePrintReceipt = useCallback(async (resumen: VentaResumenDTO) => {
+    try {
+      // Crear contenido del recibo
+      const receiptContent = generateReceiptHTML(resumen);
+      
+      // Crear un blob con el contenido HTML
+      const blob = new Blob([receiptContent], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      
+      // Abrir en nueva ventana para imprimir
+      const printWindow = window.open(url, "_blank");
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+    } catch (error) {
+      console.error("Error al generar recibo:", error);
+    }
+  }, []);
+
+  /** Genera el HTML del recibo para imprimir */
+  const generateReceiptHTML = (resumen: VentaResumenDTO): string => {
+    const formattedDate = new Date(resumen.fecha).toLocaleString("es-MX");
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Recibo - ${resumen.folio}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            width: 80mm;
+            margin: 0;
+            padding: 10mm;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 18px;
+          }
+          .header p {
+            margin: 2px 0;
+            font-size: 12px;
+            color: #666;
+          }
+          .ticket-number {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 10px 0;
+          }
+          .divider {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+          }
+          .section-title {
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 12px;
+          }
+          .item {
+            font-size: 11px;
+            margin: 3px 0;
+            display: flex;
+            justify-content: space-between;
+          }
+          .total-section {
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            padding: 10px 0;
+            margin: 10px 0;
+            font-weight: bold;
+            font-size: 14px;
+          }
+          .total-amount {
+            text-align: right;
+            font-size: 16px;
+            font-weight: bold;
+            color: #000;
+          }
+          .payment-info {
+            font-size: 11px;
+            margin-top: 10px;
+          }
+          .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>SAGI RADBIKES</h1>
+          <p>Punto de Venta</p>
+        </div>
+        
+        <div class="ticket-number">
+          Ticket: ${resumen.folio}
+        </div>
+        <p style="font-size: 11px; margin: 0;">Fecha: ${formattedDate}</p>
+        
+        <div class="divider"></div>
+        
+        <div class="section-title">RESUMEN DE VENTA</div>
+        <div class="item">
+          <span>Subtotal:</span>
+          <span>$${resumen.subtotal.toFixed(2)}</span>
+        </div>
+        <div class="item">
+          <span>IVA (${resumen.porcentajeImpuesto}%):</span>
+          <span>$${resumen.importeIVA.toFixed(2)}</span>
+        </div>
+        
+        <div class="total-section">
+          <div class="total-amount">
+            TOTAL: $${resumen.total.toFixed(2)}
+          </div>
+        </div>
+        
+        <div class="payment-info">
+          <strong>Método de Pago:</strong><br>
+          ${resumen.pago.metodoPago.replace("_", " ").toUpperCase()}
+        </div>
+        
+        <div class="footer">
+          <p>¡Gracias por su compra!</p>
+          <p>Conserve este recibo</p>
+        </div>
+      </body>
+      </html>
+    `;
   };
 
   return (
@@ -153,15 +321,9 @@ export default function POSPage() {
           />
         </div>
 
-        {/* Feedback de checkout */}
-        {checkoutStatus && (
-          <div className={`mx-6 mb-2 px-4 py-2 rounded text-sm font-medium ${
-            checkoutStatus.startsWith("error")
-              ? "bg-red-100 text-red-700"
-              : checkoutStatus === "procesando"
-              ? "bg-yellow-50 text-yellow-700"
-              : "bg-green-100 text-green-700"
-          }`}>
+        {/* Feedback de checkout - mostrar solo errores */}
+        {checkoutStatus && checkoutStatus.startsWith("error") && (
+          <div className="mx-6 mb-2 px-4 py-2 rounded text-sm font-medium bg-red-100 text-red-700">
             {checkoutStatus}
           </div>
         )}
@@ -185,6 +347,15 @@ export default function POSPage() {
         onDecrement={decrement}
         onClear={clearCart}
         onCheckout={handleCheckout}
+      />
+
+      {/* ── Success Modal ── */}
+      <SuccessModal
+        isOpen={modalOpen}
+        resumen={ventaResumen}
+        onClose={() => setModalOpen(false)}
+        onNewSale={handleNewSale}
+        onPrint={handlePrintReceipt}
       />
     </div>
   );
