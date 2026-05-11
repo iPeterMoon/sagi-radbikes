@@ -1,10 +1,7 @@
 import { ProductoVentaDTO } from "../DTOsSalida/ProductoVentaDTO";
 import { IPOSAccesoDatos } from "../../datos/daos/interfaces/IPOSAccesoDatos";
-
-export interface IProductoBO {
-  filtrarCatalogo(busqueda?: string): Promise<ProductoVentaDTO[]>;
-  verificarStock(idProducto: string, cantidad: number): Promise<boolean>;
-}
+import { IProductoBO } from "../interfaces/IProductoBO";
+import { ProductoMapper } from "../mappers/ProductoMapper";
 
 export class ProductoBO implements IProductoBO {
   constructor(private accesoDatos: IPOSAccesoDatos) {}
@@ -14,27 +11,7 @@ export class ProductoBO implements IProductoBO {
       ? await this.accesoDatos.productoDAO.buscarPorNombreOSKU(busqueda)
       : await this.accesoDatos.productoDAO.getActivos();
 
-    return productos.map((p: any) => {
-      const imagenPrincipal =
-        p.product_images?.find((img: any) => img.is_main_image)?.image_url ||
-        p.product_images?.[0]?.image_url ||
-        "";
-
-      return {
-        idProducto: String(p.id),
-        nombre: p.name ?? "",
-        precio: p.price ?? 0,
-        stock: p.stock ?? 0,
-        descripcion: p.description ?? "",
-        SKU: p.SKU,
-        codigoBarras: p.barcode_upc ?? "",
-        urlImagen: imagenPrincipal,
-        categoria: {
-          idCategoria: String(p.subcategory?.id ?? ""),
-          nombre: p.subcategory?.name ?? "",
-        },
-      };
-    });
+    return ProductoMapper.toDTOList(productos);
   }
 
   async verificarStock(idProducto: string, cantidad: number): Promise<boolean> {

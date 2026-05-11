@@ -1,8 +1,8 @@
 import { ProductoCarritoDTO } from "../DTOsEntrada/ProductoCarritoDTO";
 import { VentaResumenDTO } from "../DTOsSalida/VentaResumenDTO";
-import { PagoDTO } from "../DTOsSalida/PagoDTO";
 import { CrearVentaDTO } from "../DTOsEntrada/CrearVentaDTO";
 import { IPOSAccesoDatos } from "../../datos/daos/interfaces/IPOSAccesoDatos";
+import { VentaMapper } from "../mappers/VentaMapper";
 
 export interface IVentaBO {
   validarVenta(dto: CrearVentaDTO): string[];
@@ -16,7 +16,7 @@ export interface IVentaBO {
 
 export class VentaBO implements IVentaBO {
 
-  constructor(private accesoDatos: IPOSAccesoDatos) {}
+  constructor(private accesoDatos: IPOSAccesoDatos) { }
 
   validarVenta(dto: CrearVentaDTO): string[] {
     const errores: string[] = [];
@@ -89,25 +89,6 @@ export class VentaBO implements IVentaBO {
       amount: total,
     });
 
-    const pagoDTO: PagoDTO = {
-      idPago: String(pago.id),
-      metodoPago: pago.paymentMethod ?? "",
-      monto: pago.amount ?? 0,
-      fechaHora: pago.created_at ?? new Date(),
-      idVenta: String(pago.sale_id),
-    };
-
-    return {
-      idVenta: String(venta.id),
-      total,
-      subtotal,
-      importeIVA,
-      porcentajeImpuesto: dto.porcentajeImpuesto,
-      folio,
-      fecha: venta.created_at ?? new Date(),
-      estado: "completada",
-      mensaje: "Venta registrada exitosamente",
-      pago: pagoDTO,
-    };
+    return VentaMapper.toResumenDTO(venta, pago, subtotal, importeIVA);
   }
 }
