@@ -61,6 +61,9 @@ export default function InventarioPage() {
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<ModalType>(null);
 
+  /** Estado de carga para la página. */
+  const [isLoading, setIsLoading] = useState(true);
+
   const loadCategories = async () => {
     try {
       const cats = await inventarioApi.obtenerCategorias();
@@ -81,8 +84,10 @@ export default function InventarioPage() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
+      setIsLoading(true);
       await loadProducts();
       await loadCategories();
+      setIsLoading(false);
     };
     fetchInitialData();
   }, []);
@@ -319,43 +324,52 @@ export default function InventarioPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-        <ProductTable
-          products={paginated}
-          onEdit={(p) => setModal({ type: "edit", product: p })}
-          onDelete={handleDelete}
-          onToggle={handleToggle}
-        />
-
-        {/* Pagination */}
-        <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
-          <span className="text-[13px] text-gray-500 font-medium">
-            Mostrando {paginated.length} de {filtered.length} productos
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${
-                page === 1
-                  ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
-              }`}
-            >
-              Anterior
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${
-                page >= totalPages
-                  ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
-              }`}
-            >
-              Siguiente
-            </button>
+        {isLoading ? (
+          <div className="p-16 text-center text-gray-500 flex flex-col items-center justify-center">
+            <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+            <p className="text-sm font-medium">Cargando productos...</p>
           </div>
-        </div>
+        ) : (
+          <>
+            <ProductTable
+              products={paginated}
+              onEdit={(p) => setModal({ type: "edit", product: p })}
+              onDelete={handleDelete}
+              onToggle={handleToggle}
+            />
+
+            {/* Pagination */}
+            <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <span className="text-[13px] text-gray-500 font-medium">
+                Mostrando {paginated.length} de {filtered.length} productos
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${
+                    page === 1
+                      ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  }`}
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${
+                    page >= totalPages
+                      ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  }`}
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {modal?.type === "add" && (

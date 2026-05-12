@@ -368,9 +368,10 @@ export default function POSPage() {
         {/* Scrollable product grid */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           {loading ? (
-            <p className="text-gray-400 mt-10 text-center text-sm">
-              Cargando productos…
-            </p>
+            <div className="p-16 text-center text-gray-500 flex flex-col items-center justify-center">
+              <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+              <p className="text-sm font-medium">Cargando productos...</p>
+            </div>
           ) : (
             <ProductGrid products={filtered} onAdd={addToCart} />
           )}
