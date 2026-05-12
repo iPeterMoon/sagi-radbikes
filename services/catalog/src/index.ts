@@ -24,8 +24,11 @@ app.delete("/productos/:id",(req, res) => controlador.eliminarProducto(req, res)
 
 // Catálogos
 app.get("/categorias",    (req, res) => controlador.obtenerCategorias(req, res));
+app.post("/categorias",   (req, res) => controlador.crearCategoria(req, res));
 app.get("/marcas",        (req, res) => controlador.obtenerMarcas(req, res));
+app.post("/marcas",       (req, res) => controlador.crearMarca(req, res));
 app.get("/subcategorias", (req, res) => controlador.obtenerSubCategorias(req, res));
+app.post("/subcategorias", (req, res) => controlador.crearSubCategoria(req, res));
 app.get("/etiquetas",     (req, res) => controlador.obtenerEtiquetas(req, res));
 
 app.listen(3002, () => {
