@@ -130,8 +130,12 @@ export default function POSPage() {
   const handleCheckout = async () => {
     if (cart.length === 0) return;
     try {
+      const usuarioStr = localStorage.getItem("usuario");
+      const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+      const idUsuario = usuario?.idUsuario || "1";
+
       const body = {
-        idUsuario: "1", // TODO: leer del token de sesión
+        idUsuario: idUsuario,
         metodoPago:
           paymentMethod === "tarjeta" ? "tarjeta_debito" : paymentMethod,
         porcentajeImpuesto: 16,

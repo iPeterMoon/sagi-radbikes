@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { TopbarProps } from "@/types/inventory";
+import { authApi } from "@/lib/api/auth";
 
 /**
  * Ícono de menú hamburgesa animado.
@@ -35,10 +36,33 @@ export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
   const [usuario, setUsuario] = useState<{ username: string; roles: { nombre: string }[] } | null>(null);
 
   useEffect(() => {
-    const usuarioStr = localStorage.getItem("usuario");
-    if (usuarioStr) {
-      setUsuario(JSON.parse(usuarioStr));
+    const loadUser = () => {
+      const usuarioStr = localStorage.getItem("usuario");
+      if (usuarioStr) {
+        setUsuario(JSON.parse(usuarioStr));
+      }
+    };
+
+    loadUser();
+
+    // Si no está en localStorage, intentamos recuperar la sesión desde el endpoint
+    if (!localStorage.getItem("usuario")) {
+      authApi.validate()
+        .then((user) => {
+          setUsuario(user);
+          localStorage.setItem("usuario", JSON.stringify(user));
+        })
+        .catch(() => {
+          // Fallo silencioso si no hay sesión válida
+        });
     }
+
+    window.addEventListener("usuarioUpdated", loadUser);
+    window.addEventListener("storage", loadUser);
+    return () => {
+      window.removeEventListener("usuarioUpdated", loadUser);
+      window.removeEventListener("storage", loadUser);
+    };
   }, []);
 
   const displayName = usuario?.username || "Usuario";

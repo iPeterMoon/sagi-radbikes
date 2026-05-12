@@ -26,7 +26,9 @@ export default function CatalogoLayout({
         return;
       }
       try {
-        await authApi.validate();
+        const user = await authApi.validate();
+        localStorage.setItem("usuario", JSON.stringify(user));
+        window.dispatchEvent(new Event("usuarioUpdated"));
       } catch (error) {
         localStorage.removeItem("token");
         localStorage.removeItem("usuario");
