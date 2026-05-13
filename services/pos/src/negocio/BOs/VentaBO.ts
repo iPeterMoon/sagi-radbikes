@@ -6,10 +6,21 @@ import { VentaMapper } from "../mappers/VentaMapper";
 import { IVentaBO } from "../interfaces/IVentaBO";
 import { DetalleStockDTO } from "../DTOsSalida/DetalleStockDTO";
 
+/**
+ * Objeto de Negocio (Business Object) encargado de las reglas de negocio de las Ventas.
+ */
 export class VentaBO implements IVentaBO {
 
+  /**
+   * Inyecta el acceso a datos consolidado.
+   */
   constructor(private accesoDatos: IPOSAccesoDatos) { }
 
+  /**
+   * Valida la estructura y los datos requeridos para procesar una venta.
+   * @param {CrearVentaDTO} dto - Datos de la venta a validar.
+   * @returns {string[]} Lista de errores encontrados (vacía si es válido).
+   */
   validarVenta(dto: CrearVentaDTO): string[] {
     const errores: string[] = [];
     if (!dto.idUsuario) errores.push("idUsuario es requerido");
@@ -21,6 +32,11 @@ export class VentaBO implements IVentaBO {
     return errores;
   }
 
+  /**
+   * Verifica contra la base de datos si existe stock suficiente para todos los productos del carrito.
+   * * @param {ProductoCarritoDTO[]} productos - Lista de productos en el carrito.
+   * @returns {Promise<DetalleStockDTO[]>} Lista de detalles con stock insuficiente (vacía si todo está OK).
+   */
   async verificarStock(productos: ProductoCarritoDTO[]): Promise<DetalleStockDTO[]> {
     const errores: DetalleStockDTO[] = [];
     for (const item of productos) {
@@ -36,6 +52,12 @@ export class VentaBO implements IVentaBO {
     return errores;
   }
 
+  /**
+   * Calcula el subtotal, importe de IVA y total a pagar de una venta.
+   * @param {ProductoCarritoDTO[]} productos - Lista de productos con sus subtotales.
+   * @param {number} porcentajeImpuesto - Porcentaje de impuesto a aplicar.
+   * @returns {{ subtotal: number; importeIVA: number; total: number }} Totales calculados.
+   */
   calcularTotal(
     productos: ProductoCarritoDTO[],
     porcentajeImpuesto: number,
@@ -50,6 +72,11 @@ export class VentaBO implements IVentaBO {
     };
   }
 
+  /**
+   * Registra una venta en la base de datos, incluyendo detalles y pago.
+   * @param {CrearVentaDTO} dto - Datos completos de la venta a registrar.
+   * @returns {Promise<VentaResumenDTO>} Resumen de la venta registrada.
+   */
   async registrarVenta(dto: CrearVentaDTO): Promise<VentaResumenDTO> {
     const { subtotal, importeIVA, total } = this.calcularTotal(
       dto.productos,
@@ -58,6 +85,7 @@ export class VentaBO implements IVentaBO {
 
     const folio = `VENTA-${Date.now()}`;
 
+    // Creación de la cabecera de la venta
     const venta = await this.accesoDatos.ventaDAO.createWithDetails({
       user_seller: BigInt(dto.idUsuario),
       folio,
@@ -67,6 +95,7 @@ export class VentaBO implements IVentaBO {
       tax_percentage: dto.porcentajeImpuesto,
     });
 
+    // Creación de las partidas/detalles de la venta
     const detalles = dto.productos.map((p) => ({
       sale_id: venta.id,
       product_id: BigInt(p.idProducto),
@@ -75,6 +104,7 @@ export class VentaBO implements IVentaBO {
     }));
     await this.accesoDatos.detalleVentaDAO.createMany(detalles);
 
+    // Registro del pago
     const pago = await this.accesoDatos.pagoDAO.createPago({
       sale_id: venta.id,
       paymentMethod: dto.metodoPago,

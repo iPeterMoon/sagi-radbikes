@@ -1,6 +1,7 @@
 import { products } from "@prisma/client";
 import { IGenericDAO } from "./IGenericDAO";
 
+/** Contrato específico del DAO de Productos. */
 export interface IProductoDAO extends IGenericDAO<products> {
   getActivos(): Promise<products[]>;
   getBySKU(sku: string): Promise<products | null>;

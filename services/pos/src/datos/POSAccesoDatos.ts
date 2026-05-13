@@ -10,6 +10,10 @@ import { IDetalleVentaDAO } from "./daos/interfaces/IDetalleVentaDAO";
 import { IPagoDAO } from "./daos/interfaces/IPagoDAO";
 import { IProductoDAO } from "./daos/interfaces/IProductoDAO";
 
+/**
+ * Contenedor principal de los Data Access Objects (DAOs).
+ * Agrupa todos los repositorios para inyectarlos de forma centralizada en la capa de negocio.
+ */
 export class POSAccesoDatos implements IPOSAccesoDatos {
   public readonly prisma: PrismaClient;
   public readonly ventaDAO: IVentaDAO;

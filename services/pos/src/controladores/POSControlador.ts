@@ -3,9 +3,18 @@ import { IServicioVenta } from "../negocio/interfaces/IServicioVenta";
 import { ProductoCarritoDTO } from "../negocio/DTOsEntrada/ProductoCarritoDTO";
 import { CrearVentaDTO } from "../negocio/DTOsEntrada/CrearVentaDTO";
 
+/**
+ * Controlador del Punto de Venta (POS).
+ * Gestiona las peticiones HTTP entrantes y delega la lógica de negocio al ServicioVenta.
+ */
 export class POSControlador {
   private servicio: IServicioVenta;
 
+  /**
+   * Inicializa el controlador e inyecta el servicio de ventas.
+   * Vincula el contexto (`this`) a los métodos para su uso en Express.
+   * * @param {IServicioVenta} servicio - Interfaz del servicio de ventas.
+   */
   constructor(servicio: IServicioVenta) {
     this.servicio = servicio;
     this.buscarProductos = this.buscarProductos.bind(this);
@@ -17,6 +26,10 @@ export class POSControlador {
     this.obtenerCarrito = this.obtenerCarrito.bind(this);
   }
 
+  /**
+   * Maneja la petición para buscar productos en el catálogo.
+   * Permite filtrar por un término de búsqueda opcional.
+   */
   async buscarProductos(req: Request, res: Response): Promise<void> {
     try {
       const busqueda = req.query.busqueda as string | undefined;
@@ -27,6 +40,10 @@ export class POSControlador {
     }
   }
 
+  /**
+   * Maneja la petición para registrar una nueva venta.
+   * Valida stock, procesa la transacción y maneja errores de negocio (ej. STOCK_INSUFICIENTE).
+   */
   async registrarVenta(req: Request, res: Response): Promise<void> {
     try {
       const dto: CrearVentaDTO = req.body;
@@ -36,7 +53,7 @@ export class POSControlador {
       if (error.message === "STOCK_INSUFICIENTE") {
         res.status(409).json({
           error: "STOCK_INSUFICIENTE",
-          detalles: error.detalles 
+          detalles: error.detalles
         });
         return;
       }
@@ -46,6 +63,9 @@ export class POSControlador {
     }
   }
 
+  /**
+   * Maneja la petición para agregar un producto al carrito en memoria.
+   */
   agregarProductoCarrito(req: Request, res: Response): void {
     try {
       const producto: ProductoCarritoDTO = req.body;
@@ -56,6 +76,9 @@ export class POSControlador {
     }
   }
 
+  /**
+   * Maneja la petición para eliminar un producto específico del carrito.
+   */
   eliminarProductoCarrito(req: Request, res: Response): void {
     try {
       const idProducto = req.params.idProducto as string;
@@ -66,6 +89,9 @@ export class POSControlador {
     }
   }
 
+  /**
+   * Maneja la petición para vaciar completamente el carrito.
+   */
   limpiarCarrito(_req: Request, res: Response): void {
     try {
       this.servicio.limpiarCarrito();
@@ -75,6 +101,9 @@ export class POSControlador {
     }
   }
 
+  /**
+   * Maneja la petición para actualizar la cantidad de un producto existente en el carrito.
+   */
   cambiarCantidad(req: Request, res: Response): void {
     try {
       const idProducto = req.params.idProducto as string;
@@ -86,6 +115,9 @@ export class POSControlador {
     }
   }
 
+  /**
+   * Maneja la petición para obtener el estado actual del carrito.
+   */
   obtenerCarrito(_req: Request, res: Response): void {
     res.json({ carrito: this.servicio.obtenerCarrito() });
   }

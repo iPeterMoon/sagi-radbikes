@@ -3,6 +3,9 @@ import { ProductoCarritoDTO } from "../DTOsEntrada/ProductoCarritoDTO";
 import { DetalleStockDTO } from "../DTOsSalida/DetalleStockDTO";
 import { VentaResumenDTO } from "../DTOsSalida/VentaResumenDTO";
 
+/**
+ * Contrato para las operaciones lógicas y reglas de negocio al procesar una Venta.
+ */
 export interface IVentaBO {
   validarVenta(dto: CrearVentaDTO): string[];
   verificarStock(productos: ProductoCarritoDTO[]): Promise<DetalleStockDTO[]>;
