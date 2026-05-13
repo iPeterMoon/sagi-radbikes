@@ -72,6 +72,8 @@ export interface ProductoDTO {
   marca: MarcaDTO;
   /** Subcategoría a la que pertenece. */
   subcategoria: SubCategoriaDTO;
+  /** Stock mínimo aceptable del producto. */
+  minStock: number;
   /** Estado calculado del stock (NORMAL, BAJO, CRITICO). */
   estadoStock: EstadoStock;
   activo: boolean;

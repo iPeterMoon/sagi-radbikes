@@ -50,7 +50,7 @@ function FieldWithIcon({
 
 type FormState = Omit<
   Product,
-  "id" | "hasSalesHistory" | "price" | "stock" | "minStock"
+  "id" | "price" | "stock" | "minStock"
 > & {
   price: number | string;
   stock: number | string;
@@ -510,7 +510,6 @@ export default function ProductFormModal({
           {
             ...form,
             id: product?.id ?? Date.now(),
-            hasSalesHistory: product?.hasSalesHistory ?? false,
             brand: form.brand,
             category: form.category,
             subcategory: form.subcategory,

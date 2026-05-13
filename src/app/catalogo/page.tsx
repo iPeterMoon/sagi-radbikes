@@ -35,7 +35,7 @@ function mapDtoToProduct(dto: any): Product {
     subcategory: dto.subcategoria?.nombre || "",
     price: dto.precio,
     stock: dto.stock,
-    minStock: dto.minStock, 
+    minStock: dto.minStock || 0,
     description: dto.descripcion,
     tags: (dto.etiquetas || []).map((etiqueta: any) => ({
       name: etiqueta.nombre,

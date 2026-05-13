@@ -37,6 +37,7 @@ export class ProductoMapper {
       codigoDeBarras: entity.barcode_upc || "",
       precio: entity.price || 0,
       stock: entity.stock || 0,
+      minStock: entity.min_stock || 0,
       descripcion: entity.description || "",
       imagenes: (entity.product_images || []).map(ImagenProductoMapper.toDTO),
       categoria: entity.subcategory?.categories
