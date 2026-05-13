@@ -29,7 +29,7 @@ export default function CartItemRow({
         alt={item.product.name}
         width={48}
         height={48}
-        className="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0"
+        className="w-12 h-12 rounded-lg object-contain border border-gray-100 shrink-0"
       />
 
       {/* Name + price */}

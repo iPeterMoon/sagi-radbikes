@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { TopbarProps } from "@/types/inventory";
 import { authApi } from "@/lib/api/auth";
+import Image from "next/image";
 
 /**
  * Ícono de menú hamburgesa animado.
@@ -84,8 +85,15 @@ export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
 
       {/* Logo */}
       <div className="flex items-center gap-2 w-35 shrink-0">
-        <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-blue-400 flex items-center justify-center text-sm font-extrabold text-white">
-          R
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold text-white">
+          <Image
+            src="/logo-radbikes-white.png"
+            alt="Logo RAD Bikes"
+            width={32}
+            height={32}
+          
+          />
+
         </div>
         <span className="text-white font-bold text-base">RAD Bikes</span>
       </div>

@@ -16,12 +16,38 @@ export class ProductImageDAO implements IProductImageDAO {
     this.supabase = supabase;
   }
 
+  private normalizeFileName(name: string): string {
+    const extensionMatch = name.match(/\.[^/.]+$/);
+    const extension = extensionMatch ? extensionMatch[0].toLowerCase() : "";
+    const baseName = name
+      .replace(extension, "")
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .toLowerCase();
+
+    return `${baseName}${extension}`;
+  }
+
+  private getUniqueFileName(img: File, productId: bigint): string {
+    const safeName = this.normalizeFileName(img.name || "image");
+    const randomId =
+      typeof globalThis !== "undefined" &&
+      typeof (globalThis as any).crypto?.randomUUID === "function"
+        ? (globalThis as any).crypto.randomUUID()
+        : Math.random().toString(36).substring(2, 10);
+
+    return `${productId}/${Date.now()}-${randomId}_${safeName}`;
+  }
+
   async create(
     img: File,
     productId: bigint,
     isMain: boolean = false,
   ): Promise<product_images> {
-    const fileName = `${productId}/${Date.now()}_${img.name}`;
+    const fileName = this.getUniqueFileName(img, productId);
 
     const { error: uploadError } = await this.supabase.storage
       .from(this.BUCKET_NAME)

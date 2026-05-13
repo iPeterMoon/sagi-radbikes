@@ -22,7 +22,7 @@ export default function CatalogoLayout({
     const checkSession = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
-        router.push("/");
+        router.push("/login");
         return;
       }
       try {
@@ -32,7 +32,7 @@ export default function CatalogoLayout({
       } catch (error) {
         localStorage.removeItem("token");
         localStorage.removeItem("usuario");
-        router.push("/");
+        router.push("/login");
       }
     };
 
@@ -42,10 +42,10 @@ export default function CatalogoLayout({
   const handleLogout = async () => {
     try {
       await authApi.logout();
-      router.push("/");
+      router.push("/login");
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
-      router.push("/");
+      router.push("/login");
     }
   };
 

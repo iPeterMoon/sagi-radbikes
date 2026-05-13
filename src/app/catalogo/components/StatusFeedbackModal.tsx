@@ -46,7 +46,7 @@ export default function StatusFeedbackModal({
                 "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=400&h=200&fit=crop"
               }
               alt="Producto agregado"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               width={400}
               height={200}
               onError={(e) => {

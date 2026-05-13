@@ -32,7 +32,7 @@ export default function ProductCard({ product, onAdd }: ProductCardProps) {
           alt={product.name}
           width={300}
           height={180}
-          className="w-full h-[130px] object-cover"
+          className="w-full h-[130px] object-contain"
         />
         {/* Stock badge */}
         <span className="absolute top-2 right-2 bg-black/55 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-none backdrop-blur-sm">

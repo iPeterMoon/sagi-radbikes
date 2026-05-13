@@ -68,9 +68,9 @@ export default function ProductTable({
                     <Image
                       src={product.image?.trim() ? product.image : "/placeholder.png"}
                       alt={product.name}
-                      width={44}
-                      height={44}
-                      className="rounded-lg object-cover border border-gray-200 shrink-0"
+                      width={24}
+                      height={24}
+                      className="rounded-lg object-contain border border-gray-200 shrink-0"
                     />
                     <div className="text-left">
                       <div className="font-semibold text-gray-900 text-sm">

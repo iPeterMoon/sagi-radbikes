@@ -53,8 +53,8 @@ export default function Sidebar({ active, open, onLogout }: SidebarProps) {
     try {
       await authApi.logout();
     } finally {
-      // Usamos "/" asumiendo que tu página raíz es el login
-      router.replace("/");
+      // Usamos "/login" como la ruta de entrada al login
+      router.replace("/login");
       router.refresh();
     }
   };

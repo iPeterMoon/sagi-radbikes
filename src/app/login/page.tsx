@@ -53,10 +53,10 @@ export default function LoginPage() {
             <h2 className="text-2xl text-black ml-4 font-bold">RAD Bikes</h2>
           </div>
           <h1 className="text-xl font-semibold text-gray-800 mb-2">
-            Iniciar Sesion
+            Iniciar Sesión
           </h1>
           <span className="text-gray-500 text-md">
-            Acceso al sistema interno de gestion
+            Acceso al sistema interno de gestión
           </span>
         </div>
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 mb-1.5"
             >
-              Contrasena
+              Contraseña
             </label>
             <div className="relative">
               <input
@@ -92,14 +92,14 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-slate-950 focus:ring-blue-500 focus:border-transparent transition-all pr-10 placeholder-slate-300"
-                placeholder="Ingrese su contrasena"
+                placeholder="Ingrese su contraseña"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                 aria-label={
-                  showPassword ? "Ocultar contrasena" : "Mostrar contrasena"
+                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
                 }
               >
                 {showPassword ? <EyeAlt size="sm" /> : <EyeClosed size="sm" />}
@@ -165,7 +165,7 @@ export default function LoginPage() {
               onClick={() => setIsModalOpen(true)}
               className="text-sm text-primary hover:text-blue-800 hover:underline transition-colors cursor-pointer"
             >
-              Olvido su contrasena?
+              Olvido su contraseña?
             </button>
           </div>
         </form>
@@ -179,7 +179,7 @@ export default function LoginPage() {
       </div>
       <span className="max-w-md text-slate-500 text-center text-sm mt-4">
         Este sistema es para uso exclusivo del personal autorizado de RAD Bikes.
-        El acceso no autorizado esta estrictamente prohibido.
+        El acceso no autorizado está estrictamente prohibido.
       </span>
 
       {isModalOpen && (
@@ -190,11 +190,11 @@ export default function LoginPage() {
                 <Lock size="md" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                Restablecer Contrasena
+                Restablecer Contraseña
               </h3>
               <p className="text-gray-600 text-sm mb-6">
                 Por favor, contacte al administrador del sistema para
-                restablecer su contrasena.
+                restablecer su contraseña.
               </p>
               <button
                 type="button"
