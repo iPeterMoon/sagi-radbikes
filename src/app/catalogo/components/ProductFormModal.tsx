@@ -48,10 +48,7 @@ function FieldWithIcon({
   );
 }
 
-type FormState = Omit<
-  Product,
-  "id" | "price" | "stock" | "minStock"
-> & {
+type FormState = Omit<Product, "id" | "price" | "stock" | "minStock"> & {
   price: number | string;
   stock: number | string;
   minStock: number | string;
@@ -228,7 +225,9 @@ export default function ProductFormModal({
     { src: string; file: File }[]
   >([]);
   const [originalImages, setOriginalImages] = useState<string[]>([]);
-  const [deletedOriginalImages, setDeletedOriginalImages] = useState<string[]>([]);
+  const [deletedOriginalImages, setDeletedOriginalImages] = useState<string[]>(
+    [],
+  );
   const [originalMainImage, setOriginalMainImage] = useState<string>("");
   const [productImagesData, setProductImagesData] = useState<
     Array<{ id: string; url: string; esPrincipal: boolean }>
@@ -408,17 +407,28 @@ export default function ProductFormModal({
 
   const handleRemoveOriginalImage = (indexToRemove: number) => {
     const imageUrlToRemove = originalImages[indexToRemove];
-    const imageIdToRemove = productImagesData.find((img) => img.url === imageUrlToRemove)?.id;
-    
+    const imageIdToRemove = productImagesData.find(
+      (img) => img.url === imageUrlToRemove,
+    )?.id;
+
     if (imageIdToRemove) {
       setDeletedOriginalImages((prev) => [...prev, imageIdToRemove]);
     }
-    
-    const newList = originalImages.filter((_, index) => index !== indexToRemove);
+
+    const newList = originalImages.filter(
+      (_, index) => index !== indexToRemove,
+    );
     setOriginalImages(newList);
-    
+
     if (form.image === imageUrlToRemove) {
-      set("image", newList.length > 0 ? newList[0] : (imagesList.length > 0 ? imagesList[0] : ""));
+      set(
+        "image",
+        newList.length > 0
+          ? newList[0]
+          : imagesList.length > 0
+            ? imagesList[0]
+            : "",
+      );
     }
   };
 
@@ -426,7 +436,6 @@ export default function ProductFormModal({
     const e: Partial<Record<keyof FormState, string>> = {};
 
     if (!form.name.trim()) e.name = "El nombre es requerido";
-    if (!form.barcode.trim()) e.barcode = "El código de barras es requerido";
     if (!brandId) e.brand = "La marca es requerida";
     if (!categoryId) e.category = "La categoría es requerida";
     if (!subcategoryId) e.subcategory = "La subcategoría es requerida";
@@ -446,6 +455,7 @@ export default function ProductFormModal({
     }
 
     if (
+      form.barcode.trim() &&
       existingOtherProducts.some(
         (p) => p.barcode.trim().toLowerCase() === normalizedBarcode,
       )

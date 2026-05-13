@@ -1,5 +1,10 @@
 import { CatalogoAccesoDatos } from "../datos/CatalogoAccesoDatos";
 import { IServicioInventario } from "./interfaces/IServicioInventario";
+import { IProductoBO } from "./interfaces/IProductoBO";
+import { ICategoriaBO } from "./interfaces/ICategoriaBO";
+import { IMarcaBO } from "./interfaces/IMarcaBO";
+import { ISubCategoriaBO } from "./interfaces/ISubCategoriaBO";
+import { IEtiquetaBO } from "./interfaces/IEtiquetaBO";
 import {
   CrearProductoDTO,
   ActualizarProductoDTO,
@@ -25,11 +30,11 @@ import { EtiquetaBO } from "./BOs/EtiquetaBO";
  * {@link SubCategoriaBO} y {@link EtiquetaBO}.
  */
 export class ServicioInventario implements IServicioInventario {
-  private productoBO: ProductoBO;
-  private categoriaBO: CategoriaBO;
-  private marcaBO: MarcaBO;
-  private subCategoriaBO: SubCategoriaBO;
-  private etiquetaBO: EtiquetaBO;
+  private productoBO: IProductoBO;
+  private categoriaBO: ICategoriaBO;
+  private marcaBO: IMarcaBO;
+  private subCategoriaBO: ISubCategoriaBO;
+  private etiquetaBO: IEtiquetaBO;
 
   constructor(private accesoDatos: CatalogoAccesoDatos) {
     this.productoBO = new ProductoBO(accesoDatos);
