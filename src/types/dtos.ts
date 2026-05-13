@@ -29,6 +29,12 @@ export interface EtiquetaDTO {
   valor: string;
 }
 
+export interface CrearEtiquetaDTO {
+  nombre: string;
+  valor: string;
+  idProducto: string;
+}
+
 export interface ProductoDTO {
   idProducto: string;
   nombre: string;

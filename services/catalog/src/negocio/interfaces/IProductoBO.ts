@@ -10,7 +10,7 @@ export interface IProductoBO {
   actualizar(producto: ActualizarProductoDTO): Promise<ProductoDTO>;
   eliminar(id: string): Promise<boolean>;
   restarStock(id: string, cantidad: number): Promise<boolean>;
-  agregarImagenes(idProducto: string, archivos: Express.Multer.File[]): Promise<void>;
+  agregarImagenes(idProducto: string, archivos: Express.Multer.File[], mainImageIndex?: number): Promise<void>;
   eliminarImagen(idImagen: string): Promise<boolean>;
   establecerImagenPrincipal(idImagen: string): Promise<boolean>;
   actualizarEstado(id: string): Promise<boolean>;

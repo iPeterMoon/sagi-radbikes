@@ -1,6 +1,7 @@
 import { CatalogoAccesoDatos } from "../../datos/CatalogoAccesoDatos";
 import { IEtiquetaBO } from "../interfaces/IEtiquetaBO";
 import { EtiquetaDTO } from "../DTOsSalida/ProductoDTOs";
+import { CrearEtiquetaDTO } from "../DTOsEntrada/ProductoDTOs";
 import { EtiquetaMapper } from "../mappers/EtiquetaMapper";
 
 /**
@@ -19,15 +20,18 @@ export class EtiquetaBO implements IEtiquetaBO {
     return etiquetas.map(EtiquetaMapper.toDTO);
   }
 
-  async crear(etiqueta: EtiquetaDTO): Promise<EtiquetaDTO> {
-    const entity = EtiquetaMapper.toEntity(etiqueta);
-    const created = await this.accesoDatos.labelDAO.create(entity as any);
+  async crear(etiqueta: CrearEtiquetaDTO): Promise<EtiquetaDTO> {
+    const entity = EtiquetaMapper.toEntityFromCreate(etiqueta);
+    const created = await this.accesoDatos.labelDAO.create(entity);
     return EtiquetaMapper.toDTO(created);
   }
 
   async actualizar(etiqueta: EtiquetaDTO): Promise<EtiquetaDTO> {
     const entity = EtiquetaMapper.toEntity(etiqueta);
-    const updated = await this.accesoDatos.labelDAO.update(BigInt(etiqueta.idEtiqueta), entity as any);
+    const updated = await this.accesoDatos.labelDAO.update(
+      BigInt(etiqueta.idEtiqueta),
+      entity,
+    );
     return EtiquetaMapper.toDTO(updated);
   }
 

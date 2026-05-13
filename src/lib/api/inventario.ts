@@ -4,6 +4,7 @@ import {
   MarcaDTO,
   SubCategoriaDTO,
   EtiquetaDTO,
+  CrearEtiquetaDTO,
   CrearProductoDTO,
   ActualizarProductoDTO,
   FiltroProductoDTO,
@@ -197,13 +198,12 @@ export const inventarioApi = {
 
   /** Crea una nueva etiqueta asociada a un producto. */
   async crearEtiqueta(
-    etiqueta: EtiquetaDTO,
-    idProducto: string,
+    etiqueta: CrearEtiquetaDTO,
   ): Promise<EtiquetaDTO> {
     return fetchApi<EtiquetaDTO>(`${API_BASE}/etiquetas`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ etiqueta, idProducto }),
+      body: JSON.stringify(etiqueta),
     });
   },
 

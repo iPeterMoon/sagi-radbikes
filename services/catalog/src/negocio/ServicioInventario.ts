@@ -9,6 +9,7 @@ import {
   CrearProductoDTO,
   ActualizarProductoDTO,
   FiltroProductoDTO,
+  CrearEtiquetaDTO,
 } from "./DTOsEntrada/ProductoDTOs";
 import {
   ProductoDTO,
@@ -131,12 +132,9 @@ export class ServicioInventario implements IServicioInventario {
   }
 
   async crearEtiqueta(
-    etiqueta: EtiquetaDTO,
-    idProducto: string,
+    etiqueta: CrearEtiquetaDTO,
   ): Promise<EtiquetaDTO> {
-    const entity = { ...etiqueta, product_id: BigInt(idProducto) };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this.etiquetaBO.crear(entity as any);
+    return this.etiquetaBO.crear(etiqueta);
   }
 
   async eliminarEtiqueta(idEtiqueta: string): Promise<boolean> {

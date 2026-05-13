@@ -31,7 +31,9 @@ app.get("/marcas",        (req, res) => controlador.obtenerMarcas(req, res));
 app.post("/marcas",       (req, res) => controlador.crearMarca(req, res));
 app.get("/subcategorias", (req, res) => controlador.obtenerSubCategorias(req, res));
 app.post("/subcategorias", (req, res) => controlador.crearSubCategoria(req, res));
-app.get("/etiquetas",     (req, res) => controlador.obtenerEtiquetas(req, res));
+app.get("/etiquetas/:productoId", (req, res) => controlador.obtenerEtiquetas(req, res));
+app.post("/etiquetas",    (req, res) => controlador.crearEtiqueta(req, res));
+app.delete("/etiquetas/:id", (req, res) => controlador.eliminarEtiqueta(req, res));
 
 // Imágenes
 app.post(

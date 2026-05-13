@@ -2,6 +2,7 @@ import {
   CrearProductoDTO,
   ActualizarProductoDTO,
   FiltroProductoDTO,
+  CrearEtiquetaDTO,
 } from "../DTOsEntrada/ProductoDTOs";
 import {
   ProductoDTO,
@@ -39,8 +40,7 @@ export interface IServicioInventario {
   establecerImagenPrincipal(idImagen: string): Promise<boolean>;
   obtenerEtiquetas(idProducto: string): Promise<EtiquetaDTO[]>;
   crearEtiqueta(
-    etiqueta: EtiquetaDTO,
-    idProducto: string,
+    etiqueta: CrearEtiquetaDTO,
   ): Promise<EtiquetaDTO>;
   eliminarEtiqueta(idEtiqueta: string): Promise<boolean>;
 }

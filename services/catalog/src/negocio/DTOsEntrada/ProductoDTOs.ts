@@ -69,3 +69,13 @@ export interface FiltroProductoDTO {
   /** Precio máximo del rango de búsqueda. */
   precioMax: number;
 }
+
+/** Datos para crear una nueva etiqueta asociada a un producto. */
+export interface CrearEtiquetaDTO {
+  /** Nombre/clave del atributo (ej. "color"). */
+  nombre: string;
+  /** Valor del atributo (ej. "rojo"). */
+  valor: string;
+  /** ID del producto al que pertenece la etiqueta. */
+  idProducto: string;
+}

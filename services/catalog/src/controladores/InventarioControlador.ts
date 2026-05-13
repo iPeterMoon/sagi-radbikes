@@ -218,8 +218,13 @@ export class InventarioControlador {
 
   async crearEtiqueta(req: Request, res: Response): Promise<void> {
     try {
-      const { etiqueta, idProducto } = req.body;
-      res.status(201).json(await this.servicio.crearEtiqueta(etiqueta, idProducto));
+      const { nombre, valor, idProducto } = req.body;
+      if (!nombre || !valor || !idProducto) {
+        res.status(400).json({ error: "Se requieren nombre, valor e idProducto" });
+        return;
+      }
+      const etiqueta = { nombre, valor, idProducto };
+      res.status(201).json(await this.servicio.crearEtiqueta(etiqueta));
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

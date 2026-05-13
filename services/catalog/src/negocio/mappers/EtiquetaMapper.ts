@@ -1,5 +1,6 @@
 import { product_physical } from "@prisma/client";
 import { EtiquetaDTO } from "../DTOsSalida/ProductoDTOs";
+import { CrearEtiquetaDTO } from "../DTOsEntrada/ProductoDTOs";
 
 /**
  * Mapper de etiqueta (atributo físico) de producto.
@@ -20,13 +21,21 @@ export class EtiquetaMapper {
   }
 
   /**
-   * Convierte un EtiquetaDTO a entidad Prisma parcial.
-   * @param dto - DTO de la etiqueta
+   * Convierte un CrearEtiquetaDTO a entidad Prisma parcial para creación.
+   * @param dto - DTO de creación de etiqueta
    * @returns Entidad `product_physical` parcial
    */
-  static toEntity(dto: EtiquetaDTO): Partial<product_physical> {
+  static toEntityFromCreate(dto: CrearEtiquetaDTO): Omit<product_physical, 'id'> {
     return {
-      id: BigInt(dto.idEtiqueta),
+      name: dto.nombre,
+      value: dto.valor,
+      product_id: BigInt(dto.idProducto),
+      created_at: new Date(),
+    };
+  }
+
+  static toEntity(dto: EtiquetaDTO): Omit<product_physical, 'id' | 'product_id' | 'created_at'> {
+    return {
       name: dto.nombre,
       value: dto.valor,
     };
