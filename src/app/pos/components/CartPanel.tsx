@@ -5,7 +5,6 @@ import { formatPrice } from "@/lib/utils";
 import { CartAlt, ChevronRight } from "@boxicons/react";
 import CartItemRow from "./CartItemRow";
 import PaymentMethodSelector from "./PaymentMethodSelector";
-import { IVA_RATE } from "@/lib/mockProducts";
 
 interface CartPanelProps {
   cart: CartItem[];
@@ -35,6 +34,7 @@ export default function CartPanel({
 }: CartPanelProps) {
   const totalItems = cart.reduce((s, i) => s + i.qty, 0);
   const subtotal = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
+  const IVA_RATE = 0.16;
   const iva = subtotal * IVA_RATE;
   const total = subtotal + iva;
 
@@ -46,7 +46,7 @@ export default function CartPanel({
       <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-gray-700">
-            <CartAlt size="sm" className="text-blue-800"/>
+            <CartAlt size="sm" className="text-blue-800" />
           </span>
           <h2 className="font-bold text-gray-900 text-[15px]">Carrito</h2>
           {hasItems && (
@@ -69,7 +69,7 @@ export default function CartPanel({
       <div className="flex-1 overflow-y-auto px-5 py-1">
         {!hasItems ? (
           <div className="flex flex-col items-center justify-center h-40 text-gray-300 gap-2">
-            <CartAlt size="md"/>
+            <CartAlt size="md" />
             <p className="text-sm text-gray-400 font-medium">Carrito vacío</p>
           </div>
         ) : (
