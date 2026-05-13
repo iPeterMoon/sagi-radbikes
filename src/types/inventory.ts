@@ -98,6 +98,7 @@ export interface ProductFormModalProps {
       subcategoryId: string;
       mainImageIndex?: number;
       newMainImageId?: string; // ID of the new main image (when changing from original images)
+      deletedImageIds?: string[];
     },
   ) => void;
 }

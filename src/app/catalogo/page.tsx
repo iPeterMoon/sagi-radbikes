@@ -139,7 +139,7 @@ export default function InventarioPage() {
           descripcion: data.description,
           idCategoria: attributeIds?.categoryId ?? "",
           imagenesNuevas: [],
-          imagenesEliminar: [],
+          imagenesEliminar: attributeIds?.deletedImageIds ?? [],
           idImagenPrincipal: "",
           idMarca: attributeIds?.brandId ?? "",
           idSubCategoria: attributeIds?.subcategoryId ?? "",

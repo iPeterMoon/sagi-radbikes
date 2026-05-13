@@ -228,6 +228,7 @@ export default function ProductFormModal({
     { src: string; file: File }[]
   >([]);
   const [originalImages, setOriginalImages] = useState<string[]>([]);
+  const [deletedOriginalImages, setDeletedOriginalImages] = useState<string[]>([]);
   const [originalMainImage, setOriginalMainImage] = useState<string>("");
   const [productImagesData, setProductImagesData] = useState<
     Array<{ id: string; url: string; esPrincipal: boolean }>
@@ -405,6 +406,22 @@ export default function ProductFormModal({
       set("image", newList.length > 0 ? newList[0] : "");
   };
 
+  const handleRemoveOriginalImage = (indexToRemove: number) => {
+    const imageUrlToRemove = originalImages[indexToRemove];
+    const imageIdToRemove = productImagesData.find((img) => img.url === imageUrlToRemove)?.id;
+    
+    if (imageIdToRemove) {
+      setDeletedOriginalImages((prev) => [...prev, imageIdToRemove]);
+    }
+    
+    const newList = originalImages.filter((_, index) => index !== indexToRemove);
+    setOriginalImages(newList);
+    
+    if (form.image === imageUrlToRemove) {
+      set("image", newList.length > 0 ? newList[0] : (imagesList.length > 0 ? imagesList[0] : ""));
+    }
+  };
+
   const validate = (): boolean => {
     const e: Partial<Record<keyof FormState, string>> = {};
 
@@ -524,6 +541,7 @@ export default function ProductFormModal({
             subcategoryId,
             mainImageIndex,
             newMainImageId, // ID of the new main image (if changing from original images)
+            deletedImageIds: deletedOriginalImages,
           },
         ),
       );
@@ -925,6 +943,17 @@ export default function ProductFormModal({
                           }}
                         />
                       </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveOriginalImage(i);
+                        }}
+                        title="Quitar imagen"
+                        className="absolute -top-2 -right-2 z-20 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center border-2 border-white cursor-pointer shadow opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 hover:scale-110"
+                      >
+                        <IconX size={12} />
+                      </button>
                     </div>
                   );
                 })}

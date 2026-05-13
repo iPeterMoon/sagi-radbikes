@@ -125,6 +125,12 @@ export class ProductoBO implements IProductoBO {
       }
     }
 
+    if (dto.imagenesEliminar && dto.imagenesEliminar.length > 0) {
+      for (const idImagen of dto.imagenesEliminar) {
+        await this.eliminarImagen(idImagen);
+      }
+    }
+
     return ProductoMapper.toDTO(updated as any);
   }
 

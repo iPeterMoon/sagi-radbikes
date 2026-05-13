@@ -31,6 +31,11 @@ app.get("/subcategorias", (req, res) => controlador.obtenerSubCategorias(req, re
 app.post("/subcategorias", (req, res) => controlador.crearSubCategoria(req, res));
 app.get("/etiquetas",     (req, res) => controlador.obtenerEtiquetas(req, res));
 
+// Imágenes
+app.post("/productos/:id/imagenes", (req, res) => controlador.agregarImagenes(req, res));
+app.delete("/imagenes/:id", (req, res) => controlador.eliminarImagen(req, res));
+app.patch("/imagenes/:id/principal", (req, res) => controlador.establecerImagenPrincipal(req, res));
+
 app.listen(3002, () => {
   console.log("Catalog service running on :3002");
   startStockWorker();
