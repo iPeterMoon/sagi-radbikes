@@ -9,9 +9,9 @@ import ProductTable from "./components/ProductTable";
 import ProductFormModal from "./components/ProductFormModal";
 import {
   DeleteConfirmationModal,
-  SalesHistoryErrorModal,
 } from "./components/DeleteConfirmationModal";
 import StatusFeedbackModal from "./components/StatusFeedbackModal";
+import { ErrorFeedbackModal } from "./components/ErrorFeedbackModal";
 import { IconSearch, IconPlus } from "@/components/ui/Icons";
 
 /** Número de productos por página en la tabla. */
@@ -19,7 +19,6 @@ const PER_PAGE = 5;
 
 /**
  * Convierte un `ProductoDTO` del backend al modelo `Product` de la capa de presentación.
- * Algunos campos sin equivalente en el backend se inicializan con valores por defecto (TODO).
  */
 function mapDtoToProduct(dto: any): Product {
   // Find the main image (esPrincipal = true), or fall back to the first image
@@ -36,7 +35,7 @@ function mapDtoToProduct(dto: any): Product {
     subcategory: dto.subcategoria?.nombre || "",
     price: dto.precio,
     stock: dto.stock,
-    minStock: 5, // TODO: This should come from the backend
+    minStock: dto.minStock, 
     description: dto.descripcion,
     tags: (dto.etiquetas || []).map((etiqueta: any) => ({
       name: etiqueta.nombre,
@@ -44,7 +43,6 @@ function mapDtoToProduct(dto: any): Product {
     })),
     active: dto.activo ?? true,
     image: imageUrl,
-    hasSalesHistory: false, // TODO: This should come from the backend
   };
 }
 
@@ -203,11 +201,7 @@ export default function InventarioPage() {
   };
 
   const handleDelete = (product: Product) => {
-    if (product.hasSalesHistory) {
-      setModal({ type: "sales-error", product });
-    } else {
-      setModal({ type: "delete", product });
-    }
+    setModal({ type: "delete", product });
   };
 
   const confirmDelete = async () => {
@@ -217,10 +211,13 @@ export default function InventarioPage() {
       setModal({ type: "success-delete" });
       loadProducts();
     } catch (error: any) {
-      console.error("Error deleting product:", error);
-      const errorMessage = error.message || "No se pudo eliminar el producto";
-      alert(`Error: ${errorMessage}`);
-      setModal(null);
+      setModal({
+        type: "sales-history-error",
+        title: "Error de Eliminación",
+        subtitle: `No se puede eliminar '${modal.product.name}'`,
+        infoText: "Este producto tiene un historial de ventas registrado. Por integridad del sistema y cumplimiento contable, los productos con ventas asociadas no pueden ser eliminados permanentemente.",
+        suggestionText: "Puede desactivar el producto utilizando el interruptor 'Activo' en la lista del catálogo para que deje de estar disponible."
+      });
     }
   };
 
@@ -229,15 +226,14 @@ export default function InventarioPage() {
       await inventarioApi.actualizarEstado(id.toString());
       loadProducts();
     } catch (error) {
-      console.error("Error toggling product:", error);
+      console.error("Error al cambiar el estado del producto:", error);
     }
   };
 
   const filterBtnClass = (active: boolean, activeColors: string) =>
-    `px-4 py-[9px] rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-150 border outline-none ${
-      active
-        ? `border-transparent ${activeColors}`
-        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+    `px-4 py-[9px] rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-150 border outline-none ${active
+      ? `border-transparent ${activeColors}`
+      : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
     }`;
 
   return (
@@ -347,22 +343,20 @@ export default function InventarioPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${
-                    page === 1
-                      ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-                      : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
-                  }`}
+                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${page === 1
+                    ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    }`}
                 >
                   Anterior
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${
-                    page >= totalPages
-                      ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-                      : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
-                  }`}
+                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${page >= totalPages
+                    ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    }`}
                 >
                   Siguiente
                 </button>
@@ -395,9 +389,12 @@ export default function InventarioPage() {
           onConfirm={confirmDelete}
         />
       )}
-      {modal?.type === "sales-error" && (
-        <SalesHistoryErrorModal
-          product={modal.product}
+      {modal?.type === "sales-history-error" && (
+        <ErrorFeedbackModal
+          title={modal.title}
+          subtitle={modal.subtitle}
+          infoText={modal.infoText}
+          suggestionText={modal.suggestionText}
           onClose={() => setModal(null)}
         />
       )}

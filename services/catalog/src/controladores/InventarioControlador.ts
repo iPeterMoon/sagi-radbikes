@@ -123,8 +123,7 @@ export class InventarioControlador {
       const result = await this.servicio.eliminarProducto(id);
       res.json({ success: result });
     } catch (error: any) {
-      console.error("[eliminarProducto] ERROR:", error);
-      if (error.code === "P2014" || error.message.includes("Restrict")) {
+      if (error.code === "P2003" || error.message.includes("Restrict")) {
         res.status(400).json({ error: "No se puede eliminar este producto porque tiene compras asociadas." });
         return;
       }

@@ -133,8 +133,9 @@ export class ProductoBO implements IProductoBO {
    * @param id - ID del producto a eliminar
    */
   async eliminar(id: string): Promise<boolean> {
-    await this.accesoDatos.productImageDAO.deleteByProduct(BigInt(id));
     await this.accesoDatos.productDAO.delete(BigInt(id));
+    // TODO: fix temporal, deberia eliminarse automáticamente por la relación en cascada
+    await this.accesoDatos.productImageDAO.deleteByProduct(BigInt(id));
     return true;
   }
 

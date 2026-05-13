@@ -9,7 +9,7 @@ export type ModalType =
   | { type: "add" }
   | { type: "edit"; product: Product }
   | { type: "delete"; product: Product }
-  | { type: "sales-error"; product: Product }
+  | { type: "sales-history-error"; title: string; subtitle: string; infoText: string; suggestionText: string }
   | { type: "success-add"; productImage?: string }
   | { type: "success-edit"; productImage?: string }
   | { type: "success-delete" }
@@ -40,14 +40,12 @@ export interface Product {
   active: boolean;
   /** URL de la imagen principal. */
   image: string;
-  /** Indica si el producto tiene historial de ventas (bloquea eliminación). */
-  hasSalesHistory: boolean;
 }
 
 /** Datos del formulario de producto (sin campos generados por el servidor). */
 export interface ProductFormData extends Omit<
   Product,
-  "id" | "hasSalesHistory" | "image"
+  "id" | "image"
 > {
   id?: number;
 }
@@ -109,12 +107,6 @@ export interface DeleteConfirmModalProps {
   product: Product;
   onClose: () => void;
   onConfirm: () => void;
-}
-
-/** Props del modal de error por historial de ventas. */
-export interface SalesHistoryErrorModalProps {
-  product: Product;
-  onClose: () => void;
 }
 
 /** Props del modal de retroalimentación (alta o baja exitosa). */
