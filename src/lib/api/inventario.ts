@@ -4,12 +4,10 @@ import {
   MarcaDTO,
   SubCategoriaDTO,
   EtiquetaDTO,
-} from "@/backend/negocio/DTOsSalida/ProductoDTOs";
-import {
   CrearProductoDTO,
   ActualizarProductoDTO,
   FiltroProductoDTO,
-} from "@/backend/negocio/DTOsEntrada/ProductoDTOs";
+} from "@/types/dtos";
 
 /** URL base para los endpoints del inventario. */
 const API_BASE = "/api/inventario";

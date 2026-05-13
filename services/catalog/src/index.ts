@@ -1,11 +1,13 @@
 import "dotenv/config";
 import express from "express";
+import multer from "multer";
 import { CatalogoAccesoDatos } from "./datos/CatalogoAccesoDatos";
 import { ServicioInventario } from "./negocio/ServicioInventario";
 import { InventarioControlador } from "./controladores/InventarioControlador";
 import { startStockWorker } from "./queue/stockWorker";
 
 const app = express();
+const upload = multer();
 app.use(express.json());
 
 const accesoDatos = new CatalogoAccesoDatos();
@@ -32,7 +34,11 @@ app.post("/subcategorias", (req, res) => controlador.crearSubCategoria(req, res)
 app.get("/etiquetas",     (req, res) => controlador.obtenerEtiquetas(req, res));
 
 // Imágenes
-app.post("/productos/:id/imagenes", (req, res) => controlador.agregarImagenes(req, res));
+app.post(
+  "/productos/:id/imagenes",
+  upload.array("archivos"),
+  (req, res) => controlador.agregarImagenes(req, res),
+);
 app.delete("/imagenes/:id", (req, res) => controlador.eliminarImagen(req, res));
 app.patch("/imagenes/:id/principal", (req, res) => controlador.establecerImagenPrincipal(req, res));
 

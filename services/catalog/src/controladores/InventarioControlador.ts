@@ -236,8 +236,23 @@ export class InventarioControlador {
 
   async agregarImagenes(req: Request, res: Response): Promise<void> {
     try {
-      // multipart handled by a middleware like multer — forward as-is for now
-      res.status(501).json({ error: "Image upload not yet implemented in catalog service" });
+      const productoId = qs(req.params.id);
+      const archivos = (req.files ?? []) as Express.Multer.File[];
+      if (!productoId) {
+        res.status(400).json({ error: "El ID del producto es requerido" });
+        return;
+      }
+      if (archivos.length === 0) {
+        res.status(400).json({ error: "No se encontraron archivos de imagen" });
+        return;
+      }
+
+      const mainImageIndex = req.body?.mainImageIndex
+        ? Number(req.body.mainImageIndex)
+        : undefined;
+
+      await this.servicio.agregarImagenes(productoId, archivos, mainImageIndex);
+      res.status(201).json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

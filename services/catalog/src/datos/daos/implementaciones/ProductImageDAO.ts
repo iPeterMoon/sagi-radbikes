@@ -31,8 +31,11 @@ export class ProductImageDAO implements IProductImageDAO {
     return `${baseName}${extension}`;
   }
 
-  private getUniqueFileName(img: File, productId: bigint): string {
-    const safeName = this.normalizeFileName(img.name || "image");
+  private getUniqueFileName(
+    img: Express.Multer.File,
+    productId: bigint,
+  ): string {
+    const safeName = this.normalizeFileName(img.originalname || "image");
     const randomId =
       typeof globalThis !== "undefined" &&
       typeof (globalThis as any).crypto?.randomUUID === "function"
@@ -43,7 +46,7 @@ export class ProductImageDAO implements IProductImageDAO {
   }
 
   async create(
-    img: File,
+    img: Express.Multer.File,
     productId: bigint,
     isMain: boolean = false,
   ): Promise<product_images> {
@@ -51,7 +54,9 @@ export class ProductImageDAO implements IProductImageDAO {
 
     const { error: uploadError } = await this.supabase.storage
       .from(this.BUCKET_NAME)
-      .upload(fileName, img);
+      .upload(fileName, img.buffer, {
+        contentType: img.mimetype,
+      });
 
     if (uploadError) throw new Error(uploadError.message);
 

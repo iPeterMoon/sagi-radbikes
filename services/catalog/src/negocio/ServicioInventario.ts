@@ -103,7 +103,7 @@ export class ServicioInventario implements IServicioInventario {
 
   async agregarImagenes(
     idProducto: string,
-    archivos: File[],
+    archivos: Express.Multer.File[],
     mainImageIndex?: number,
   ): Promise<void> {
     return this.productoBO.agregarImagenes(

@@ -2,7 +2,7 @@ import { product_images } from "@prisma/client";
 
 export interface IProductImageDAO {
   create(
-    img: File,
+    img: Express.Multer.File,
     productId: bigint,
     isMain?: boolean,
   ): Promise<product_images>;

@@ -32,7 +32,7 @@ export interface IServicioInventario {
 
   agregarImagenes(
     idProducto: string,
-    archivos: File[],
+    archivos: Express.Multer.File[],
     mainImageIndex?: number,
   ): Promise<void>;
   eliminarImagen(idImagen: string): Promise<boolean>;

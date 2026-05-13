@@ -159,7 +159,7 @@ export class ProductoBO implements IProductoBO {
    */
   async agregarImagenes(
     idProducto: string,
-    archivos: File[],
+    archivos: Express.Multer.File[],
     mainImageIndex?: number,
   ): Promise<void> {
     for (let i = 0; i < archivos.length; i++) {

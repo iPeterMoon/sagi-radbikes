@@ -15,7 +15,7 @@ export interface CrearProductoDTO {
   /** ID de la marca del producto. */
   idMarca: string;
   /** Archivos de imagen a subir para el producto. */
-  imagenesArchivo: File[];
+  imagenesArchivo: Express.Multer.File[];
   /** ID de la subcategoría a la que pertenece. */
   idSubCategoria: string;
   /** Atributos adicionales clave-valor del producto (ej. color, talla). */
@@ -39,7 +39,7 @@ export interface ActualizarProductoDTO {
   /** Nuevo ID de categoría. */
   idCategoria: string;
   /** Nuevas imágenes a agregar. */
-  imagenesNuevas: File[];
+  imagenesNuevas: Express.Multer.File[];
   /** IDs de imágenes a eliminar. */
   imagenesEliminar: string[];
   /** ID de la imagen que será principal. */

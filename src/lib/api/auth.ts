@@ -1,5 +1,16 @@
-import { LoginDTO } from "@/backend/negocio/DTOsEntrada/LoginDTO";
-import { SesionDTO } from "@/backend/negocio/DTOsSalida/SesionDTO";
+export interface LoginDTO {
+  usuario: string;
+  contrasena: string;
+}
+
+export interface SesionDTO {
+  token: string;
+  usuario: {
+    id: string;
+    nombre: string;
+    rol: string;
+  };
+}
 
 /** URL base para los endpoints de autenticación. */
 const API_BASE = "/api/auth";
