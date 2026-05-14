@@ -1,4 +1,4 @@
-import { CatalogoAccesoDatos } from "../../datos/CatalogoAccesoDatos";
+import { ICatalogoAccesoDatos } from "../../datos/daos/interfaces/ICatalogoAccesoDatos";
 import { ICategoriaBO } from "../interfaces/ICategoriaBO";
 import { CategoriaDTO } from "../DTOsSalida";
 import { CategoriaMapper } from "../mappers/CategoriaMapper";
@@ -13,7 +13,7 @@ export class CategoriaBO implements ICategoriaBO {
    *
    * @param accesoDatos Objeto centralizado que provee acceso a los distintos DAOs del catálogo.
    */
-  constructor(private accesoDatos: CatalogoAccesoDatos) {}
+  constructor(private accesoDatos: ICatalogoAccesoDatos) {}
 
   /**
    * Recupera todas las categorías registradas en el sistema.

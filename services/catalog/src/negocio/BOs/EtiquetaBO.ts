@@ -1,4 +1,4 @@
-import { CatalogoAccesoDatos } from "../../datos/CatalogoAccesoDatos";
+import { ICatalogoAccesoDatos } from "../../datos/daos/interfaces/ICatalogoAccesoDatos";
 import { IEtiquetaBO } from "../interfaces/IEtiquetaBO";
 import { EtiquetaDTO } from "../DTOsSalida";
 import { CrearEtiquetaDTO } from "../DTOsEntrada";
@@ -14,7 +14,7 @@ export class EtiquetaBO implements IEtiquetaBO {
    *
    * @param accesoDatos Objeto centralizado que provee acceso a los distintos DAOs del catálogo.
    */
-  constructor(private accesoDatos: CatalogoAccesoDatos) {}
+  constructor(private accesoDatos: ICatalogoAccesoDatos) {}
 
   /**
    * Obtiene todas las etiquetas asociadas a un producto específico.

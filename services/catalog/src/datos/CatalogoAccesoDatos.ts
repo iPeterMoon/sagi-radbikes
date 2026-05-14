@@ -14,8 +14,9 @@ import { IBrandDAO } from "./daos/interfaces/IBrandDAO";
 import { ISubCategoryDAO } from "./daos/interfaces/ISubCategoryDAO";
 import { IProductImageDAO } from "./daos/interfaces/IProductImageDAO";
 import { ILabelDAO } from "./daos/interfaces/ILabelDAO";
+import { ICatalogoAccesoDatos } from "./daos/interfaces/ICatalogoAccesoDatos";
 
-export class CatalogoAccesoDatos {
+export class CatalogoAccesoDatos implements ICatalogoAccesoDatos {
   public readonly prisma: PrismaClient;
   public readonly supabase: SupabaseClient;
   public readonly productDAO: IProductDAO;

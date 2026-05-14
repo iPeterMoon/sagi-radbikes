@@ -1,4 +1,4 @@
-import { CatalogoAccesoDatos } from "../../datos/CatalogoAccesoDatos";
+import { ICatalogoAccesoDatos } from "../../datos/daos/interfaces/ICatalogoAccesoDatos";
 import { IProductoBO } from "../interfaces/IProductoBO";
 import {
   CrearProductoDTO,
@@ -19,7 +19,7 @@ export class ProductoBO implements IProductoBO {
    *
    * @param accesoDatos Objeto centralizado que provee acceso a los distintos DAOs del catálogo.
    */
-  constructor(private accesoDatos: CatalogoAccesoDatos) {}
+  constructor(private accesoDatos: ICatalogoAccesoDatos) {}
 
   /**
    * Obtiene todos los productos aplicando filtros opcionales.

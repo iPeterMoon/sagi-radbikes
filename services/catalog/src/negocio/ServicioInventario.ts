@@ -1,3 +1,4 @@
+import { ICatalogoAccesoDatos } from "../datos/daos/interfaces/ICatalogoAccesoDatos";
 import { CatalogoAccesoDatos } from "../datos/CatalogoAccesoDatos";
 import { IServicioInventario } from "./interfaces/IServicioInventario";
 import { IProductoBO } from "./interfaces/IProductoBO";
@@ -40,7 +41,7 @@ export class ServicioInventario implements IServicioInventario {
    *
    * @param accesoDatos Objeto encargado del acceso a la capa de datos.
    */
-  constructor(private accesoDatos: CatalogoAccesoDatos) {
+  constructor(private accesoDatos: ICatalogoAccesoDatos) {
     this.productoBO = new ProductoBO(accesoDatos);
     this.categoriaBO = new CategoriaBO(accesoDatos);
     this.marcaBO = new MarcaBO(accesoDatos);

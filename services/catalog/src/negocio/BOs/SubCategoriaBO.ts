@@ -1,4 +1,4 @@
-import { CatalogoAccesoDatos } from "../../datos/CatalogoAccesoDatos";
+import { ICatalogoAccesoDatos } from "../../datos/daos/interfaces/ICatalogoAccesoDatos";
 import { ISubCategoriaBO } from "../interfaces/ISubCategoriaBO";
 import { SubCategoriaDTO } from "../DTOsSalida";
 import { SubCategoriaMapper } from "../mappers/SubCategoriaMapper";
@@ -14,7 +14,7 @@ export class SubCategoriaBO implements ISubCategoriaBO {
    *
    * @param accesoDatos Objeto centralizado que provee acceso a los distintos DAOs del catálogo.
    */
-  constructor(private accesoDatos: CatalogoAccesoDatos) {}
+  constructor(private accesoDatos: ICatalogoAccesoDatos) {}
 
   /**
    * Obtiene todas las subcategorías registradas en el sistema sin importar su categoría padre.

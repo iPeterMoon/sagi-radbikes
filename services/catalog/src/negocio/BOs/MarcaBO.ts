@@ -1,4 +1,4 @@
-import { CatalogoAccesoDatos } from "../../datos/CatalogoAccesoDatos";
+import { ICatalogoAccesoDatos } from "../../datos/daos/interfaces/ICatalogoAccesoDatos";
 import { IMarcaBO } from "../interfaces/IMarcaBO";
 import { MarcaDTO } from "../DTOsSalida";
 import { MarcaMapper } from "../mappers/MarcaMapper";
@@ -13,7 +13,7 @@ export class MarcaBO implements IMarcaBO {
    *
    * @param accesoDatos Objeto centralizado que provee acceso a los distintos DAOs del catálogo.
    */
-  constructor(private accesoDatos: CatalogoAccesoDatos) {}
+  constructor(private accesoDatos: ICatalogoAccesoDatos) {}
 
   /**
    * Recupera todas las marcas registradas en el sistema.
