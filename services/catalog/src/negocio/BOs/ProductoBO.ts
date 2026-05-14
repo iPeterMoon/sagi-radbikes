@@ -4,8 +4,8 @@ import {
   CrearProductoDTO,
   ActualizarProductoDTO,
   FiltroProductoDTO,
-} from "../DTOsEntrada/ProductoDTOs";
-import { ProductoDTO } from "../DTOsSalida/ProductoDTOs";
+} from "../DTOsEntrada";
+import { ProductoDTO } from "../DTOsSalida";
 import { ProductoMapper } from "../mappers/ProductoMapper";
 
 /**
@@ -14,11 +14,18 @@ import { ProductoMapper } from "../mappers/ProductoMapper";
  * consulta, creación, actualización, eliminación, imágenes y stock.
  */
 export class ProductoBO implements IProductoBO {
+  /**
+   * Constructor de la clase ProductoBO.
+   *
+   * @param accesoDatos Objeto centralizado que provee acceso a los distintos DAOs del catálogo.
+   */
   constructor(private accesoDatos: CatalogoAccesoDatos) {}
 
   /**
    * Obtiene todos los productos aplicando filtros opcionales.
-   * @param filtro - Criterios de búsqueda (texto, categoría, marca, rango de precios)
+   *
+   * @param filtro Criterios de búsqueda (texto, categoría, marca, rango de precios).
+   * @returns Un arreglo que contiene los DTOs de los productos que coinciden con los filtros.
    */
   async obtenerTodos(filtro: FiltroProductoDTO): Promise<ProductoDTO[]> {
     const categoriaId = filtro.idCategoria ? BigInt(filtro.idCategoria) : null;
@@ -35,7 +42,9 @@ export class ProductoBO implements IProductoBO {
 
   /**
    * Obtiene un producto por su identificador, incluyendo imágenes y relaciones.
-   * @param id - ID del producto como string
+   *
+   * @param id ID del producto como string.
+   * @returns El DTO del producto encontrado o nulo si no existe.
    */
   async obtenerPorId(id: string): Promise<ProductoDTO | null> {
     const producto = await this.accesoDatos.productDAO.getById(BigInt(id), {
@@ -47,6 +56,12 @@ export class ProductoBO implements IProductoBO {
     return producto ? ProductoMapper.toDTO(producto as any) : null;
   }
 
+  /**
+   * Recupera todos los productos que pertenecen a una categoría específica.
+   *
+   * @param idCategoria El identificador único de la categoría en formato string.
+   * @returns Un arreglo con los DTOs de los productos de dicha categoría.
+   */
   async obtenerPorCategoria(idCategoria: string): Promise<ProductoDTO[]> {
     const productos = await this.accesoDatos.productDAO.getByCategory(
       BigInt(idCategoria),
@@ -54,6 +69,12 @@ export class ProductoBO implements IProductoBO {
     return productos.map((p) => ProductoMapper.toDTO(p as any));
   }
 
+  /**
+   * Obtiene una lista de productos cuyo stock actual es menor al umbral especificado.
+   *
+   * @param umbral Cantidad mínima de stock de referencia.
+   * @returns Un arreglo de DTOs de productos con bajo inventario.
+   */
   async obtenerPorStockDebajoDe(umbral: number): Promise<ProductoDTO[]> {
     const productos = await this.accesoDatos.productDAO.getBelowStock(umbral);
     return productos.map((p) => ProductoMapper.toDTO(p as any));
@@ -62,7 +83,9 @@ export class ProductoBO implements IProductoBO {
   /**
    * Crea un nuevo producto generando un SKU único automáticamente.
    * Si el DTO incluye etiquetas, las asocia al producto creado.
-   * @param dto - Datos del nuevo producto
+   *
+   * @param dto Datos del nuevo producto.
+   * @returns El DTO del producto recién creado y registrado.
    */
   async crear(dto: CrearProductoDTO): Promise<ProductoDTO> {
     const sku = `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -96,7 +119,9 @@ export class ProductoBO implements IProductoBO {
   /**
    * Actualiza los datos de un producto existente.
    * Reemplaza completamente las etiquetas si se proveen en el DTO.
-   * @param dto - Datos actualizados del producto, incluyendo su ID
+   *
+   * @param dto Datos actualizados del producto, incluyendo su ID.
+   * @returns El DTO del producto con su información actualizada.
    */
   async actualizar(dto: ActualizarProductoDTO): Promise<ProductoDTO> {
     const entity = {
@@ -136,7 +161,9 @@ export class ProductoBO implements IProductoBO {
 
   /**
    * Elimina un producto y todas sus imágenes asociadas.
-   * @param id - ID del producto a eliminar
+   *
+   * @param id ID del producto a eliminar en formato string.
+   * @returns Un valor booleano confirmando la eliminación exitosa.
    */
   async eliminar(id: string): Promise<boolean> {
     await this.accesoDatos.productDAO.delete(BigInt(id));
@@ -145,6 +172,13 @@ export class ProductoBO implements IProductoBO {
     return true;
   }
 
+  /**
+   * Disminuye la cantidad de stock disponible de un producto específico.
+   *
+   * @param id El identificador único del producto.
+   * @param cantidad La cantidad de unidades que se restarán del inventario actual.
+   * @returns Un valor booleano indicando si la operación fue exitosa.
+   */
   async restarStock(id: string, cantidad: number): Promise<boolean> {
     return await this.accesoDatos.productDAO.decreaseStock(
       BigInt(id),
@@ -154,8 +188,11 @@ export class ProductoBO implements IProductoBO {
 
   /**
    * Sube y asocia nuevas imágenes a un producto en Supabase Storage.
-   * @param idProducto - ID del producto destino
-   * @param archivos - Archivos de imagen a subir
+   *
+   * @param idProducto ID del producto destino.
+   * @param archivos Archivos de imagen a subir provenientes de Multer.
+   * @param mainImageIndex Índice opcional que indica cuál de los archivos es la imagen principal.
+   * @returns Promesa vacía que se resuelve al terminar la subida y asociación de imágenes.
    */
   async agregarImagenes(
     idProducto: string,
@@ -172,15 +209,33 @@ export class ProductoBO implements IProductoBO {
     }
   }
 
+  /**
+   * Elimina una imagen específica del producto, tanto de la base de datos como del Storage.
+   *
+   * @param idImagen El identificador único de la imagen a eliminar.
+   * @returns Un valor booleano indicando que la eliminación fue exitosa.
+   */
   async eliminarImagen(idImagen: string): Promise<boolean> {
     await this.accesoDatos.productImageDAO.delete(BigInt(idImagen));
     return true;
   }
 
+  /**
+   * Establece una imagen existente como la imagen principal representativa del producto.
+   *
+   * @param idImagen El identificador único de la imagen que será la principal.
+   * @returns Un valor booleano indicando que la actualización fue exitosa.
+   */
   async establecerImagenPrincipal(idImagen: string): Promise<boolean> {
     return await this.accesoDatos.productImageDAO.setMain(BigInt(idImagen));
   }
 
+  /**
+   * Alterna el estado de activación de un producto (de activo a inactivo o viceversa).
+   *
+   * @param id El identificador único del producto.
+   * @returns Un valor booleano confirmando si la actualización de estado fue exitosa.
+   */
   async actualizarEstado(id: string): Promise<boolean> {
     const producto = await this.accesoDatos.productDAO.getById(BigInt(id));
     if (!producto) return false;

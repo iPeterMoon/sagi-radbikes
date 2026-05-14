@@ -1,5 +1,5 @@
 import { product_images } from "@prisma/client";
-import { ImagenProductoDTO } from "../DTOsSalida/ProductoDTOs";
+import { ImagenProductoDTO } from "../DTOsSalida";
 
 /**
  * Mapper de imagen de producto.

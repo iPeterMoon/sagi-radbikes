@@ -1,5 +1,5 @@
 import { brands } from "@prisma/client";
-import { MarcaDTO } from "../DTOsSalida/ProductoDTOs";
+import { MarcaDTO } from "../DTOsSalida";
 
 /**
  * Mapper de marca de producto.

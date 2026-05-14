@@ -1,5 +1,5 @@
 import { subcategory } from "@prisma/client";
-import { SubCategoriaDTO } from "../DTOsSalida/ProductoDTOs";
+import { SubCategoriaDTO } from "../DTOsSalida";
 
 /**
  * Mapper de subcategoría de producto.

@@ -8,16 +8,22 @@ import { BrandDAO } from "./daos/implementaciones/BrandDAO";
 import { SubCategoryDAO } from "./daos/implementaciones/SubCategoryDAO";
 import { ProductImageDAO } from "./daos/implementaciones/ProductImageDAO";
 import { LabelDAO } from "./daos/implementaciones/LabelDAO";
+import { IProductDAO } from "./daos/interfaces/IProductDAO";
+import { ICategoryDAO } from "./daos/interfaces/ICategoryDAO";
+import { IBrandDAO } from "./daos/interfaces/IBrandDAO";
+import { ISubCategoryDAO } from "./daos/interfaces/ISubCategoryDAO";
+import { IProductImageDAO } from "./daos/interfaces/IProductImageDAO";
+import { ILabelDAO } from "./daos/interfaces/ILabelDAO";
 
 export class CatalogoAccesoDatos {
   public readonly prisma: PrismaClient;
   public readonly supabase: SupabaseClient;
-  public readonly productDAO: ProductDAO;
-  public readonly categoryDAO: CategoryDAO;
-  public readonly brandDAO: BrandDAO;
-  public readonly subCategoryDAO: SubCategoryDAO;
-  public readonly productImageDAO: ProductImageDAO;
-  public readonly labelDAO: LabelDAO;
+  public readonly productDAO: IProductDAO;
+  public readonly categoryDAO: ICategoryDAO;
+  public readonly brandDAO: IBrandDAO;
+  public readonly subCategoryDAO: ISubCategoryDAO;
+  public readonly productImageDAO: IProductImageDAO;
+  public readonly labelDAO: ILabelDAO;
 
   constructor() {
     this.prisma = PrismaFactory.getCliente();

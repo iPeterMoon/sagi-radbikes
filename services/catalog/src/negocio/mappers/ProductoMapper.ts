@@ -1,6 +1,6 @@
 import { products, product_images, subcategory, brands, product_physical, categories } from "@prisma/client";
 import { EstadoStock } from "../enums/EstadoStock";
-import { ProductoDTO } from "../DTOsSalida/ProductoDTOs";
+import { ProductoDTO } from "../DTOsSalida";
 import { ImagenProductoMapper } from "./ImagenProductoMapper";
 import { CategoriaMapper } from "./CategoriaMapper";
 import { MarcaMapper } from "./MarcaMapper";

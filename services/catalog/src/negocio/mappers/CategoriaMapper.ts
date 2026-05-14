@@ -1,5 +1,5 @@
 import { categories } from "@prisma/client";
-import { CategoriaDTO } from "../DTOsSalida/ProductoDTOs";
+import { CategoriaDTO } from "../DTOsSalida";
 
 /**
  * Mapper de categoría.

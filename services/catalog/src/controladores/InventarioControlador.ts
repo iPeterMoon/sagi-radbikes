@@ -10,12 +10,12 @@ import {
   CrearProductoDTO,
   ActualizarProductoDTO,
   FiltroProductoDTO,
-} from "../negocio/DTOsEntrada/ProductoDTOs";
+} from "../negocio/DTOsEntrada";
 import {
   CategoriaDTO,
   MarcaDTO,
   SubCategoriaDTO,
-} from "../negocio/DTOsSalida/ProductoDTOs";
+} from "../negocio/DTOsSalida";
 import { PrismaFactory } from "../datos/PrismaFactory";
 
 (BigInt.prototype as any).toJSON = function () {

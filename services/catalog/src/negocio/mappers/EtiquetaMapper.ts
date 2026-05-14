@@ -1,6 +1,6 @@
 import { product_physical } from "@prisma/client";
-import { EtiquetaDTO } from "../DTOsSalida/ProductoDTOs";
-import { CrearEtiquetaDTO } from "../DTOsEntrada/ProductoDTOs";
+import { EtiquetaDTO } from "../DTOsSalida";
+import { CrearEtiquetaDTO } from "../DTOsEntrada";
 
 /**
  * Mapper de etiqueta (atributo físico) de producto.
