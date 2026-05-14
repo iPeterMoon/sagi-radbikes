@@ -4,7 +4,6 @@ import React from "react";
 import Image from "next/image";
 import {
   DeleteConfirmModalProps,
-  SalesHistoryErrorModalProps,
 } from "@/types/inventory";
 import { IconDeleteBig, IconWarning } from "@/components/ui/Icons";
 
@@ -88,36 +87,3 @@ export function DeleteConfirmationModal({
   );
 }
 
-export function SalesHistoryErrorModal({
-  product,
-  onClose,
-}: SalesHistoryErrorModalProps) {
-  return (
-    <Overlay onClose={onClose}>
-      <div className="bg-white rounded-2xl w-[min(96vw,380px)] px-7 py-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
-        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4 text-red-500">
-          <IconWarning />
-        </div>
-
-        <h2 className="text-lg font-bold text-gray-900 mb-2">
-          No se puede eliminar
-        </h2>
-        <p className="text-[13px] text-gray-500 leading-relaxed mb-5">
-          El producto <strong>&apos;{product.name}&apos;</strong> tiene un
-          historial de ventas asociado y no puede ser eliminado.
-          <br />
-          <br />
-          Te sugerimos usar el interruptor <strong>Activo</strong> para
-          desactivarlo del catálogo.
-        </p>
-
-        <button
-          onClick={onClose}
-          className="w-full p-2.5 rounded-lg border-none bg-blue-600 text-white cursor-pointer text-sm font-semibold hover:bg-blue-700 transition-colors"
-        >
-          Entendido
-        </button>
-      </div>
-    </Overlay>
-  );
-}

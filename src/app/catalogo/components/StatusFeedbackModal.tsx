@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/Icons";
 
 interface StatusFeedbackModalProps {
-  type: "add" | "edit" | "delete";
+  type: "add" | "edit";
   onClose: () => void;
   onContinue?: () => void;
   productImage?: string;
@@ -18,7 +18,7 @@ interface StatusFeedbackModalProps {
 /**
  * Modal de retroalimentación de estado.
  * Se muestra tras agregar o eliminar un producto exitosamente.
- * El tipo "add" incluye una imagen de portada; el tipo "delete" usa un icono simple.
+ * El tipo "add" incluye una imagen de portada;
  */
 export default function StatusFeedbackModal({
   type,
