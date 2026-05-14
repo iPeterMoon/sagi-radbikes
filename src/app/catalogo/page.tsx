@@ -129,6 +129,7 @@ export default function InventarioPage() {
       subcategoryId: string;
       mainImageIndex?: number;
       newMainImageId?: string;
+      deletedImageIds?: string[];
     },
   ) => {
     try {
