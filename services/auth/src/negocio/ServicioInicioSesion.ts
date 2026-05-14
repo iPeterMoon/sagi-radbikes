@@ -1,4 +1,4 @@
-import { AuthAccesoDatos } from "../datos/AuthAccesoDatos";
+import { IAuthAccesoDatos } from "../datos/IAuthAccesoDatos";
 import { IServicioInicioSesion } from "./IServicioInicioSesion";
 import { UsuarioBO } from "./BOs/UsuarioBO";
 import { LoginDTO } from "./DTOsEntrada/LoginDTO";
@@ -12,7 +12,7 @@ import { SesionDTO } from "./DTOsSalida/SesionDTO";
 export class ServicioInicioSesion implements IServicioInicioSesion {
   private readonly usuarioBO: UsuarioBO;
 
-  constructor(accesoDatos: AuthAccesoDatos) {
+  constructor(accesoDatos: IAuthAccesoDatos) {
     this.usuarioBO = new UsuarioBO(accesoDatos);
   }
 

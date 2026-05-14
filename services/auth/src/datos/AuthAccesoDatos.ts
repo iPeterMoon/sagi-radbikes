@@ -2,8 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaFactory } from "./PrismaFactory";
 import { UsuarioDAO } from "./daos/implementaciones/UsuarioDAO";
 import { UsuarioRolDAO } from "./daos/implementaciones/UsuarioRolDAO";
+import { IAuthAccesoDatos } from "./IAuthAccesoDatos";
 
-export class AuthAccesoDatos {
+export class AuthAccesoDatos implements IAuthAccesoDatos {
   public readonly prisma: PrismaClient;
   public readonly usuarioDAO: UsuarioDAO;
   public readonly usuarioRolDAO: UsuarioRolDAO;
