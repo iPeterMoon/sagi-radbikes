@@ -1,5 +1,6 @@
 import { IAuthAccesoDatos } from "../datos/IAuthAccesoDatos";
 import { IServicioInicioSesion } from "./IServicioInicioSesion";
+import { IUsuarioBO } from "./interfaces/IUsuarioBO";
 import { UsuarioBO } from "./BOs/UsuarioBO";
 import { LoginDTO } from "./DTOsEntrada/LoginDTO";
 import { UsuarioDTO } from "./DTOsSalida/UsuarioDTO";
@@ -10,7 +11,7 @@ import { SesionDTO } from "./DTOsSalida/SesionDTO";
  * Actua como fachada delegando en {@link UsuarioBO} las operaciones de autenticación.
  */
 export class ServicioInicioSesion implements IServicioInicioSesion {
-  private readonly usuarioBO: UsuarioBO;
+  private readonly usuarioBO: IUsuarioBO;
 
   constructor(accesoDatos: IAuthAccesoDatos) {
     this.usuarioBO = new UsuarioBO(accesoDatos);

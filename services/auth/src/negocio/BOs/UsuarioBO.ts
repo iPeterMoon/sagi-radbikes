@@ -7,6 +7,7 @@ import { UsuarioDTO } from "../DTOsSalida/UsuarioDTO";
 import { SesionDTO } from "../DTOsSalida/SesionDTO";
 import { UsuarioMapper } from "../mappers/UsuarioMapper";
 import { PasswordEncoder } from "../PasswordEncoder";
+import { IUsuarioBO } from "../interfaces/IUsuarioBO";
 
 /** Clave secreta para firmar y verificar JWT. Configurable via JWT_SECRET. */
 const JWT_SECRET = process.env.JWT_SECRET || "default-secret-key";
@@ -24,7 +25,7 @@ const TOKEN_EXPIRATION_SECONDS = SAFE_SESSION_TIMEOUT_HOURS * 60 * 60;
  * Business Object de usuario.
  * Maneja autenticación, generación de JWT y validación de tokens.
  */
-export class UsuarioBO {
+export class UsuarioBO implements IUsuarioBO {
   constructor(private accesoDatos: AuthAccesoDatos) {}
 
   /**
