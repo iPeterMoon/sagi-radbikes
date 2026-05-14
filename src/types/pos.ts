@@ -51,6 +51,7 @@ export interface VentaResumenDTO {
   pago: PagoDTO;
 }
 
+/** Error ocurrido durante el checkout en el Punto de Venta. */
 export interface CheckoutError {
   error: string;
   detalles?: { producto: string; solicitado: number; disponible: number }[];

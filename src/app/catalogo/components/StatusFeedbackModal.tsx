@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/Icons";
 
 interface StatusFeedbackModalProps {
-  type: "add" | "edit";
+  type: "add" | "edit" | "delete";
   onClose: () => void;
   onContinue?: () => void;
   productImage?: string;

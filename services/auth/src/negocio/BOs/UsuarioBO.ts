@@ -1,7 +1,5 @@
 import jwt from "jsonwebtoken";
 import { AuthAccesoDatos } from "../../datos/AuthAccesoDatos";
-import { IUsuarioDAO } from "../../datos/daos/interfaces/IUsuarioDAO";
-import { IUsuarioRolDAO } from "../../datos/daos/interfaces/IUsuarioRolDAO";
 import { LoginDTO } from "../DTOsEntrada/LoginDTO";
 import { UsuarioDTO } from "../DTOsSalida/UsuarioDTO";
 import { SesionDTO } from "../DTOsSalida/SesionDTO";

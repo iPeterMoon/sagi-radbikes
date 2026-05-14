@@ -16,6 +16,12 @@ import { IProductImageDAO } from "./daos/interfaces/IProductImageDAO";
 import { ILabelDAO } from "./daos/interfaces/ILabelDAO";
 import { ICatalogoAccesoDatos } from "./daos/interfaces/ICatalogoAccesoDatos";
 
+/**
+ * Implementación concreta de la interfaz ICatalogoAccesoDatos.
+ * Esta clase centraliza el acceso a la base de datos y almacenamiento,
+ * y proporciona instancias de todos los DAOs necesarios para gestionar
+ * el catálogo de productos, categorías, marcas, subcategorías, imágenes y etiquetas.
+ */
 export class CatalogoAccesoDatos implements ICatalogoAccesoDatos {
   public readonly prisma: PrismaClient;
   public readonly supabase: SupabaseClient;
@@ -26,6 +32,10 @@ export class CatalogoAccesoDatos implements ICatalogoAccesoDatos {
   public readonly productImageDAO: IProductImageDAO;
   public readonly labelDAO: ILabelDAO;
 
+  /**
+   * Constructor de la clase CatalogoAccesoDatos.
+   * Inicializa el cliente de Prisma, el cliente de Supabase y todas las instancias de los DAOs.
+   */
   constructor() {
     this.prisma = PrismaFactory.getCliente();
     this.supabase = SupabaseFactory.getCliente();

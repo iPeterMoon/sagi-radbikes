@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * Manejador para la ruta POST /api/auth/login. Recibe las credenciales del usuario en el cuerpo de la solicitud,
+ * las envía al servicio de autenticación y, si la autenticación es exitosa, devuelve una respuesta con el token JWT
+ * en una cookie. Si la autenticación falla, devuelve un error con el mensaje correspondiente.
+ */
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const res = await fetch(`${process.env.AUTH_SERVICE_URL}/login`, {

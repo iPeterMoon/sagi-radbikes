@@ -6,6 +6,12 @@ import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 import { authApi } from "@/lib/api/auth";
 
+/**
+ * Layout del módulo de Catálogo.
+ * Renderiza la barra lateral de navegación y la barra superior.
+ * Valida la sesión del usuario y redirige a login si no está autenticado.
+ * @param children - Contenido que se renderizará en el área principal
+ */
 export default function CatalogoLayout({
   children,
 }: {

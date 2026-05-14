@@ -46,6 +46,10 @@ function mapDtoToProduct(dto: any): Product {
   };
 }
 
+/**
+ * Página de Catálogo de Inventario.
+ * Permite listar, buscar, filtrar, crear, editar y eliminar productos.
+ */
 export default function InventarioPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<

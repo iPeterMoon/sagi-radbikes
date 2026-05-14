@@ -14,6 +14,10 @@ import ProductGrid from "./components/ProductGrid";
 import CartPanel from "./components/CartPanel";
 import SuccessModal from "./components/SuccessModal";
 
+/**
+ * Página del Punto de Venta (POS).
+ * Interfaz para realizar ventas: búsqueda de productos, gestión de carrito, checkout y procesamiento de pagos.
+ */
 export default function POSPage() {
   const [products, setProducts] = useState<POSProduct[]>([]);
   const [loading, setLoading] = useState(true);

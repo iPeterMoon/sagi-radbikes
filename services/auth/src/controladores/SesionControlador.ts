@@ -3,14 +3,31 @@ import { IServicioInicioSesion } from "../negocio/IServicioInicioSesion";
 import { LoginDTO } from "../negocio/DTOsEntrada/LoginDTO";
 import { serializarJsonSeguro } from "../utils/serializarJson";
 
+/**
+ * Controlador de sesión que maneja las rutas relacionadas con la autenticación de usuarios.
+ * Utiliza el servicio de inicio de sesión para realizar las operaciones de autenticación,
+ * generación de tokens y validación de sesiones.
+ */
 const SESSION_TIMEOUT_HOURS = Number(process.env.SESSION_TIMEOUT_HOURS || "24");
+/**
+ * Duración de sesión validada: mínimo 1 hora, default 24 h. Si SESSION_TIMEOUT_HOURS es inválido, se usará 24 horas.
+ * Este valor se utiliza para configurar la expiración del token JWT y la cookie de sesión.
+ */
 const SAFE_SESSION_TIMEOUT_HOURS =
   Number.isFinite(SESSION_TIMEOUT_HOURS) && SESSION_TIMEOUT_HOURS > 0
     ? SESSION_TIMEOUT_HOURS : 24;
 
+/**
+ * Controlador de sesión que maneja las rutas relacionadas con la autenticación de usuarios.
+ * Utiliza el servicio de inicio de sesión para realizar las operaciones de autenticación,
+ * generación de tokens y validación de sesiones.
+ */
 export class SesionControlador {
-  constructor(private servicio: IServicioInicioSesion) {}
+  constructor(private servicio: IServicioInicioSesion) { }
 
+  /**
+   * Maneja la solicitud de inicio de sesión. Recibe las credenciales del usuario, delega la autenticación al servicio y, si es exitosa, establece una cookie con el token JWT y devuelve los datos de sesión.
+   */
   async iniciarSesion(req: Request, res: Response): Promise<void> {
     try {
       const dto: LoginDTO = req.body;
@@ -30,6 +47,9 @@ export class SesionControlador {
     }
   }
 
+  /**
+   * Maneja la solicitud de cierre de sesión. Invalida el token JWT y elimina la cookie de sesión.
+   */
   async cerrarSesion(req: Request, res: Response): Promise<void> {
     try {
       const token =
@@ -43,6 +63,9 @@ export class SesionControlador {
     }
   }
 
+  /**
+   * Maneja la solicitud de validación de token. Verifica la validez del token JWT y devuelve los datos del usuario autenticado.
+   */
   async validar(req: Request, res: Response): Promise<void> {
     try {
       const token =

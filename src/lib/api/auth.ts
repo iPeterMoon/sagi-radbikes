@@ -1,8 +1,10 @@
+/** DTO con credenciales de inicio de sesión. */
 export interface LoginDTO {
   usuario: string;
   contrasena: string;
 }
 
+/** DTO con información de sesión activa. */
 export interface SesionDTO {
   token: string;
   usuario: {

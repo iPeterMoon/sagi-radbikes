@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * Función auxiliar para manejar las solicitudes GET, PUT, PATCH y DELETE a la ruta /api/inventario/productos/[id]. 
+ * Recibe la solicitud, el método HTTP y el ID del producto, envía una solicitud al servicio de catálogos con los 
+ * datos correspondientes y devuelve la respuesta con el resultado de la operación.
+ */
 async function proxyWithId(req: NextRequest, method: string, id: string) {
   const search = req.nextUrl.search;
-  
+
   const headers: HeadersInit = {};
   const contentType = req.headers.get("content-type");
   if (contentType) headers["Content-Type"] = contentType;
@@ -25,7 +30,7 @@ async function proxyWithId(req: NextRequest, method: string, id: string) {
 
   // PATCH, PUT go to /productos in catalog service according to backend index.ts mappings
   // Except DELETE goes to /productos/:id
-  const targetUrl = method === "GET" || method === "DELETE" 
+  const targetUrl = method === "GET" || method === "DELETE"
     ? `${process.env.CATALOG_SERVICE_URL}/productos/${id}${search}`
     : `${process.env.CATALOG_SERVICE_URL}/productos${search}`;
 

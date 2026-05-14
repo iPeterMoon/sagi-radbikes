@@ -11,6 +11,11 @@ import {
 import Image from "next/image";
 import { authApi } from "@/lib/api/auth";
 
+/**
+ * Página de Inicio de Sesión.
+ * Formulario para autenticar usuarios con nombre de usuario y contraseña.
+ * Incluye validaciones, manejo de errores y redirección post-login.
+ */
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");

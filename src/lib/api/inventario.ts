@@ -98,6 +98,10 @@ export const inventarioApi = {
     });
   },
 
+  /**
+   * Actualiza el estado de visibilidad de un producto (activo/inactivo).
+   * @param id - ID del producto
+   */
   async actualizarEstado(id: string): Promise<boolean> {
     return fetchApi<boolean>(`${API_BASE}/productos/${id}`, {
       method: "PATCH",
@@ -160,6 +164,7 @@ export const inventarioApi = {
    * Sube nuevas imágenes para un producto.
    * @param idProducto - ID del producto destino
    * @param archivos - Archivos de imagen a subir
+   * @param mainImageIndex - Índice del archivo que será la imagen principal
    */
   async agregarImagenes(
     idProducto: string,
@@ -185,6 +190,10 @@ export const inventarioApi = {
     });
   },
 
+  /**
+   * Establece la imagen principal de un producto.
+   * @param idImagen - ID de la imagen a establecer como principal
+   */
   async establecerImagenPrincipal(idImagen: string): Promise<boolean> {
     return fetchApi<boolean>(`${API_BASE}/imagenes/${idImagen}/principal`, {
       method: "PATCH",
@@ -196,7 +205,10 @@ export const inventarioApi = {
     return fetchApi<EtiquetaDTO[]>(`${API_BASE}/etiquetas/${idProducto}`);
   },
 
-  /** Crea una nueva etiqueta asociada a un producto. */
+  /**
+   * Crea una nueva etiqueta (atributo clave-valor) asociada a un producto.
+   * @param etiqueta - Datos de la etiqueta a crear
+   */
   async crearEtiqueta(
     etiqueta: CrearEtiquetaDTO,
   ): Promise<EtiquetaDTO> {

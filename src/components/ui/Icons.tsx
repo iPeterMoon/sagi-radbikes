@@ -1,3 +1,4 @@
+/** Props para los componentes de iconos. */
 interface IconProps {
   className?: string;
   size?: number;
@@ -8,6 +9,7 @@ const base = (size: number) => ({
   height: size,
 });
 
+/** Icono de Dashboard (cuadrícula). */
 export function IconDashboard({ size = 18 }: IconProps) {
   return (
     <svg
@@ -25,6 +27,7 @@ export function IconDashboard({ size = 18 }: IconProps) {
   );
 }
 
+/** Icono de Catálogo (libro). */
 export function IconCatalog({ size = 18 }: IconProps) {
   return (
     <svg
@@ -40,6 +43,7 @@ export function IconCatalog({ size = 18 }: IconProps) {
   );
 }
 
+/** Icono de Punto de Venta (carrito de compras). */
 export function IconPOS({ size = 18 }: IconProps) {
   return (
     <svg
@@ -56,6 +60,7 @@ export function IconPOS({ size = 18 }: IconProps) {
   );
 }
 
+/** Icono de Reportes (gráfico de barras). */
 export function IconReports({ size = 18 }: IconProps) {
   return (
     <svg
@@ -72,6 +77,7 @@ export function IconReports({ size = 18 }: IconProps) {
   );
 }
 
+/** Icono de Cerrar Sesión (salida). */
 export function IconLogout({ size = 18 }: IconProps) {
   return (
     <svg
@@ -88,6 +94,7 @@ export function IconLogout({ size = 18 }: IconProps) {
   );
 }
 
+/** Icono de Búsqueda (lupa). */
 export function IconSearch({ size = 16 }: IconProps) {
   return (
     <svg
@@ -103,6 +110,7 @@ export function IconSearch({ size = 16 }: IconProps) {
   );
 }
 
+/** Icono de Editar (lápiz). */
 export function IconEdit({ size = 15 }: IconProps) {
   return (
     <svg
@@ -118,6 +126,7 @@ export function IconEdit({ size = 15 }: IconProps) {
   );
 }
 
+/** Icono de Eliminar (papelera de basura). */
 export function IconTrash({ size = 15 }: IconProps) {
   return (
     <svg
@@ -134,6 +143,7 @@ export function IconTrash({ size = 15 }: IconProps) {
   );
 }
 
+/** Icono de Confirmación (marca de verificación). */
 export function IconCheck({ size = 32 }: IconProps) {
   return (
     <svg
