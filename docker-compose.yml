@@ -5,6 +5,27 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
+  gateway-service:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./services/gateway:/app
+      - /app/node_modules
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - CATALOG_SERVICE_URL=http://catalog-service:3002
+      - POS_SERVICE_URL=http://pos-service:3003
+      - FRONTEND_URL=http://localhost:3000
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - auth-service
+      - catalog-service
+      - pos-service
+    restart: unless-stopped
+
   frontend:
     image: node:22-alpine
     working_dir: /app
@@ -15,14 +36,13 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - AUTH_SERVICE_URL=http://auth-service:3001
-      - CATALOG_SERVICE_URL=http://catalog-service:3002
-      - POS_SERVICE_URL=http://pos-service:3003
+      - AUTH_SERVICE_URL=http://gateway-service:8080/auth
+      - CATALOG_SERVICE_URL=http://gateway-service:8080/catalog
+      - POS_SERVICE_URL=http://gateway-service:8080/pos
     command: sh -c "npm install && npm run postinstall && npm run dev -- -H 0.0.0.0"
     depends_on:
       - redis
-      - auth-service
-      - catalog-service
+      - gateway-service
     restart: unless-stopped
 
   auth-service:
@@ -31,8 +51,6 @@ services:
     volumes:
       - ./services/auth:/app
       - /app/node_modules
-    ports:
-      - "3001:3001"
     environment:
       - NODE_ENV=development
       - DATABASE_URL=${DATABASE_URL}
@@ -48,8 +66,6 @@ services:
     volumes:
       - ./services/catalog:/app
       - /app/node_modules
-    ports:
-      - "3002:3002"
     environment:
       - NODE_ENV=development
       - DATABASE_URL=${DATABASE_URL}
@@ -66,8 +82,6 @@ services:
     volumes:
       - ./services/pos:/app
       - /app/node_modules
-    ports:
-      - "3003:3003"
     environment:
       - NODE_ENV=development
       - DATABASE_URL=${DATABASE_URL}
