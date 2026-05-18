@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   CartItem,
   PaymentMethod,
@@ -19,6 +20,7 @@ import SuccessModal from "./components/SuccessModal";
  * Interfaz para realizar ventas: búsqueda de productos, gestión de carrito, checkout y procesamiento de pagos.
  */
 export default function POSPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<POSProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -32,6 +34,25 @@ export default function POSPage() {
   const [ventaResumen, setVentaResumen] = useState<VentaResumenDTO | null>(
     null,
   );
+
+  /**
+   * Función auxiliar para manejar errores de autenticación.
+   * Si el error contiene "Unauthorized" o "No token provided", redirige al login.
+   */
+  const handleAuthError = (error: any): boolean => {
+    const errorMessage = error?.error || error?.message || "";
+    if (
+      errorMessage.includes("Unauthorized") ||
+      errorMessage.includes("No token provided")
+    ) {
+      // Limpiar la cookie de token
+      document.cookie =
+        "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+      router.replace("/login");
+      return true;
+    }
+    return false;
+  };
 
   // ── Fetch products from POS service ──
   useEffect(() => {
@@ -61,7 +82,11 @@ export default function POSPage() {
           setProducts(mapped);
         },
       )
-      .catch(console.error)
+      .catch((err) => {
+        if (!handleAuthError(err)) {
+          console.error("Error loading products:", err);
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -158,6 +183,9 @@ export default function POSPage() {
       });
       if (!res.ok) {
         const err = await res.json();
+        if (handleAuthError(err)) {
+          return;
+        }
         setCheckoutError(err);
         return;
       }

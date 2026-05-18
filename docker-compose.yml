@@ -1,19 +1,28 @@
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    environment:
+      - DOCKER_API_VERSION=1.44
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
+      - "--log.level=DEBUG"              # Útil para debug
     ports:
       - "80:80"
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik
 
   redis:
     image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     healthcheck:
@@ -21,10 +30,12 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-    restart: unless-stopped
+    networks:
+      - traefik
 
   gateway-service:
     image: node:22-alpine
+    container_name: gateway-service
     working_dir: /app
     volumes:
       - ./services/gateway:/app
@@ -44,16 +55,16 @@ services:
       - FRONTEND_URL=http://localhost
     command: sh -c "npm install && npm run dev"
     depends_on:
-      auth-service:
-        condition: service_started
-      catalog-service:
-        condition: service_started
-      pos-service:
-        condition: service_started
+      - auth-service
+      - catalog-service
+      - pos-service
     restart: unless-stopped
+    networks:
+      - traefik
 
   frontend:
     image: node:22-alpine
+    container_name: frontend
     working_dir: /app
     volumes:
       - .:/app
@@ -67,19 +78,20 @@ services:
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
     environment:
       - NODE_ENV=development
-      - AUTH_SERVICE_URL=http://api.localhost/auth
-      - CATALOG_SERVICE_URL=http://api.localhost/catalog
-      - POS_SERVICE_URL=http://api.localhost/pos
+      - AUTH_SERVICE_URL=http://gateway-service:8080/auth
+      - CATALOG_SERVICE_URL=http://gateway-service:8080/catalog
+      - POS_SERVICE_URL=http://gateway-service:8080/pos
     command: sh -c "npm install && npm run postinstall && npm run dev -- -H 0.0.0.0"
     depends_on:
-      redis:
-        condition: service_healthy
-      gateway-service:
-        condition: service_started
+      - redis
+      - gateway-service
     restart: unless-stopped
+    networks:
+      - traefik
 
   auth-service:
     image: node:22-alpine
+    container_name: auth-service
     working_dir: /app
     volumes:
       - ./services/auth:/app
@@ -90,12 +102,14 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     command: sh -c "npm install && npx prisma generate && npm run dev"
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     restart: unless-stopped
+    networks:
+      - traefik
 
   catalog-service:
     image: node:22-alpine
+    container_name: catalog-service
     working_dir: /app
     volumes:
       - ./services/catalog:/app
@@ -107,12 +121,14 @@ services:
       - REDIS_PORT=6379
     command: sh -c "npm install && npx prisma generate && npm run dev"
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     restart: unless-stopped
+    networks:
+      - traefik
 
   pos-service:
     image: node:22-alpine
+    container_name: pos-service
     working_dir: /app
     volumes:
       - ./services/pos:/app
@@ -125,6 +141,12 @@ services:
       - CATALOG_SERVICE_URL=http://catalog-service:3002
     command: sh -c "npm install && npx prisma generate && npm run dev"
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     restart: unless-stopped
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    name: traefik
+    driver: bridge

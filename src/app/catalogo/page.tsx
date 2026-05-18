@@ -2,14 +2,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ModalType, Product } from "@/types/inventory";
 import { inventarioApi } from "@/lib/api/inventario";
 import { getStockStatus } from "@/lib/utils";
 import ProductTable from "./components/ProductTable";
 import ProductFormModal from "./components/ProductFormModal";
-import {
-  DeleteConfirmationModal,
-} from "./components/DeleteConfirmationModal";
+import { DeleteConfirmationModal } from "./components/DeleteConfirmationModal";
 import StatusFeedbackModal from "./components/StatusFeedbackModal";
 import { ErrorFeedbackModal } from "./components/ErrorFeedbackModal";
 import { IconSearch, IconPlus } from "@/components/ui/Icons";
@@ -51,6 +50,7 @@ function mapDtoToProduct(dto: any): Product {
  * Permite listar, buscar, filtrar, crear, editar y eliminar productos.
  */
 export default function InventarioPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<
     { idCategoria: string; nombre: string }[]
@@ -66,12 +66,33 @@ export default function InventarioPage() {
   /** Estado de carga para la página. */
   const [isLoading, setIsLoading] = useState(true);
 
+  /**
+   * Función auxiliar para manejar errores de autenticación.
+   * Si el error contiene "Unauthorized" o "No token provided", redirige al login.
+   */
+  const handleAuthError = (error: any) => {
+    const errorMessage = error?.message || "";
+    if (
+      errorMessage.includes("Unauthorized") ||
+      errorMessage.includes("No token provided")
+    ) {
+      // Limpiar la cookie de token
+      document.cookie =
+        "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+      router.replace("/login");
+      return true;
+    }
+    return false;
+  };
+
   const loadCategories = async () => {
     try {
       const cats = await inventarioApi.obtenerCategorias();
       setCategories(cats);
     } catch (error) {
-      console.error("Error loading categories:", error);
+      if (!handleAuthError(error)) {
+        console.error("Error loading categories:", error);
+      }
     }
   };
 
@@ -80,7 +101,9 @@ export default function InventarioPage() {
       const dtos = await inventarioApi.obtenerProductos();
       setProducts(dtos.map(mapDtoToProduct));
     } catch (error) {
-      console.error("Error loading products:", error);
+      if (!handleAuthError(error)) {
+        console.error("Error loading products:", error);
+      }
     }
   };
 
@@ -220,8 +243,10 @@ export default function InventarioPage() {
         type: "sales-history-error",
         title: "Error de Eliminación",
         subtitle: `No se puede eliminar '${modal.product.name}'`,
-        infoText: "Este producto tiene un historial de ventas registrado. Por integridad del sistema y cumplimiento contable, los productos con ventas asociadas no pueden ser eliminados permanentemente.",
-        suggestionText: "Puede desactivar el producto utilizando el interruptor 'Activo' en la lista del catálogo para que deje de estar disponible."
+        infoText:
+          "Este producto tiene un historial de ventas registrado. Por integridad del sistema y cumplimiento contable, los productos con ventas asociadas no pueden ser eliminados permanentemente.",
+        suggestionText:
+          "Puede desactivar el producto utilizando el interruptor 'Activo' en la lista del catálogo para que deje de estar disponible.",
       });
     }
   };
@@ -236,9 +261,10 @@ export default function InventarioPage() {
   };
 
   const filterBtnClass = (active: boolean, activeColors: string) =>
-    `px-4 py-[9px] rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-150 border outline-none ${active
-      ? `border-transparent ${activeColors}`
-      : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+    `px-4 py-[9px] rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-150 border outline-none ${
+      active
+        ? `border-transparent ${activeColors}`
+        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
     }`;
 
   return (
@@ -348,20 +374,22 @@ export default function InventarioPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${page === 1
-                    ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
-                    }`}
+                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${
+                    page === 1
+                      ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  }`}
                 >
                   Anterior
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${page >= totalPages
-                    ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
-                    }`}
+                  className={`px-3.5 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium transition-colors ${
+                    page >= totalPages
+                      ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  }`}
                 >
                   Siguiente
                 </button>

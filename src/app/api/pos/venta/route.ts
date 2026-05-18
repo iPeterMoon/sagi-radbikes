@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { proxyWithAuth } from "../../utils/authProxy";
 
 /** POST /api/pos/venta → POST :3003/venta */
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const res = await fetch(`${process.env.POS_SERVICE_URL}/venta`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
+  const body = await req.arrayBuffer();
+  return proxyWithAuth(
+    req,
+    `${process.env.POS_SERVICE_URL}/venta`,
+    "POST",
+    body || undefined,
+  );
 }
