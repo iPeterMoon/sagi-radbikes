@@ -1,7 +1,6 @@
 services:
   traefik:
     image: traefik:latest
-    container_name: traefik
     restart: unless-stopped
     environment:
       - DOCKER_API_VERSION=1.44
@@ -10,7 +9,7 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      - "--log.level=DEBUG"              # Útil para debug
+      - "--log.level=DEBUG"
     ports:
       - "80:80"
       - "8080:8080"
@@ -21,7 +20,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -35,7 +33,6 @@ services:
 
   gateway-service:
     image: node:22-alpine
-    container_name: gateway-service
     working_dir: /app
     volumes:
       - ./services/gateway:/app
@@ -64,7 +61,6 @@ services:
 
   frontend:
     image: node:22-alpine
-    container_name: frontend
     working_dir: /app
     volumes:
       - .:/app
@@ -91,7 +87,6 @@ services:
 
   auth-service:
     image: node:22-alpine
-    container_name: auth-service
     working_dir: /app
     volumes:
       - ./services/auth:/app
@@ -109,7 +104,6 @@ services:
 
   catalog-service:
     image: node:22-alpine
-    container_name: catalog-service
     working_dir: /app
     volumes:
       - ./services/catalog:/app
@@ -128,7 +122,6 @@ services:
 
   pos-service:
     image: node:22-alpine
-    container_name: pos-service
     working_dir: /app
     volumes:
       - ./services/pos:/app
