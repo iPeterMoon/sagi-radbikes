@@ -1,8 +1,26 @@
 services:
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
   gateway-service:
@@ -11,19 +29,27 @@ services:
     volumes:
       - ./services/gateway:/app
       - /app/node_modules
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gateway.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.gateway.entrypoints=web"
+      - "traefik.http.services.gateway.loadbalancer.server.port=8080"
     environment:
       - NODE_ENV=development
       - AUTH_SERVICE_URL=http://auth-service:3001
       - CATALOG_SERVICE_URL=http://catalog-service:3002
       - POS_SERVICE_URL=http://pos-service:3003
-      - FRONTEND_URL=http://localhost:3000
+      - FRONTEND_URL=http://localhost
     command: sh -c "npm install && npm run dev"
     depends_on:
-      - auth-service
-      - catalog-service
-      - pos-service
+      auth-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      pos-service:
+        condition: service_started
     restart: unless-stopped
 
   frontend:
@@ -32,17 +58,24 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
     environment:
       - NODE_ENV=development
-      - AUTH_SERVICE_URL=http://gateway-service:8080/auth
-      - CATALOG_SERVICE_URL=http://gateway-service:8080/catalog
-      - POS_SERVICE_URL=http://gateway-service:8080/pos
+      - AUTH_SERVICE_URL=http://api.localhost/auth
+      - CATALOG_SERVICE_URL=http://api.localhost/catalog
+      - POS_SERVICE_URL=http://api.localhost/pos
     command: sh -c "npm install && npm run postinstall && npm run dev -- -H 0.0.0.0"
     depends_on:
-      - redis
-      - gateway-service
+      redis:
+        condition: service_healthy
+      gateway-service:
+        condition: service_started
     restart: unless-stopped
 
   auth-service:
@@ -57,7 +90,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     command: sh -c "npm install && npx prisma generate && npm run dev"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   catalog-service:
@@ -73,7 +107,8 @@ services:
       - REDIS_PORT=6379
     command: sh -c "npm install && npx prisma generate && npm run dev"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   pos-service:
@@ -90,5 +125,6 @@ services:
       - CATALOG_SERVICE_URL=http://catalog-service:3002
     command: sh -c "npm install && npx prisma generate && npm run dev"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped

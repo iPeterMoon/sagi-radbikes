@@ -31,9 +31,9 @@ Asegúrate de abrir cada archivo `.env` creado y ajustar los valores de conexió
 
 El proyecto está diseñado con una arquitectura de microservicios. Puedes ejecutarlo de dos maneras: utilizando Docker (recomendado) o levantando los servicios de forma manual (local).
 
-### Opción 1: Ejecución con Docker (Recomendado)
+### Opción 1: Ejecución con Docker y Balanceo de Carga (Recomendado)
 
-Esta es la forma más rápida y sencilla, ya que Docker se encargará de levantar todos los microservicios, el frontend de Next.js y cualquier dependencia de red automáticamente.
+Esta es la forma más rápida y sencilla, ya que Docker se encargará de levantar todos los microservicios, el frontend de Next.js, y Traefik (como balanceador de carga) automáticamente.
 
 **Requisitos previos:** Tener [Docker](https://www.docker.com/) y Docker Compose instalados.
 
@@ -46,9 +46,21 @@ docker-compose up --build
 
 *(Para detener el proyecto, usa `docker-compose down`)*
 
-El sistema principal estará disponible en [http://localhost:3000](http://localhost:3000).
+El sistema principal estará disponible en [http://localhost](http://localhost) y la API en [http://api.localhost](http://api.localhost). Traefik ofrece un panel de control en [http://localhost:8080](http://localhost:8080).
 
 ---
+
+## Arquitectura de Alta Disponibilidad y Balanceo de Carga
+
+Este proyecto utiliza **Traefik** como proxy inverso y balanceador de carga. Traefik escucha en el puerto 80 y distribuye el tráfico automáticamente hacia los contenedores correspondientes basándose en el host (`localhost` para el frontend y `api.localhost` para el Gateway).
+
+Puedes simular un entorno de alta disponibilidad escalando dinámicamente el API Gateway o los microservicios internos. Traefik detectará las nuevas réplicas automáticamente y distribuirá el tráfico (por defecto usando Round Robin) sin necesidad de configuraciones adicionales.
+
+Para iniciar el proyecto con múltiples instancias, utiliza la bandera `--scale` de Docker Compose. Por ejemplo, para levantar 3 instancias del Gateway y 2 del servicio de catálogo:
+
+```bash
+docker-compose up --build --scale gateway-service=3 --scale catalog-service=2
+```
 
 ### Opción 2: Ejecución Local (Manual)
 
