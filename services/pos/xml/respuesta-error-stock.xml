@@ -1,0 +1,21 @@
+<!-- 
+  RESPUESTA XML DE ERROR - STOCK INSUFICIENTE (409 Conflict)
+  
+  Estructura de respuesta cuando no hay suficiente stock de los productos solicitados.
+  Content-Type: application/xml
+  Status Code: 409
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<respuestaVenta estado="error" codigo="409">
+  <mensaje>Stock insuficiente para completar la venta</mensaje>
+  <error>STOCK_INSUFICIENTE</error>
+  <detalles>
+    <producto>
+      <idProducto>42</idProducto>
+      <nombre>Trek Marlin 5 2024</nombre>
+      <cantidadSolicitada>5</cantidadSolicitada>
+      <stockDisponible>2</stockDisponible>
+      <diferencia>3</diferencia>
+    </producto>
+  </detalles>
+</respuestaVenta>

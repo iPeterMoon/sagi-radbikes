@@ -1,0 +1,12 @@
+<!-- 
+  RESPUESTA XML DE ERROR - INTERNO (500 Internal Server Error)
+  
+  Estructura de respuesta cuando ocurre un error interno no previsto.
+  Content-Type: application/xml
+  Status Code: 500
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<respuestaVenta estado="error" codigo="500">
+  <mensaje>Error interno del servidor</mensaje>
+  <detalles>Ocurrió un problema inesperado al procesar la solicitud. Por favor, intente nuevamente.</detalles>
+</respuestaVenta>

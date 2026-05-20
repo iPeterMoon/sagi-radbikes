@@ -107,8 +107,29 @@ app.use("/catalog", requireAuth, proxy(CATALOG_SERVICE));
 /**
  * Enrutamiento protegido para el microservicio de Punto de Venta (POS).
  * Requiere un token válido antes de redirigir el tráfico.
+ * 
+ * Configuración especial: El endpoint /pos/venta recibe y transfiere XML.
+ * Se configura para preservar headers y no alterar el contenido.
  */
-app.use("/pos", requireAuth, proxy(POS_SERVICE));
+app.use(
+  "/pos",
+  requireAuth,
+  proxy(POS_SERVICE, {
+    // proxyReqPathResolver asegura que la ruta se mantenga igual al hacer proxy
+    proxyReqPathResolver: (req) => {
+      return req.baseUrl;
+    },
+    // userResDecorator permite modificar la respuesta antes de enviarla al cliente
+    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+      // Conserva el header Content-Type de la respuesta del microservicio POS si es XML
+      if (proxyRes.headers["content-type"]?.includes("application/xml")) {
+        userRes.set("Content-Type", "application/xml");
+      }
+      return proxyResData;
+    },
+    parseReqBody: false,
+  })
+);
 
 /** Puerto en el que escuchará el API Gateway. */
 const PORT = process.env.PORT || 8080;

@@ -2,13 +2,19 @@ import { Request, Response } from "express";
 import { IServicioVenta } from "../negocio/interfaces/IServicioVenta";
 import { ProductoCarritoDTO } from "../negocio/DTOsEntrada/ProductoCarritoDTO";
 import { CrearVentaDTO } from "../negocio/DTOsEntrada/CrearVentaDTO";
+import { ValidadorXML } from "../utils/ValidadorXML";
+import { SerializadorXML } from "../utils/SerializadorXML";
 
 /**
  * Controlador del Punto de Venta (POS).
  * Gestiona las peticiones HTTP entrantes y delega la lógica de negocio al ServicioVenta.
+ * 
+ * Nota: El endpoint /venta ahora recibe y retorna exclusivamente XML validado contra XSD.
  */
 export class POSControlador {
   private servicio: IServicioVenta;
+  private validador: ValidadorXML;
+  private serializador: SerializadorXML;
 
   /**
    * Inicializa el controlador e inyecta el servicio de ventas.
@@ -17,6 +23,8 @@ export class POSControlador {
    */
   constructor(servicio: IServicioVenta) {
     this.servicio = servicio;
+    this.validador = new ValidadorXML("venta.xsd");
+    this.serializador = new SerializadorXML();
     this.buscarProductos = this.buscarProductos.bind(this);
     this.registrarVenta = this.registrarVenta.bind(this);
     this.agregarProductoCarrito = this.agregarProductoCarrito.bind(this);
@@ -42,24 +50,85 @@ export class POSControlador {
 
   /**
    * Maneja la petición para registrar una nueva venta.
-   * Valida stock, procesa la transacción y maneja errores de negocio (ej. STOCK_INSUFICIENTE).
+   * 
+   * NUEVO FLUJO XML:
+   * 1. Recibe el cuerpo como text/plain con MIME type application/xml
+   * 2. Valida que el XML esté bien formado
+   * 3. Parsea el XML y valida su estructura contra el esquema conceptual
+   * 4. Convierte el XML a objeto CrearVentaDTO
+   * 5. Procesa la venta mediante ServicioVenta
+   * 6. Retorna XML de respuesta (éxito o error)
    */
   async registrarVenta(req: Request, res: Response): Promise<void> {
     try {
-      const dto: CrearVentaDTO = req.body;
-      const resumen = await this.servicio.registrarVenta(dto);
-      res.status(201).json(resumen);
-    } catch (error: any) {
-      if (error.message === "STOCK_INSUFICIENTE") {
-        res.status(409).json({
-          error: "STOCK_INSUFICIENTE",
-          detalles: error.detalles
-        });
+      // req.body es un string XML cuando viene del middleware express.text()
+      const xmlString = req.body as string;
+
+      if (!xmlString || xmlString.trim().length === 0) {
+        res.setHeader("Content-Type", "application/xml");
+        res.status(400).send(
+          this.serializador.errorGenericoAXml(400, "Cuerpo de la solicitud vacío")
+        );
         return;
       }
 
+      // 1. Validar que el XML esté bien formado
+      const errorBienFormado = this.validador.validarXMLBienFormado(xmlString);
+      if (errorBienFormado) {
+        res.setHeader("Content-Type", "application/xml");
+        res.status(400).send(
+          this.serializador.errorGenericoAXml(400, errorBienFormado.message)
+        );
+        return;
+      }
+
+      // 2. Parsear el XML
+      let parsedXML: any;
+      try {
+        parsedXML = this.validador.parsearXML(xmlString);
+      } catch (error: any) {
+        res.setHeader("Content-Type", "application/xml");
+        res.status(400).send(
+          this.serializador.errorGenericoAXml(400, error.message)
+        );
+        return;
+      }
+
+      // 3. Validar estructura contra esquema conceptual
+      const erroresEstructura = this.validador.validarEstructuraCrearVenta(parsedXML);
+      if (erroresEstructura.length > 0) {
+        res.setHeader("Content-Type", "application/xml");
+        res.status(400).send(
+          this.serializador.erroresValidacionAXml(erroresEstructura)
+        );
+        return;
+      }
+
+      // 4. Convertir XML a DTO
+      const dto: CrearVentaDTO = this.serializador.xmlACrearVentaDTO(parsedXML);
+
+      // 5. Procesar la venta
+      const resumen = await this.servicio.registrarVenta(dto);
+
+      // 6. Retornar XML de éxito
+      res.setHeader("Content-Type", "application/xml");
+      res.status(201).send(this.serializador.ventaResumenDTOAXml(resumen));
+    } catch (error: any) {
+      // Manejo de errores controlados de negocio
+      if (error.message === "STOCK_INSUFICIENTE") {
+        res.setHeader("Content-Type", "application/xml");
+        res.status(409).send(
+          this.serializador.errorStockInsuficienteAXml(error.detalles)
+        );
+        return;
+      }
+
+      // Otros errores
       const status = error.message?.startsWith("Validación") ? 400 : 500;
-      res.status(status).json({ error: error.message });
+      res.setHeader("Content-Type", "application/xml");
+      res.status(status).send(
+        this.serializador.errorGenericoAXml(status, error.message || "Error interno del servidor")
+      );
     }
   }
 

@@ -1,0 +1,17 @@
+<!-- 
+  RESPUESTA XML DE ERROR - VALIDACIÓN (400 Bad Request)
+  
+  Estructura de respuesta cuando el XML entrante no cumple con el esquema o está mal formado.
+  Content-Type: application/xml
+  Status Code: 400
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<respuestaVenta estado="error" codigo="400">
+  <mensaje>Validación de XML fallida</mensaje>
+  <errores>
+    <error>Campo 'idUsuario' es requerido</error>
+    <error>Campo 'metodoPago' es requerido</error>
+    <error>Producto 0: 'cantidad' debe ser >= 1</error>
+    <error>porcentajeImpuesto debe estar entre 0 y 100</error>
+  </errores>
+</respuestaVenta>
