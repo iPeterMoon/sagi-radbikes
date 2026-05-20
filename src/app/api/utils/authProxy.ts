@@ -26,6 +26,9 @@ export async function proxyWithAuth(
     const contentType = req.headers.get("content-type");
     if (contentType) headers["Content-Type"] = contentType;
 
+    const accept = req.headers.get("accept");
+    if (accept) headers["Accept"] = accept;
+
     // Incluir token en header Authorization si existe
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;

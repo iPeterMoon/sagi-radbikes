@@ -2,6 +2,7 @@ import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { CrearVentaDTO } from "../negocio/DTOsEntrada/CrearVentaDTO";
 import { ProductoCarritoDTO } from "../negocio/DTOsEntrada/ProductoCarritoDTO";
 import { VentaResumenDTO } from "../negocio/DTOsSalida/VentaResumenDTO";
+import { ProductoVentaDTO } from "../negocio/DTOsSalida/ProductoVentaDTO";
 
 /**
  * Serializador bidireccional para convertir entre XML y objetos DTO.
@@ -30,22 +31,16 @@ export class SerializadorXML {
   }
 
   /**
-   * Convierte un XML string a un objeto CrearVentaDTO.
-   * Extrae el elemento raíz 'crearVenta' y mapea sus propiedades.
-   * 
-   * @param xmlString - XML parseado que contiene la venta
-   * @returns {CrearVentaDTO} Objeto DTO con los datos de la venta
+   * Convierte un XML parseado a un objeto CrearVentaDTO.
+   * @param parsedXML - Objeto parseado desde XML
    */
   xmlACrearVentaDTO(parsedXML: any): CrearVentaDTO {
     const venta = parsedXML.crearVenta;
-
-    // Normalizar productos (puede ser un único objeto o array)
     let productos = venta.productos.producto;
     if (!Array.isArray(productos)) {
       productos = [productos];
     }
 
-    // Mapear productos a ProductoCarritoDTO
     const productosDTO: ProductoCarritoDTO[] = productos.map((prod: any) => ({
       idProducto: String(prod.idProducto),
       nombre: String(prod.nombre),
@@ -57,18 +52,89 @@ export class SerializadorXML {
     return {
       idUsuario: String(venta.idUsuario),
       metodoPago: String(venta.metodoPago),
-      productos: productosDTO,
       porcentajeImpuesto: Number(venta.porcentajeImpuesto),
+      productos: productosDTO,
     };
   }
 
   /**
-   * Serializa un VentaResumenDTO a XML con estructura de respuesta exitosa.
-   * Retorna un documento XML bien formado con la cabecera apropiada.
-   * 
-   * @param resumen - DTO con los datos de la venta registrada
-   * @returns {string} Documento XML serializado
+   * Convierte un XML parseado a un ProductoCarritoDTO para acciones sobre el carrito.
+   * @param parsedXML - Objeto parseado desde XML
    */
+  xmlAProductoCarritoDTO(parsedXML: any): ProductoCarritoDTO {
+    const producto = parsedXML.agregarProducto || parsedXML.producto || parsedXML.item;
+    if (!producto) {
+      throw new Error("XML de carrito inválido: raíz de producto no encontrada");
+    }
+
+    return {
+      idProducto: String(producto.idProducto),
+      nombre: String(producto.nombre),
+      cantidad: Number(producto.cantidad),
+      precioUnitario: Number(producto.precioUnitario),
+      subtotal: Number(producto.subtotal),
+    };
+  }
+
+  /**
+   * Convierte un XML parseado a la cantidad esperada para la operación cambiarCantidad.
+   * @param parsedXML - Objeto parseado desde XML
+   */
+  xmlACantidad(parsedXML: any): number {
+    const cantidad = parsedXML.cambiarCantidad?.cantidad;
+    if (cantidad === undefined || cantidad === null) {
+      throw new Error("XML de cambiar cantidad inválido: etiqueta 'cantidad' no encontrada");
+    }
+    return Number(cantidad);
+  }
+
+  /**
+   * Convierte una lista de productos de catálogo a XML.
+   */
+  productosAXml(productos: ProductoVentaDTO[]): string {
+    const respuesta = {
+      productos: {
+        producto: productos.map((item) => ({
+          idProducto: item.idProducto,
+          nombre: item.nombre,
+          precio: item.precio.toFixed(2),
+          stock: item.stock,
+          urlImagen: item.urlImagen || "",
+          SKU: item.SKU,
+          codigoBarras: item.codigoBarras || "",
+          categoria: { nombre: item.categoria?.nombre || "" },
+        })),
+      },
+    };
+
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${this.builder.build(respuesta)}`;
+  }
+
+  /**
+   * Convierte el estado del carrito a XML.
+   */
+  carritoAXml(carrito: ProductoCarritoDTO[]): string {
+    const respuesta: any = {
+      carrito: {
+        items: {
+          item: carrito.map((producto) => ({
+            idProducto: producto.idProducto,
+            nombre: producto.nombre,
+            cantidad: producto.cantidad,
+            precioUnitario: producto.precioUnitario.toFixed(2),
+            subtotal: producto.subtotal.toFixed(2),
+          })),
+        },
+      },
+    };
+
+    if (carrito.length === 0) {
+      respuesta.carrito.items = {};
+    }
+
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${this.builder.build(respuesta)}`;
+  }
+
   ventaResumenDTOAXml(resumen: VentaResumenDTO): string {
     const respuesta = {
       respuestaVenta: {
@@ -95,13 +161,6 @@ export class SerializadorXML {
     return `<?xml version="1.0" encoding="UTF-8"?>\n${this.builder.build(respuesta)}`;
   }
 
-  /**
-   * Serializa un error de validación XML a formato XML estructurado.
-   * Usado cuando el XML entrante no cumple con el esquema.
-   * 
-   * @param erroresValidacion - Array de mensajes de error
-   * @returns {string} Documento XML de error
-   */
   erroresValidacionAXml(erroresValidacion: string[]): string {
     const respuesta = {
       respuestaVenta: {
@@ -117,13 +176,6 @@ export class SerializadorXML {
     return `<?xml version="1.0" encoding="UTF-8"?>\n${this.builder.build(respuesta)}`;
   }
 
-  /**
-   * Serializa un error de stock insuficiente a formato XML estructurado.
-   * Usado cuando no hay stock disponible para los productos solicitados.
-   * 
-   * @param detalles - Información sobre el stock insuficiente
-   * @returns {string} Documento XML de error
-   */
   errorStockInsuficienteAXml(detalles: any): string {
     const respuesta = {
       respuestaVenta: {
@@ -131,27 +183,19 @@ export class SerializadorXML {
         "@_codigo": "409",
         mensaje: "Stock insuficiente para completar la venta",
         error: "STOCK_INSUFICIENTE",
-        detalles: detalles,
+        detalles,
       },
     };
 
     return `<?xml version="1.0" encoding="UTF-8"?>\n${this.builder.build(respuesta)}`;
   }
 
-  /**
-   * Serializa un error genérico a formato XML estructurado.
-   * 
-   * @param codigo - Código de estado HTTP
-   * @param mensaje - Mensaje de error
-   * @param detalles - Información adicional del error (opcional)
-   * @returns {string} Documento XML de error
-   */
   errorGenericoAXml(codigo: number, mensaje: string, detalles?: any): string {
     const respuesta: any = {
       respuestaVenta: {
         "@_estado": "error",
         "@_codigo": codigo.toString(),
-        mensaje: mensaje,
+        mensaje,
       },
     };
 

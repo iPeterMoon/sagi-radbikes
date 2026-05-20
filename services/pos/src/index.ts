@@ -7,18 +7,8 @@ import { POSControlador } from "./controladores/POSControlador";
 const app = express();
 const PORT = process.env.PORT || 3003;
 
-// Middleware para JSON en endpoints que no sean /venta
-app.use((req, res, next) => {
-  // Excluir la ruta /venta del parsing de JSON (será text/xml)
-  if (req.path === "/venta" && req.method === "POST") {
-    next();
-  } else {
-    express.json()(req, res, next);
-  }
-});
-
-// Middleware personalizado para aceptar XML text en la ruta /venta
-app.post("/venta", express.text({ type: "application/xml" }));
+// Procesar solo XML de entrada para las rutas del servicio POS exponiendo únicamente el parser XML.
+app.use(express.text({ type: ["application/xml", "text/xml", "application/*+xml"] }));
 
 /**
  * Endpoint de verificación de salud del servicio (Healthcheck).

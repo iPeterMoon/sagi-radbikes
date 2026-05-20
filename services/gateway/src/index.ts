@@ -115,13 +115,19 @@ app.use(
   "/pos",
   requireAuth,
   proxy(POS_SERVICE, {
-    // proxyReqPathResolver asegura que la ruta se mantenga igual al hacer proxy
     proxyReqPathResolver: (req) => {
-      return req.baseUrl;
+      return req.url || "";
     },
-    // userResDecorator permite modificar la respuesta antes de enviarla al cliente
+    proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+      if (srcReq.headers["content-type"]) {
+        proxyReqOpts.headers["Content-Type"] = srcReq.headers["content-type"] as string;
+      }
+      if (srcReq.headers["accept"]) {
+        proxyReqOpts.headers["Accept"] = srcReq.headers["accept"] as string;
+      }
+      return proxyReqOpts;
+    },
     userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
-      // Conserva el header Content-Type de la respuesta del microservicio POS si es XML
       if (proxyRes.headers["content-type"]?.includes("application/xml")) {
         userRes.set("Content-Type", "application/xml");
       }

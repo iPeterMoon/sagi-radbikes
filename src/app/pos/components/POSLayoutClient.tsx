@@ -4,6 +4,11 @@ import { useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
 
+export const xmlRequestHeaders = {
+  "Content-Type": "application/xml",
+  "Accept": "application/xml",
+};
+
 /**
  * Shell de cliente para el layout del POS.
  * Gestiona el estado de visibilidad del sidebar y renderiza
