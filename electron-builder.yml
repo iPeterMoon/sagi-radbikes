@@ -1,0 +1,35 @@
+appId: com.tuempresa.pos
+productName: MiPOS
+directories:
+  output: dist
+
+files:
+  - electron/**/*
+  - package.json
+
+# Copia el build standalone de Next.js, sus assets estáticos y la carpeta
+# public dentro de los recursos de la app empaquetada, manteniendo la misma
+# estructura relativa que espera el server.js autocontenido.
+extraResources:
+  - from: .next/standalone
+    to: app
+    filter:
+      - '!**/.env*'
+  - from: .next/static
+    to: app/.next/static
+  - from: public
+    to: app/public
+
+mac:
+  target: dmg
+  category: public.app-category.business
+  icon: build/icon.icns
+
+win:
+  target: nsis
+  icon: build/icon.ico
+
+linux:
+  target: AppImage
+  category: Office
+  icon: build/icon.png

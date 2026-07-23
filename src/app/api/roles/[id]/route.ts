@@ -40,4 +40,5 @@ export async function DELETE(req: NextRequest) {
         console.error("Error al eliminar rol:", error);
         return NextResponse.json({ error: "Error al eliminar rol" }, { status: 500 });
     }
+    
 }

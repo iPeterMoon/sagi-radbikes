@@ -78,12 +78,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     let result = false;
 
     if (body.action === 'toggleStatus') {
-      const result = await servicio.actualizarEstado(id);
+      result = await servicio.actualizarEstado(id);
       return NextResponse.json({ success: result }, { status: 200 });
     }
 
     if (body.action === 'adjustStock') {
-      const result = await servicio.ajustarStock(id, body.cantidad);
+      result = await servicio.ajustarStock(id, body.cantidad);
       return NextResponse.json({ success: result }, { status: 200 });
     }
 

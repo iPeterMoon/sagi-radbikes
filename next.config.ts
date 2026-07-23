@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -19,8 +20,9 @@ const nextConfig: NextConfig = {
     ],
   },
   output: "standalone",
+  turbopack: {
+    root: path.resolve(process.cwd()),
+  }
 };
-
-module.exports = nextConfig;
 
 export default nextConfig;
