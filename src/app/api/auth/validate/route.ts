@@ -1,30 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServicioInicioSesion } from "@/lib/auth/factory";
 
-/**
- * Manejador para la ruta GET /api/auth/validate. Recibe el token JWT en el encabezado de autorización o en una cookie,
- * lo envía al servicio de autenticación y devuelve una respuesta con el resultado de la validación.
- */
-async function validate(req: NextRequest) {
-  const token =
-    req.headers.get("authorization")?.replace("Bearer ", "") ||
-    req.cookies.get("token")?.value;
+const servicio = createServicioInicioSesion();
 
-  const res = await fetch(`${process.env.AUTH_SERVICE_URL}/validate`, {
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-  const data = await res.text();
-  return new NextResponse(data, { status: res.status });
-}
-/**
- * Manejadores para las rutas POST y GET /api/auth/validate. Ambos métodos permiten validar el token JWT del usuario autenticado,
- * enviando el token al servicio de autenticación y devolviendo la respuesta con el resultado de la validación. 
- * Esto permite que tanto las solicitudes POST como GET puedan ser utilizadas para validar la sesión del usuario.
- */
-export async function POST(req: NextRequest) {
-  return await validate(req);
-}
 export async function GET(req: NextRequest) {
-  return await validate(req);
+  try {
+    const token =
+      req.headers.get("authorization")?.replace("Bearer ", "") ||
+      req.cookies.get("token")?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const usuario = await servicio.validarToken(token);
+
+    if (usuario) {
+      return NextResponse.json({ valid: true }, { status: 200 });
+    } else {
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+    }
+  } catch (error: any) {
+    console.error(" VALIDAR - ERROR: ", error);
+    return NextResponse.json({ error: error.message }, { status: 401 });
+  }
 }

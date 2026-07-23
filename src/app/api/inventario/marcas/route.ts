@@ -1,23 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { proxyWithAuth } from "../../utils/authProxy";
+import { createServicioCatalogo } from "@/lib/inventory/factory";
 
-/**
- * Manejador para la ruta GET /api/inventario/marcas. Recibe una solicitud GET y devuelve una lista de marcas.
- */
+const servicio = createServicioCatalogo();
+
 export async function GET(req: NextRequest) {
-  return proxyWithAuth(req, `${process.env.CATALOG_SERVICE_URL}/marcas`, "GET");
+  try {
+    const marcas = await servicio.obtenerMarcas();
+    return NextResponse.json(marcas, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
-/**
- * Manejador para la ruta POST /api/inventario/marcas. Recibe una solicitud POST con los datos de la nueva marca y
- * la envía al servicio de catálogos.
- */
 export async function POST(req: NextRequest) {
-  const body = await req.arrayBuffer();
-  return proxyWithAuth(
-    req,
-    `${process.env.CATALOG_SERVICE_URL}/marcas`,
-    "POST",
-    body || undefined,
-  );
+  try {
+    const body = await req.json();
+    const marca = await servicio.crearMarca(body);
+    return NextResponse.json(marca, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 }

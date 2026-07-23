@@ -17,10 +17,10 @@ export function ErrorFeedbackModal({
 }: ErrorFeedbackModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-[450px] p-8 animate-in fade-in zoom-in duration-200">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-112.5 p-8 animate-in fade-in zoom-in duration-200">
         <div className="flex flex-col items-center text-center">
           {/* Icono circular rosa */}
-          <div className="w-16 h-16 rounded-full bg-rose-200 flex items-center justify-center mb-6 flex-shrink-0">
+          <div className="w-16 h-16 rounded-full bg-rose-200 flex items-center justify-center mb-6 shrink-0">
             <div className="w-8 h-8 flex items-center justify-center text-rose-600">
               <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
@@ -41,7 +41,7 @@ export function ErrorFeedbackModal({
           {/* Sección de información */}
           <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-6 text-left w-full">
             <div className="flex gap-3">
-              <div className="flex-shrink-0 pt-0.5">
+              <div className="shrink-0 pt-0.5">
                 <InfoCircle className="w-5 h-5 text-red-600" strokeWidth={2} />
               </div>
               <p className="text-sm text-gray-700 leading-relaxed">

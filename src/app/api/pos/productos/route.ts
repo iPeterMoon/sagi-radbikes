@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { proxyWithAuth } from "../../utils/authProxy";
+import { createServicioVenta } from "@/lib/pos/factory";
 
-/** GET /api/pos/productos?busqueda=xxx → GET :3003/productos */
+const servicio = createServicioVenta();
+
 export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl;
-  const qs = searchParams.toString();
-  const url = `${process.env.POS_SERVICE_URL}/productos${qs ? `?${qs}` : ""}`;
-
-  return proxyWithAuth(req, url, "GET");
+  try {
+    const { searchParams } = req.nextUrl;
+    const busqueda = searchParams.get("busqueda") ?? "";
+    const productos = await servicio.buscarProductos(busqueda);
+    return NextResponse.json(productos, { status: 200});
+  } catch(error: any) {
+    console.error("GET POS/PRODUCTOS - ERROR: ", error);
+    return NextResponse.json({ error: error.message }, { status: 500});
+  }
 }

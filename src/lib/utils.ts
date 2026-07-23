@@ -24,3 +24,4 @@ export function getStockStatus(stock: number, minStock: number): StockStatus {
 export function formatPrice(price: number): string {
   return price.toLocaleString("es-MX", { minimumFractionDigits: 2 });
 }
+

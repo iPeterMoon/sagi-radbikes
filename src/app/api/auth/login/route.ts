@@ -1,21 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
+import { LoginDTO } from "@/lib/api/auth";
+import { createServicioInicioSesion } from "@/lib/auth/factory";
 
-/**
- * Manejador para la ruta POST /api/auth/login. Recibe las credenciales del usuario en el cuerpo de la solicitud,
- * las envía al servicio de autenticación y, si la autenticación es exitosa, devuelve una respuesta con el token JWT
- * en una cookie. Si la autenticación falla, devuelve un error con el mensaje correspondiente.
- */
+const SESSION_TIMEOUT_HOURS = Number(process.env.SESSION_TIMEOUT_HOURS || "12");
+const SAFE_SESSION_TIMOUT_HOURS = 
+  Number.isFinite(SESSION_TIMEOUT_HOURS) && SESSION_TIMEOUT_HOURS > 0
+    ? SESSION_TIMEOUT_HOURS : 12;
+
+const servicio = createServicioInicioSesion();
+
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const res = await fetch(`${process.env.AUTH_SERVICE_URL}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await res.text();
-  const response = new NextResponse(data, { status: res.status });
+  try {
+    const body = await req.json();
+    
+    // Asumiendo que iniciarSesion devuelve el token o los datos del usuario
+    const sesion = await servicio.iniciarSesion(body);
 
-  const cookie = res.headers.get("set-cookie");
-  if (cookie) response.headers.set("set-cookie", cookie);
-  return response;
+    const response = NextResponse.json(sesion, { status: 200 });
+
+    if (sesion.token) {
+       response.cookies.set("token", sesion.token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          path: "/",
+          maxAge: SAFE_SESSION_TIMOUT_HOURS * 3600
+       });
+    }
+
+    return response;
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 401 });
+  }
 }

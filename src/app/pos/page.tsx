@@ -9,135 +9,51 @@ import {
   VentaResumenDTO,
   CheckoutError,
 } from "@/types/pos";
+import type {
+  CrearVentaDTO,
+  ProductoCarritoDTO,
+  ProductoVentaDTO,
+} from "@/types/dtos";
+import { posApi } from "@/lib/api/pos";
 import SearchBar from "./components/SearchBar";
 import CategoryTabs from "./components/CategoryTabs";
-import ProductGrid, { parseProductsFromXml } from "./components/ProductGrid";
+import ProductGrid from "./components/ProductGrid";
 import CartPanel from "./components/CartPanel";
 import SuccessModal from "./components/SuccessModal";
 
-function parseCartFromXml(xmlString: string): CartItem[] {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-  const parserError = xmlDoc.querySelector("parsererror");
-  if (parserError) throw new Error(parserError.textContent || "XML inválido");
-
-  return Array.from(xmlDoc.querySelectorAll("carrito > items > item")).map((item) => {
-    const id = Number(item.querySelector("idProducto")?.textContent?.trim() || "0");
-    const name = item.querySelector("nombre")?.textContent?.trim() || "";
-    const qty = Number(item.querySelector("cantidad")?.textContent?.trim() || "0");
-    const price = Number(item.querySelector("precioUnitario")?.textContent?.trim() || "0");
-
-    return {
-      product: {
-        id,
-        name,
-        category: "Sin categoría",
-        price,
-        stock: 0,
-        image: "/placeholder.png",
-        sku: "",
-      },
-      qty,
-    };
-  });
+function mapProductoVenta(p: ProductoVentaDTO): POSProduct {
+  return {
+    id: Number(p.idProducto),
+    name: p.nombre,
+    category: p.categoria?.nombre ?? "Sin categoría",
+    price: p.precio,
+    stock: p.stock,
+    image: p.urlImagen || "/placeholder.png",
+    sku: p.SKU,
+  };
 }
 
-function parseVentaResumenFromXml(xmlString: string): VentaResumenDTO {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-  const parserError = xmlDoc.querySelector("parsererror");
-  if (parserError) throw new Error(parserError.textContent || "XML inválido");
-
-  const respuesta = xmlDoc.querySelector("respuestaVenta");
-  if (!respuesta) {
-    throw new Error("Respuesta de venta inválida");
-  }
-
-  const getText = (selector: string) => xmlDoc.querySelector(selector)?.textContent?.trim() || "";
-  const fecha = new Date(getText("respuestaVenta > fecha"));
-
+function mapCarritoItem(item: ProductoCarritoDTO): CartItem {
   return {
-    idVenta: getText("respuestaVenta > idVenta"),
-    total: Number(getText("respuestaVenta > total") || 0),
-    mensaje: getText("respuestaVenta > mensaje"),
-    estado: getText("respuestaVenta > estado"),
-    fecha,
-    folio: getText("respuestaVenta > folio"),
-    subtotal: Number(getText("respuestaVenta > subtotal") || 0),
-    importeIVA: Number(getText("respuestaVenta > importeIVA") || 0),
-    porcentajeImpuesto: Number(getText("respuestaVenta > porcentajeImpuesto") || 0),
-    pago: {
-      idPago: getText("respuestaVenta > pago > idPago"),
-      metodoPago: getText("respuestaVenta > pago > metodoPago"),
-      monto: Number(getText("respuestaVenta > pago > monto") || 0),
-      fechaHora: new Date(getText("respuestaVenta > pago > fechaHora")),
-      idVenta: getText("respuestaVenta > idVenta"),
+    product: {
+      id: Number(item.idProducto),
+      name: item.nombre,
+      category: "Sin categoría",
+      price: item.precioUnitario,
+      stock: 0,
+      image: "/placeholder.png",
+      sku: "",
     },
+    qty: item.cantidad,
   };
 }
 
-function parseErrorXml(xmlString: string): CheckoutError {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-  const parserError = xmlDoc.querySelector("parsererror");
-  if (parserError) {
-    return { error: parserError.textContent || "XML inválido" };
+function mapCheckoutError(err: any): CheckoutError {
+  const msg = err?.message || "Error desconocido";
+  if (err?.detalles) {
+    return { error: msg, detalles: err.detalles };
   }
-
-  const mensaje = xmlDoc.querySelector("mensaje")?.textContent?.trim() || "Error desconocido";
-  const errorCode = xmlDoc.querySelector("error")?.textContent?.trim();
-  const detallesElement = xmlDoc.querySelector("detalles");
-  const detalles = detallesElement
-    ? Array.from(detallesElement.querySelectorAll("item")).map((item) => ({
-        producto: item.querySelector("producto")?.textContent?.trim() || "",
-        solicitado: Number(item.querySelector("solicitado")?.textContent?.trim() || "0"),
-        disponible: Number(item.querySelector("disponible")?.textContent?.trim() || "0"),
-      }))
-    : undefined;
-
-  return {
-    error: errorCode || mensaje,
-    detalles: detalles?.length ? detalles : undefined,
-  };
-}
-
-function buildVentaXml(
-  idUsuario: string,
-  metodoPago: string,
-  porcentajeImpuesto: number,
-  productos: CartItem[],
-): string {
-  const productosXml = productos
-    .map(
-      (item) => `<producto><idProducto>${item.product.id}</idProducto><nombre>${item.product.name}</nombre><cantidad>${item.qty}</cantidad><precioUnitario>${item.product.price.toFixed(2)}</precioUnitario><subtotal>${(item.product.price * item.qty).toFixed(2)}</subtotal></producto>`,
-    )
-    .join("");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<crearVenta>
-  <idUsuario>${idUsuario}</idUsuario>
-  <metodoPago>${metodoPago}</metodoPago>
-  <porcentajeImpuesto>${porcentajeImpuesto}</porcentajeImpuesto>
-  <productos>${productosXml}</productos>
-</crearVenta>`;
-}
-
-function buildAgregarProductoXml(product: POSProduct): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<agregarProducto>
-  <idProducto>${product.id}</idProducto>
-  <nombre>${product.name}</nombre>
-  <cantidad>1</cantidad>
-  <precioUnitario>${product.price.toFixed(2)}</precioUnitario>
-  <subtotal>${product.price.toFixed(2)}</subtotal>
-</agregarProducto>`;
-}
-
-function buildCambiarCantidadXml(cantidad: number): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<cambiarCantidad>
-  <cantidad>${cantidad}</cantidad>
-</cambiarCantidad>`;
+  return { error: msg };
 }
 
 /**
@@ -161,8 +77,6 @@ export default function POSPage() {
   );
 
   // Sincroniza las imágenes y datos del carrito con el catálogo cargado.
-  // Si el carrito proviene del servicio POS sin `urlImagen`, usamos
-  // la información del producto del catálogo para mostrar la imagen real.
   useEffect(() => {
     if (products.length === 0 || cart.length === 0) return;
 
@@ -194,7 +108,6 @@ export default function POSPage() {
       errorMessage.includes("Unauthorized") ||
       errorMessage.includes("No token provided")
     ) {
-      // Limpiar la cookie de token
       document.cookie =
         "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
       router.replace("/login");
@@ -203,23 +116,12 @@ export default function POSPage() {
     return false;
   };
 
-  // ── Fetch products and cart from POS service ──
+  // ── Load products and cart ──
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const res = await fetch("/api/pos/productos", {
-          headers: { Accept: "application/xml" },
-        });
-        const text = await res.text();
-        if (!res.ok) {
-          const error = parseErrorXml(text);
-          if (!handleAuthError(error)) {
-            console.error("Error loading products:", error);
-          }
-          return;
-        }
-        const mapped = parseProductsFromXml(text);
-        setProducts(mapped);
+        const data = await posApi.obtenerProductos();
+        setProducts(data.map(mapProductoVenta));
       } catch (err: any) {
         if (!handleAuthError(err)) {
           console.error("Error loading products:", err);
@@ -231,18 +133,8 @@ export default function POSPage() {
 
     const loadCart = async () => {
       try {
-        const res = await fetch("/api/pos/carrito", {
-          headers: { Accept: "application/xml" },
-        });
-        const text = await res.text();
-        if (!res.ok) {
-          const error = parseErrorXml(text);
-          if (!handleAuthError(error)) {
-            console.error("Error loading carrito:", error);
-          }
-          return;
-        }
-        setCart(parseCartFromXml(text));
+        const data = await posApi.obtenerCarrito();
+        setCart(data.map(mapCarritoItem));
       } catch (err: any) {
         if (!handleAuthError(err)) {
           console.error("Error loading carrito:", err);
@@ -273,23 +165,18 @@ export default function POSPage() {
 
   const addToCart = useCallback(async (product: POSProduct) => {
     try {
-      const xml = buildAgregarProductoXml(product);
-      const res = await fetch("/api/pos/carrito", {
-        method: "POST",
-        headers: { "Content-Type": "application/xml", Accept: "application/xml" },
-        body: xml,
+      const data = await posApi.agregarProductoCarrito({
+        idProducto: String(product.id),
+        nombre: product.name,
+        cantidad: 1,
+        precioUnitario: product.price,
+        subtotal: product.price,
       });
-      const text = await res.text();
-      if (!res.ok) {
-        const error = parseErrorXml(text);
-        if (!handleAuthError(error)) {
-          setCheckoutError(error);
-        }
-        return;
-      }
-      setCart(parseCartFromXml(text));
+      setCart(data.map(mapCarritoItem));
     } catch (err: any) {
-      setCheckoutError({ error: err.message || "No se pudo agregar el producto" });
+      if (!handleAuthError(err)) {
+        setCheckoutError(mapCheckoutError(err));
+      }
     }
   }, []);
 
@@ -297,23 +184,12 @@ export default function POSPage() {
     try {
       const currentItem = cart.find((item) => item.product.id === id);
       const newQty = currentItem ? currentItem.qty + 1 : 1;
-      const xml = buildCambiarCantidadXml(newQty);
-      const res = await fetch(`/api/pos/carrito/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/xml", Accept: "application/xml" },
-        body: xml,
-      });
-      const text = await res.text();
-      if (!res.ok) {
-        const error = parseErrorXml(text);
-        if (!handleAuthError(error)) {
-          setCheckoutError(error);
-        }
-        return;
-      }
-      setCart(parseCartFromXml(text));
+      const data = await posApi.cambiarCantidad(String(id), newQty);
+      setCart(data.map(mapCarritoItem));
     } catch (err: any) {
-      setCheckoutError({ error: err.message || "No se pudo actualizar la cantidad" });
+      if (!handleAuthError(err)) {
+        setCheckoutError(mapCheckoutError(err));
+      }
     }
   }, [cart]);
 
@@ -323,47 +199,27 @@ export default function POSPage() {
       if (!currentItem) return;
       const newQty = currentItem.qty - 1;
       if (newQty < 1) {
-        await fetch(`/api/pos/carrito/${id}`, { method: "DELETE" });
-        setCart((prev) => prev.filter((item) => item.product.id !== id));
+        const data = await posApi.eliminarProductoCarrito(String(id));
+        setCart(data.map(mapCarritoItem));
         return;
       }
-      const xml = buildCambiarCantidadXml(newQty);
-      const res = await fetch(`/api/pos/carrito/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/xml", Accept: "application/xml" },
-        body: xml,
-      });
-      const text = await res.text();
-      if (!res.ok) {
-        const error = parseErrorXml(text);
-        if (!handleAuthError(error)) {
-          setCheckoutError(error);
-        }
-        return;
-      }
-      setCart(parseCartFromXml(text));
+      const data = await posApi.cambiarCantidad(String(id), newQty);
+      setCart(data.map(mapCarritoItem));
     } catch (err: any) {
-      setCheckoutError({ error: err.message || "No se pudo actualizar la cantidad" });
+      if (!handleAuthError(err)) {
+        setCheckoutError(mapCheckoutError(err));
+      }
     }
   }, [cart]);
 
   const clearCart = useCallback(async () => {
     try {
-      const res = await fetch("/api/pos/carrito", {
-        method: "DELETE",
-        headers: { Accept: "application/xml" },
-      });
-      const text = await res.text();
-      if (!res.ok) {
-        const error = parseErrorXml(text);
-        if (!handleAuthError(error)) {
-          setCheckoutError(error);
-        }
-        return;
-      }
-      setCart(parseCartFromXml(text));
+      await posApi.limpiarCarrito();
+      setCart([]);
     } catch (err: any) {
-      setCheckoutError({ error: err.message || "No se pudo limpiar el carrito" });
+      if (!handleAuthError(err)) {
+        setCheckoutError(mapCheckoutError(err));
+      }
     }
   }, []);
 
@@ -395,44 +251,34 @@ export default function POSPage() {
       const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
       const idUsuario = usuario?.idUsuario || "1";
 
-      const xml = buildVentaXml(
+      const dto: CrearVentaDTO = {
         idUsuario,
-        paymentMethod === "tarjeta" ? "tarjeta_debito" : paymentMethod,
-        16,
-        cart,
-      );
+        metodoPago:
+          paymentMethod === "tarjeta" ? "tarjeta_debito" : paymentMethod,
+        porcentajeImpuesto: 16,
+        productos: cart.map((item) => ({
+          idProducto: String(item.product.id),
+          nombre: item.product.name,
+          cantidad: item.qty,
+          precioUnitario: item.product.price,
+          subtotal: item.product.price * item.qty,
+        })),
+      };
 
-      const res = await fetch("/api/pos/venta", {
-        method: "POST",
-        headers: { "Content-Type": "application/xml", Accept: "application/xml" },
-        body: xml,
-      });
-
-      const text = await res.text();
-      if (!res.ok) {
-        const error = parseErrorXml(text);
-        if (handleAuthError(error)) {
-          return;
-        }
-        setCheckoutError(error);
-        return;
-      }
-
-      const resumen = parseVentaResumenFromXml(text);
+      const resumen = await posApi.registrarVenta(dto);
       updateProductsStock(cart);
       setVentaResumen(resumen);
       setModalOpen(true);
       setCheckoutError(null);
 
-      const clearRes = await fetch("/api/pos/carrito", {
-        method: "DELETE",
-        headers: { Accept: "application/xml" },
-      });
-      if (clearRes.ok) {
+      try {
+        await posApi.limpiarCarrito();
         setCart([]);
+      } catch {
+        // best-effort
       }
     } catch (err: any) {
-      setCheckoutError({ error: err.message || "error: no se pudo conectar con el servidor" });
+      setCheckoutError(mapCheckoutError(err));
     }
   };
 
@@ -445,14 +291,11 @@ export default function POSPage() {
   /** Manejador para imprimir recibo */
   const handlePrintReceipt = useCallback(async (resumen: VentaResumenDTO) => {
     try {
-      // Crear contenido del recibo
       const receiptContent = generateReceiptHTML(resumen);
 
-      // Crear un blob con el contenido HTML
       const blob = new Blob([receiptContent], { type: "text/html" });
       const url = URL.createObjectURL(blob);
 
-      // Abrir en nueva ventana para imprimir
       const printWindow = window.open(url, "_blank");
       if (printWindow) {
         printWindow.onload = () => {

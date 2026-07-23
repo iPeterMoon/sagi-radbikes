@@ -106,7 +106,7 @@ export const inventarioApi = {
     return fetchApi<boolean>(`${API_BASE}/productos/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ toggleActive: true }),
+      body: JSON.stringify({ action: 'toggleStatus' }),
     });
   },
 

@@ -1,23 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { proxyWithAuth } from "../../utils/authProxy";
+import { createServicioVenta } from "@/lib/pos/factory";
 
-/** GET /api/pos/carrito → GET :3003/carrito */
-export async function GET(req: NextRequest) {
-  return proxyWithAuth(req, `${process.env.POS_SERVICE_URL}/carrito`, "GET");
+const servicio = createServicioVenta();
+
+export async function GET() {
+  try {
+    const carrito = servicio.obtenerCarrito();
+    return NextResponse.json(carrito, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
-/** DELETE /api/pos/carrito → DELETE :3003/carrito (limpiar todo) */
-export async function DELETE(req: NextRequest) {
-  return proxyWithAuth(req, `${process.env.POS_SERVICE_URL}/carrito`, "DELETE");
+export async function DELETE() {
+  try {
+    servicio.limpiarCarrito();
+    return NextResponse.json({ message: "Carrito limpiado" }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
-/** POST /api/pos/carrito (agregar) → POST :3003/carrito/agregar */
 export async function POST(req: NextRequest) {
-  const body = await req.text();
-  return proxyWithAuth(
-    req,
-    `${process.env.POS_SERVICE_URL}/carrito/agregar`,
-    "POST",
-    body || undefined,
-  );
+  try {
+    const body = await req.json();
+    servicio.agregarProductoCarrito(body);
+    const carrito = servicio.obtenerCarrito();
+    return NextResponse.json(carrito, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 }

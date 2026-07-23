@@ -1,26 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { proxyWithAuth } from "../../utils/authProxy";
+import { createServicioCatalogo } from "@/lib/inventory/factory";
 
-/**
- * Manejador para la ruta GET /api/inventario/categorias. Recibe una solicitud GET y devuelve una lista de categorías.
- */
+const servicio = createServicioCatalogo();
+
 export async function GET(req: NextRequest) {
-  return proxyWithAuth(
-    req,
-    `${process.env.CATALOG_SERVICE_URL}/categorias`,
-    "GET",
-  );
+  try {
+    const categorias = await servicio.obtenerCategorias();
+    return NextResponse.json(categorias, { status: 200 });
+  } catch (error: any) {
+    console.error("GET CATEGORIAS - ERROR: ",error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
-/**
- * Manejador para la ruta POST /api/inventario/categorias. Recibe una solicitud POST con los datos de la nueva categoría y
- * la envía al servicio de catálogos.
- */
+
 export async function POST(req: NextRequest) {
-  const body = await req.arrayBuffer();
-  return proxyWithAuth(
-    req,
-    `${process.env.CATALOG_SERVICE_URL}/categorias`,
-    "POST",
-    body || undefined,
-  );
+  try {
+    const body = await req.json();
+    const categoria = await servicio.crearCategoria(body);
+    return NextResponse.json(categoria, { status: 201 });
+  } catch (error: any) {
+    console.error("POST CATEGORIAS - ERROR: ", error);
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 }

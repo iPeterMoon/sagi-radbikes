@@ -1,68 +1,95 @@
 import { NextRequest, NextResponse } from "next/server";
-import { proxyWithAuth } from "../../../utils/authProxy";
+import { createServicioCatalogo } from "@/lib/inventory/factory";
+import { PrismaFactory } from "@/lib/PrismaFactory";
+import { ActualizarProductoDTO } from "@/types/dtos";
 
-/**
- * Función auxiliar para manejar las solicitudes GET, PUT, PATCH y DELETE a la ruta /api/inventario/productos/[id].
- * Recibe la solicitud, el método HTTP y el ID del producto, envía una solicitud al servicio de catálogos con los
- * datos correspondientes y devuelve la respuesta con el resultado de la operación.
- */
-async function proxyWithId(req: NextRequest, method: string, id: string) {
-  const search = req.nextUrl.search;
+const servicio = createServicioCatalogo();
 
-  const hasBody = method !== "GET" && method !== "HEAD";
-  let body: BodyInit | undefined = undefined;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const id = (await params).id;
+    const producto = await servicio.obtenerProductoPorId(id);
 
-  if (hasBody) {
-    const text = await req.text();
-    if (text) {
-      try {
-        const bodyObj = JSON.parse(text);
-        bodyObj.id = id;
-        body = JSON.stringify(bodyObj);
-      } catch {
-        body = text;
-      }
+    if (!producto) {
+      return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
     }
+
+    return NextResponse.json(producto, { status: 200 });
+  } catch (error: any) {
+    console.error("GET PRODUCTO[ID] - ERROR: ", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  // PATCH, PUT go to /productos in catalog service according to backend index.ts mappings
-  // Except DELETE goes to /productos/:id
-  const targetUrl =
-    method === "GET" || method === "DELETE"
-      ? `${process.env.CATALOG_SERVICE_URL}/productos/${id}${search}`
-      : `${process.env.CATALOG_SERVICE_URL}/productos${search}`;
-
-  return proxyWithAuth(req, targetUrl, method, body);
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
-  return proxyWithId(req, "GET", id);
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const id = (await params).id;
+    const dto: ActualizarProductoDTO = await req.json();
+    const prisma = PrismaFactory.getCliente();
+
+    if (dto.idMarca && isNaN(Number(dto.idMarca))) {
+      const brand = await prisma.brands.findFirst({ where: { name: dto.idMarca } });
+      if (!brand) throw new Error(`La ma
+rca '${dto.idMarca}' no existe.`);
+      dto.idMarca = brand.id.toString();
+    }
+    if (dto.idCategoria && isNaN(Number(dto.idCategoria))) {
+      const category = await prisma.categories.findFirst({ where: { name: dto.idCategoria } });
+      if (!category) throw new Error(`La categoría '${dto.idCategoria}' no existe.`);
+      dto.idCategoria = category.id.toString();
+    }
+    if (dto.idSubCategoria && isNaN(Number(dto.idSubCategoria))) {
+      const subcategory = await prisma.subcategory.findFirst({ where: { name: dto.idSubCategoria } });
+      if (!subcategory) throw new Error(`La subcategoría '${dto.idSubCategoria}' no existe.`);
+      dto.idSubCategoria = subcategory.id.toString();
+    }
+
+    dto.idProducto = id;
+
+    const producto = await servicio.actualizarProducto(dto);
+    return NextResponse.json(producto, { status: 200 });
+  } catch (error: any) {
+    console.error("PUT PRODUCTO[ID] - ERROR: ", error);
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
-  return proxyWithId(req, "PUT", id);
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const id = (await params).id;
+    await servicio.eliminarProducto(id);
+    return new NextResponse(null, { status: 204 });
+  } catch (error: any) {
+    console.error("DELETE PRODUCTO[ID] - ERROR: ", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
-  return proxyWithId(req, "PATCH", id);
-}
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const id = (await params).id;
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
-  return proxyWithId(req, "DELETE", id);
+    const body = await req.json();
+
+    if (!id) {
+      return NextResponse.json({ error: "Se requiere el id del producto" }, { status: 400 });
+    }
+
+    let result = false;
+
+    if (body.action === 'toggleStatus') {
+      const result = await servicio.actualizarEstado(id);
+      return NextResponse.json({ success: result }, { status: 200 });
+    }
+
+    if (body.action === 'adjustStock') {
+      const result = await servicio.ajustarStock(id, body.cantidad);
+      return NextResponse.json({ success: result }, { status: 200 });
+    }
+
+    return NextResponse.json({ error: "Acción no válida" }, { status: 400 });
+  } catch (error: any) {
+    console.error("PATCH PRODUCTOS[ID] - ERROR: ", error);
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 }

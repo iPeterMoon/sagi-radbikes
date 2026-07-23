@@ -1,38 +1,31 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createServicioCatalogo } from "@/lib/inventory/factory";
 
-/**
- * Manejador para la ruta POST /api/inventario/productos/[id]/imagenes. Recibe una solicitud POST 
- * con el ID del producto en los parámetros de la ruta y los datos de la imagen en el cuerpo de la solicitud,
- * envía una solicitud al servicio de catálogos para agregar la imagen al producto correspondiente y devuelve 
- * la respuesta con el resultado de la operación.
- */
+const servicio = createServicioCatalogo();
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
+  try {
+    const { id } = await params;
+    const formData = await req.formData();
+    const archivos = formData.getAll("archivos").filter((f): f is File => f instanceof File);
 
-  const targetUrl = `${process.env.CATALOG_SERVICE_URL}/productos/${id}/imagenes`;
-  const body = await req.formData();
+    if (!id) {
+      return NextResponse.json({ error: "El ID del producto es requerido"}, { status: 400});
+    }
+    if (archivos.length === 0) {
+      return NextResponse.json({ error: "No se encontraron archivos de imagen" }, { status: 400 });
+    }
 
-  const headers = new Headers();
-  const token = req.cookies.get("token")?.value || req.headers.get("authorization")?.replace("Bearer ", "");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+    const mainImageIndex = formData.get("mainImageIndex")
+      ? Number(formData.get("mainImageIndex"))
+      : undefined;
 
-  const res = await fetch(targetUrl, {
-    method: "POST",
-    headers,
-    body,
-    cache: "no-store",
-  });
-
-  const resHeaders: HeadersInit = {};
-  const resContentType = res.headers.get("content-type");
-  if (resContentType) resHeaders["Content-Type"] = resContentType;
-
-  return new Response(res.body, {
-    status: res.status,
-    statusText: res.statusText,
-    headers: resHeaders,
-  });
+    await servicio.agregarImagenes(id, archivos, mainImageIndex);
+    return NextResponse.json({ success: true }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
