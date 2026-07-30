@@ -1,5 +1,6 @@
 import { CrearVentaDTO } from "../DTOsEntrada/CrearVentaDTO";
 import { ProductoCarritoDTO } from "../DTOsEntrada/ProductoCarritoDTO";
+import { VentaTicketDTO } from "../DTOsSalida";
 import { DetalleStockDTO } from "../DTOsSalida/DetalleStockDTO";
 import { VentaResumenDTO } from "../DTOsSalida/VentaResumenDTO";
 
@@ -14,4 +15,6 @@ export interface IVentaBO {
     porcentajeImpuesto: number,
   ): { subtotal: number; importeIVA: number; total: number };
   registrarVenta(dto: CrearVentaDTO): Promise<VentaResumenDTO>;
+
+  obtenerVentaParaTicket(folio: string): Promise<VentaTicketDTO>
 }

@@ -5,6 +5,8 @@ import { IPOSAccesoDatos } from "../../datos/daos/interfaces/IPOSAccesoDatos";
 import { VentaMapper } from "../mappers/VentaMapper";
 import { IVentaBO } from "../interfaces/IVentaBO";
 import { DetalleStockDTO } from "../DTOsSalida/DetalleStockDTO";
+import { TicketMapper } from "../mappers/TicketMapper";
+import { VentaTicketDTO } from "../DTOsSalida";
 
 /**
  * Objeto de Negocio (Business Object) encargado de las reglas de negocio de las Ventas.
@@ -117,4 +119,22 @@ export class VentaBO implements IVentaBO {
 
     return VentaMapper.toResumenDTO(venta, pago, subtotal, importeIVA);
   }
+
+  // VentaBO.ts — agregar al final de la clase, junto a los demás métodos
+
+/**
+ * Obtiene una venta ya registrada por su folio y la transforma en el DTO
+ * necesario para reconstruir su ticket (usado tanto para impresión inmediata
+ * post-venta como para reimpresión posterior).
+ * @param {string} folio - Folio único de la venta.
+ * @returns {Promise<VentaTicketDTO>} DTO listo para el constructor de tickets.
+ * @throws {Error} "VENTA_NO_ENCONTRADA" si el folio no existe.
+ */
+async obtenerVentaParaTicket(folio: string): Promise<VentaTicketDTO> {
+  const venta = await this.accesoDatos.ventaDAO.getByFolio(folio);
+  if (!venta) {
+    throw new Error("VENTA_NO_ENCONTRADA");
+  }
+  return TicketMapper.toTicketDTO(venta);
+}
 }

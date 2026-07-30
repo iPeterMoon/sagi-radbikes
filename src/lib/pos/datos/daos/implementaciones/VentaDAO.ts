@@ -26,13 +26,17 @@ export class VentaDAO extends GenericDAO<sales> implements IVentaDAO {
 
   /**
    * Busca una venta utilizando el folio único generado al momento de la transacción.
+   * Incluyendo la información del producto (nombre) necesaria para reconstruir el ticket
    * @param {string} folio - Cadena de folio de venta.
    * @returns {Promise<sales | null>} Entidad completa de venta o nulo.
    */
   async getByFolio(folio: string): Promise<sales | null> {
     return await this.db.findFirst({
       where: { folio },
-      include: { sale_details: true, payments: true },
+      include: {
+        sale_details: { include: { products: true }},
+        payments: true
+      },
     });
   }
 

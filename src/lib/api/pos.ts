@@ -70,4 +70,12 @@ export const posApi = {
       method: "DELETE",
     });
   },
+
+  async imprimirTicket(folio: string): Promise<void> {
+    await fetchApi<void>(`/api/print`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folio }),
+    });
+  },
 };

@@ -15,4 +15,5 @@ export interface IServicioVenta {
   cambiarCantidad(idProducto: string, cantidad: number): void;
   obtenerCarrito(): ProductoCarritoDTO[];
   registrarVenta(dto: CrearVentaDTO): Promise<VentaResumenDTO>;
+  imprimirVenta(folio: string): Promise<void>;
 }

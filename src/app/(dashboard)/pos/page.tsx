@@ -41,7 +41,7 @@ function mapCarritoItem(item: ProductoCarritoDTO): CartItem {
       category: "Sin categoría",
       price: item.precioUnitario,
       stock: 0,
-      image: item.urlImagen ||"/placeholder.png",
+      image: item.urlImagen || "/placeholder.png",
       sku: "",
     },
     qty: item.cantidad,
@@ -102,19 +102,22 @@ export default function POSPage() {
    * Función auxiliar para manejar errores de autenticación.
    * Si el error contiene "Unauthorized" o "No token provided", redirige al login.
    */
-  const handleAuthError = useCallback((error: any): boolean => {
-    const errorMessage = error?.error || error?.message || "";
-    if (
-      errorMessage.includes("Unauthorized") ||
-      errorMessage.includes("No token provided")
-    ) {
-      document.cookie =
-        "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-      router.replace("/login");
-      return true;
-    }
-    return false;
-  }, [router]);
+  const handleAuthError = useCallback(
+    (error: any): boolean => {
+      const errorMessage = error?.error || error?.message || "";
+      if (
+        errorMessage.includes("Unauthorized") ||
+        errorMessage.includes("No token provided")
+      ) {
+        document.cookie =
+          "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+        router.replace("/login");
+        return true;
+      }
+      return false;
+    },
+    [router],
+  );
 
   // ── Load products and cart ──
   useEffect(() => {
@@ -163,55 +166,64 @@ export default function POSPage() {
     return matchSearch && matchCategory;
   });
 
-  const addToCart = useCallback(async (product: POSProduct) => {
-    try {
-      const data = await posApi.agregarProductoCarrito({
-        idProducto: String(product.id),
-        nombre: product.name,
-        cantidad: 1,
-        precioUnitario: product.price,
-        subtotal: product.price,
-        urlImagen: product.image,
-      });
-      setCart(data.map(mapCarritoItem));
-    } catch (err: any) {
-      if (!handleAuthError(err)) {
-        setCheckoutError(mapCheckoutError(err));
-      }
-    }
-  }, [handleAuthError]);
-
-  const increment = useCallback(async (id: number) => {
-    try {
-      const currentItem = cart.find((item) => item.product.id === id);
-      const newQty = currentItem ? currentItem.qty + 1 : 1;
-      const data = await posApi.cambiarCantidad(String(id), newQty);
-      setCart(data.map(mapCarritoItem));
-    } catch (err: any) {
-      if (!handleAuthError(err)) {
-        setCheckoutError(mapCheckoutError(err));
-      }
-    }
-  }, [handleAuthError, cart]);
-
-  const decrement = useCallback(async (id: number) => {
-    try {
-      const currentItem = cart.find((item) => item.product.id === id);
-      if (!currentItem) return;
-      const newQty = currentItem.qty - 1;
-      if (newQty < 1) {
-        const data = await posApi.eliminarProductoCarrito(String(id));
+  const addToCart = useCallback(
+    async (product: POSProduct) => {
+      try {
+        const data = await posApi.agregarProductoCarrito({
+          idProducto: String(product.id),
+          nombre: product.name,
+          cantidad: 1,
+          precioUnitario: product.price,
+          subtotal: product.price,
+          urlImagen: product.image,
+        });
         setCart(data.map(mapCarritoItem));
-        return;
+      } catch (err: any) {
+        if (!handleAuthError(err)) {
+          setCheckoutError(mapCheckoutError(err));
+        }
       }
-      const data = await posApi.cambiarCantidad(String(id), newQty);
-      setCart(data.map(mapCarritoItem));
-    } catch (err: any) {
-      if (!handleAuthError(err)) {
-        setCheckoutError(mapCheckoutError(err));
+    },
+    [handleAuthError],
+  );
+
+  const increment = useCallback(
+    async (id: number) => {
+      try {
+        const currentItem = cart.find((item) => item.product.id === id);
+        const newQty = currentItem ? currentItem.qty + 1 : 1;
+        const data = await posApi.cambiarCantidad(String(id), newQty);
+        setCart(data.map(mapCarritoItem));
+      } catch (err: any) {
+        if (!handleAuthError(err)) {
+          setCheckoutError(mapCheckoutError(err));
+        }
       }
-    }
-  }, [handleAuthError, cart]);
+    },
+    [handleAuthError, cart],
+  );
+
+  const decrement = useCallback(
+    async (id: number) => {
+      try {
+        const currentItem = cart.find((item) => item.product.id === id);
+        if (!currentItem) return;
+        const newQty = currentItem.qty - 1;
+        if (newQty < 1) {
+          const data = await posApi.eliminarProductoCarrito(String(id));
+          setCart(data.map(mapCarritoItem));
+          return;
+        }
+        const data = await posApi.cambiarCantidad(String(id), newQty);
+        setCart(data.map(mapCarritoItem));
+      } catch (err: any) {
+        if (!handleAuthError(err)) {
+          setCheckoutError(mapCheckoutError(err));
+        }
+      }
+    },
+    [handleAuthError, cart],
+  );
 
   const clearCart = useCallback(async () => {
     try {
@@ -293,145 +305,12 @@ export default function POSPage() {
   /** Manejador para imprimir recibo */
   const handlePrintReceipt = useCallback(async (resumen: VentaResumenDTO) => {
     try {
-      const receiptContent = generateReceiptHTML(resumen);
-
-      const blob = new Blob([receiptContent], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-
-      const printWindow = window.open(url, "_blank");
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.print();
-        };
-      }
-    } catch (error) {
-      console.error("Error al generar recibo:", error);
+      await posApi.imprimirTicket(resumen.folio);
+    } catch (error: any) {
+      console.error("Error al imprimir ticket:", error);
+      setCheckoutError(mapCheckoutError(error));
     }
   }, []);
-
-  /** Genera el HTML del recibo para imprimir */
-  const generateReceiptHTML = (resumen: VentaResumenDTO): string => {
-    const formattedDate = new Date(resumen.fecha).toLocaleString("es-MX");
-
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Recibo - ${resumen.folio}</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            width: 80mm;
-            margin: 0;
-            padding: 10mm;
-          }
-          .header {
-            text-align: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-          }
-          .header h1 {
-            margin: 0;
-            font-size: 18px;
-          }
-          .header p {
-            margin: 2px 0;
-            font-size: 12px;
-            color: #666;
-          }
-          .ticket-number {
-            font-size: 14px;
-            font-weight: bold;
-            margin: 10px 0;
-          }
-          .divider {
-            border-top: 1px dashed #000;
-            margin: 10px 0;
-          }
-          .section-title {
-            font-weight: bold;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            font-size: 12px;
-          }
-          .item {
-            font-size: 11px;
-            margin: 3px 0;
-            display: flex;
-            justify-content: space-between;
-          }
-          .total-section {
-            border-top: 2px solid #000;
-            border-bottom: 2px solid #000;
-            padding: 10px 0;
-            margin: 10px 0;
-            font-weight: bold;
-            font-size: 14px;
-          }
-          .total-amount {
-            text-align: right;
-            font-size: 16px;
-            font-weight: bold;
-            color: #000;
-          }
-          .payment-info {
-            font-size: 11px;
-            margin-top: 10px;
-          }
-          .footer {
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-            margin-top: 20px;
-            border-top: 1px solid #ccc;
-            padding-top: 10px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>SAGI RADBIKES</h1>
-          <p>Punto de Venta</p>
-        </div>
-        
-        <div class="ticket-number">
-          Ticket: ${resumen.folio}
-        </div>
-        <p style="font-size: 11px; margin: 0;">Fecha: ${formattedDate}</p>
-        
-        <div class="divider"></div>
-        
-        <div class="section-title">RESUMEN DE VENTA</div>
-        <div class="item">
-          <span>Subtotal:</span>
-          <span>$${resumen.subtotal.toFixed(2)}</span>
-        </div>
-        <div class="item">
-          <span>IVA (${resumen.porcentajeImpuesto}%):</span>
-          <span>$${resumen.importeIVA.toFixed(2)}</span>
-        </div>
-        
-        <div class="total-section">
-          <div class="total-amount">
-            TOTAL: $${resumen.total.toFixed(2)}
-          </div>
-        </div>
-        
-        <div class="payment-info">
-          <strong>Método de Pago:</strong><br>
-          ${resumen.pago.metodoPago.replace("_", " ").toUpperCase()}
-        </div>
-        
-        <div class="footer">
-          <p>¡Gracias por su compra!</p>
-          <p>Conserve este recibo</p>
-        </div>
-      </body>
-      </html>
-    `;
-  };
 
   return (
     <div className="flex h-full overflow-hidden">

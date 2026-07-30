@@ -10,6 +10,7 @@ import { CarritoBO } from "./BOs/CarritoBO";
 import { ProductoBO } from "./BOs/ProductoBO";
 import { VentaBO } from "./BOs/VentaBO";
 import { IServicioVenta } from "./interfaces/IServicioVenta";
+import { imprimirTicket } from "../impresion/ticketBuilder";
 
 /**
  * Servicio central del Punto de Venta.
@@ -104,5 +105,18 @@ export class ServicioVenta implements IServicioVenta {
     const resumen = await this.ventaBO.registrarVenta(dto);
 
     return resumen;
+  }
+
+  /**
+ * Imprime el ticket de una venta ya registrada, identificada por su folio.
+ * Reutilizado tanto por la impresión post-checkout como por el botón de
+ * reimpresión (día 3 del plan).
+ * @param {string} folio - Folio único de la venta a imprimir.
+ * @throws {Error} "VENTA_NO_ENCONTRADA" o errores propios de la impresora
+ * (ej. "IMPRESORA_DESCONECTADA").
+ */
+  async imprimirVenta(folio: string): Promise<void> {
+    const ticketDTO = await this.ventaBO.obtenerVentaParaTicket(folio);
+    await imprimirTicket(ticketDTO);
   }
 }
