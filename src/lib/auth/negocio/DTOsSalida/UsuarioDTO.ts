@@ -11,7 +11,7 @@ export interface UsuarioDTO {
   /** Apellido(s) del empleado */
   apellido: string;
   /** Email del empleado */
-  email: string;
+  email?: string;
   /** Telefono de contacto del empleado */
   telefono: string;
   /** Estado de actividad (Si está trabajando actualmente en la tienda o no) */

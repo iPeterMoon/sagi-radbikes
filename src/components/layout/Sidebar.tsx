@@ -11,6 +11,7 @@ import {
   IconReports,
   IconLogout,
 } from "@/components/ui/Icons";
+import { User } from "@boxicons/react";
 
 interface NavItem {
   id: string;
@@ -30,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "catalogo", label: "Catálogo", href: "/catalogo", Icon: IconCatalog },
   { id: "pos", label: "Punto de Venta", href: "/pos", Icon: IconPOS },
   { id: "reportes", label: "Reportes", href: "/reportes", Icon: IconReports },
+  { id: "usuarios", label: "Usuarios", href: "/usuarios", Icon: User},
 ];
 
 /**

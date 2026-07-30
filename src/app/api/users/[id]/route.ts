@@ -16,8 +16,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ usua
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ usuarioId: string }> }) {
     try {
-        const usuarioId = (await params).usuarioId;
         const body = await req.json();
+        const usuarioId = (await params).usuarioId;
         const usuarioActualizado = await servicio.actualizar(BigInt(usuarioId), body);
         return NextResponse.json(usuarioActualizado, { status: 200 });
     } catch (error: any) {
@@ -37,10 +37,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ u
     }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ usuarioId: string }> }) {
+export async function PATCH(req: NextRequest,{ params}: { params: Promise<{ id: string}>}) {
     try {
-        const usuarioId = (await params).usuarioId;
-        const exito = await servicio.alternarActivo(BigInt(usuarioId));
+        const { id } = await params;
+        
+        const exito = await servicio.alternarActivo(BigInt(id));
         return NextResponse.json({ success: exito }, { status: 200 });
     } catch (error: any) {
         console.error("Error al alternar estado de usuario:", error);

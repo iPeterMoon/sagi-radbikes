@@ -13,10 +13,12 @@ export class UsuarioMapper {
    * @returns UsuarioDTO sin datos sensibles
    */
   static toDTO(
-    entity: users & { user_role?: Array<{ roles: roles }> }
+    entity: users & { user_role?: Array<{ roles: roles | null}> }
   ): UsuarioDTO {
-    const roles = entity.user_role?.map((ur) => ur.roles) || [];
 
+    const rolesFiltrados = entity.user_role
+      ?.map((ur) => ur.roles)
+      .filter((rol) => rol !== null) || []
     return {
       idUsuario: String(entity.id),
       username: entity.username || "",
@@ -25,7 +27,7 @@ export class UsuarioMapper {
       email: entity.email || "",
       telefono: entity.telefono || "",
       is_active: entity.is_active,
-      roles: RolMapper.toDTOArray(roles),
+      roles: RolMapper.toDTOArray(rolesFiltrados as any),
     };
   }
 

@@ -1,4 +1,4 @@
-import { users } from "@prisma/client";
+import { roles, user_role, users } from "@prisma/client";
 import { IGenericDAO } from "./IGenericDAO";
 
 /**
@@ -7,6 +7,13 @@ import { IGenericDAO } from "./IGenericDAO";
  * con sus roles asociados.
  */
 export interface IUsuarioDAO extends IGenericDAO<users> {
+  
+  /**
+   * Obtiene todos los registros del modelo con sus roles.
+   * @returns Una promesa que resuelve en un array de registros.
+   */
+  getAllWithRoles(): Promise<Array<users & { user_role: Array<user_role & { roles: roles | null }> }>>
+
   /**
    * Obtiene un usuario por su nombre de usuario. La búsqueda es insensible a mayúsculas.
    * @param username - El nombre de usuario del usuario a buscar.

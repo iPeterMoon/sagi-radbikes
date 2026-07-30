@@ -118,7 +118,7 @@ export class UsuarioBO implements IUsuarioBO {
  * @returns Una promesa que resuelve a un arreglo con los DTOs de todos los usuarios.
  */
   async obtenerTodos(): Promise<UsuarioDTO[]> {
-    const usuarios = await this.accesoDatos.usuarioDAO.getAll();
+    const usuarios = await this.accesoDatos.usuarioDAO.getAllWithRoles();
     return usuarios.map(UsuarioMapper.toDTO);
   }
 
@@ -197,14 +197,14 @@ export class UsuarioBO implements IUsuarioBO {
         }
       }
 
-      if (usuario.email !== existente.email) {
-        const usuarioEmail = await this.accesoDatos.usuarioDAO.getByEmail(usuario.email);
+      if (usuario.email !== existente.email && existente.email !== null ) {
+        const usuarioEmail = await this.accesoDatos.usuarioDAO.getByEmail(usuario.email!);
         if (usuarioEmail) {
           throw new Error("Este correo ya está asociado con un usuario");
         }
       }
 
-      if (usuario.telefono !== existente.telefono) {
+      if (usuario.telefono !== existente.telefono && existente.telefono !== null) {
         const usuarioTelefono = await this.accesoDatos.usuarioDAO.getByPhone(usuario.telefono);
         if (usuarioTelefono) {
           throw new Error("Este telefono ya está asociado con un usuario");

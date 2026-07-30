@@ -1,4 +1,8 @@
-export type { LoginDTO, } from "@/lib/auth/negocio/DTOsEntrada";
+export type { 
+  LoginDTO, 
+  NuevoRolDTO, 
+  NuevoUsuarioDTO 
+} from "@/lib/auth/negocio/DTOsEntrada";
 export type {
   RolDTO,
   SesionDTO,

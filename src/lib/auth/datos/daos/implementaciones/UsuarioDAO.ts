@@ -1,4 +1,4 @@
-import { PrismaClient, users } from "@prisma/client";
+import { PrismaClient, roles, user_role, users } from "@prisma/client";
 import { GenericDAO } from "./GenericDAO";
 import { IUsuarioDAO } from "../interfaces/IUsuarioDAO";
 
@@ -15,6 +15,20 @@ export class UsuarioDAO extends GenericDAO<users> implements IUsuarioDAO {
    */
   constructor(prisma: PrismaClient) {
     super(prisma, "users");
+  }
+
+  /**
+   * Obtiene todos los registros del modelo con sus roles.
+   * @returns Una promesa que resuelve en un array de registros.
+   */
+  async getAllWithRoles(): Promise<Array<users & { user_role: Array<user_role & { roles: roles | null }> }>> {
+    return await this.db.findMany({ include: {
+      user_role: {
+        include: {
+          roles: true,
+        }
+      }
+    } });
   }
 
   /**
@@ -97,7 +111,7 @@ export class UsuarioDAO extends GenericDAO<users> implements IUsuarioDAO {
     return await this.db.findFirst({
       where: { telefono: { equals: phone } },
       include: {
-        user_role : {
+        user_role: {
           include: {
             roles: true,
           }
@@ -120,7 +134,7 @@ export class UsuarioDAO extends GenericDAO<users> implements IUsuarioDAO {
         return false;
       }
 
-      const isActive = user.isActive;
+      const isActive = user.is_active;
 
       await this.db.update({
         where: { id: id },
@@ -128,6 +142,7 @@ export class UsuarioDAO extends GenericDAO<users> implements IUsuarioDAO {
       })
       return true;
     } catch (error: any) {
+      console.log(error);
       return false;
     }
   }

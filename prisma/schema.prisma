@@ -144,7 +144,7 @@ model users {
   password   String?     @db.VarChar
   nombre     String?     @db.VarChar
   apellido   String?     @db.VarChar
-  email      String?     @unique @db.VarChar
+  email      String?     @db.VarChar
   telefono   String?     @unique @db.VarChar
   is_active  Boolean    @default(true)
   sales      sales[]

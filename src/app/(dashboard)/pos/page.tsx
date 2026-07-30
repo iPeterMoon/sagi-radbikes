@@ -41,7 +41,7 @@ function mapCarritoItem(item: ProductoCarritoDTO): CartItem {
       category: "Sin categoría",
       price: item.precioUnitario,
       stock: 0,
-      image: "/placeholder.png",
+      image: item.urlImagen ||"/placeholder.png",
       sku: "",
     },
     qty: item.cantidad,
@@ -96,13 +96,13 @@ export default function POSPage() {
         };
       }),
     );
-  }, [products]);
+  }, [products, cart.length]);
 
   /**
    * Función auxiliar para manejar errores de autenticación.
    * Si el error contiene "Unauthorized" o "No token provided", redirige al login.
    */
-  const handleAuthError = (error: any): boolean => {
+  const handleAuthError = useCallback((error: any): boolean => {
     const errorMessage = error?.error || error?.message || "";
     if (
       errorMessage.includes("Unauthorized") ||
@@ -114,7 +114,7 @@ export default function POSPage() {
       return true;
     }
     return false;
-  };
+  }, [router]);
 
   // ── Load products and cart ──
   useEffect(() => {
@@ -144,7 +144,7 @@ export default function POSPage() {
 
     loadProducts();
     loadCart();
-  }, []);
+  }, [handleAuthError]);
 
   const categories = [
     "Todas",
@@ -171,6 +171,7 @@ export default function POSPage() {
         cantidad: 1,
         precioUnitario: product.price,
         subtotal: product.price,
+        urlImagen: product.image,
       });
       setCart(data.map(mapCarritoItem));
     } catch (err: any) {
@@ -178,7 +179,7 @@ export default function POSPage() {
         setCheckoutError(mapCheckoutError(err));
       }
     }
-  }, []);
+  }, [handleAuthError]);
 
   const increment = useCallback(async (id: number) => {
     try {
@@ -191,7 +192,7 @@ export default function POSPage() {
         setCheckoutError(mapCheckoutError(err));
       }
     }
-  }, [cart]);
+  }, [handleAuthError, cart]);
 
   const decrement = useCallback(async (id: number) => {
     try {
@@ -210,7 +211,7 @@ export default function POSPage() {
         setCheckoutError(mapCheckoutError(err));
       }
     }
-  }, [cart]);
+  }, [handleAuthError, cart]);
 
   const clearCart = useCallback(async () => {
     try {
@@ -221,7 +222,7 @@ export default function POSPage() {
         setCheckoutError(mapCheckoutError(err));
       }
     }
-  }, []);
+  }, [handleAuthError]);
 
   /** Actualiza el stock de los productos de forma reactiva sin hacer un fetch completo */
   const updateProductsStock = useCallback((productsToDecrement: CartItem[]) => {
@@ -262,6 +263,7 @@ export default function POSPage() {
           cantidad: item.qty,
           precioUnitario: item.product.price,
           subtotal: item.product.price * item.qty,
+          urlImagen: item.product.image,
         })),
       };
 

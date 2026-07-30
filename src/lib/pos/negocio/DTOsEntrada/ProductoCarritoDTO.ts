@@ -13,4 +13,6 @@ export interface ProductoCarritoDTO {
     precioUnitario: number;
     /** Monto acumulado de este producto (precioUnitario * cantidad) */
     subtotal: number;
+    /** URL de la imagen del producto */
+    urlImagen: string;
 }
