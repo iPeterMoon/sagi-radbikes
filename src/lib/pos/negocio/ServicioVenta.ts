@@ -21,12 +21,22 @@ export class ServicioVenta implements IServicioVenta {
   private ventaBO: IVentaBO;
   private carritoBO: ICarritoBO;
   private productoBO: IProductoBO;
+  private static instance: IServicioVenta;
+
+
+
+  static getInstance(accesoDatos: IPOSAccesoDatos): IServicioVenta {
+    if (!this.instance) {
+      this.instance = new ServicioVenta(accesoDatos);
+    }
+    return this.instance;
+  }
 
   /**
    * Inicializa el servicio instanciando los objetos de negocio.
    * * @param {IPOSAccesoDatos} accesoDatos - Interfaz de la capa de acceso a datos.
    */
-  constructor(accesoDatos: IPOSAccesoDatos) {
+  private constructor(accesoDatos: IPOSAccesoDatos) {
     this.ventaBO = new VentaBO(accesoDatos);
     this.carritoBO = new CarritoBO();
     this.productoBO = new ProductoBO(accesoDatos);
@@ -69,8 +79,8 @@ export class ServicioVenta implements IServicioVenta {
    * * @param {string} idProducto - ID del producto a actualizar.
    * @param {number} cantidad - Nueva cantidad del producto.
    */
-  cambiarCantidad(idProducto: string, cantidad: number): void {
-    this.carritoBO.cambiarCantidad(idProducto, cantidad);
+  async cambiarCantidad(idProducto: string, cantidad: number): Promise <void> {
+    return await this.carritoBO.cambiarCantidad(idProducto, cantidad);
   }
 
   /**

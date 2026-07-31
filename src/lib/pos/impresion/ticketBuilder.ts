@@ -13,6 +13,7 @@ function crearImpresora(): ThermalPrinter {
         interface: process.env.PRINTER_INTERFACE || "/dev/usb/lp0",
         width: 42,
         characterSet: CharacterSet.PC852_LATIN2,
+        
     });
 }
 
@@ -39,9 +40,11 @@ export async function imprimirTicket(venta: VentaTicketDTO): Promise<void> {
         console.error("No se pudo imprimir el logo, continuando sin el: ", err);
     }
     printer.bold(true);
+    printer.setTextSize(1, 1);
     printer.println(NEGOCIO_CONFIG.nombre);
-    printer.bold(false);
     printer.setTextNormal();
+    printer.println("");
+    printer.bold(false);
     for (const line of NEGOCIO_CONFIG.direccionLineas) {
         printer.println(line);
     }

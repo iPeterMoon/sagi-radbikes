@@ -2,6 +2,7 @@ import { ProductoCarritoDTO } from "../DTOsEntrada/ProductoCarritoDTO";
 import { CrearVentaDTO } from "../DTOsEntrada/CrearVentaDTO";
 import { VentaResumenDTO } from "../DTOsSalida/VentaResumenDTO";
 import { ProductoVentaDTO } from "../DTOsSalida/ProductoVentaDTO";
+import { IPOSAccesoDatos } from "../../datos/daos/interfaces/IPOSAccesoDatos";
 
 /**
  * Contrato de la fachada principal del módulo de ventas (Servicio Orquestador).

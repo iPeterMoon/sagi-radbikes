@@ -9,7 +9,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const { idProducto } = await params;
     const body = await req.json();
-    servicio.cambiarCantidad(idProducto, body.cantidad);
+    await servicio.cambiarCantidad(idProducto, body.cantidad);
     const carrito = servicio.obtenerCarrito();
     return NextResponse.json(carrito, { status: 200 });
   } catch (error: any) {

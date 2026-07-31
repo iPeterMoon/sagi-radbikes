@@ -5,7 +5,7 @@ export interface ICarritoBO {
   agregar(producto: ProductoCarritoDTO): void;
   eliminar(idProducto: string): void;
   limpiar(): void;
-  cambiarCantidad(idProducto: string, cantidad: number): void;
+  cambiarCantidad(idProducto: string, cantidad: number): Promise<void>;
   obtenerItems(): ProductoCarritoDTO[];
   calcularTotal(): number;
 }

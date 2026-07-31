@@ -5,7 +5,7 @@ import { POSAccesoDatos } from "./datos/POSAccesoDatos";
 
 export function createServicioVenta(): IServicioVenta {
     const accesoDatos = crearAccesoDatos();
-    return new ServicioVenta(accesoDatos);
+    return ServicioVenta.getInstance(accesoDatos);
 }
 
 const crearAccesoDatos = (): IPOSAccesoDatos => {

@@ -20,6 +20,7 @@ import CategoryTabs from "./components/CategoryTabs";
 import ProductGrid from "./components/ProductGrid";
 import CartPanel from "./components/CartPanel";
 import SuccessModal from "./components/SuccessModal";
+import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 
 function mapProductoVenta(p: ProductoVentaDTO): POSProduct {
   return {
@@ -30,6 +31,7 @@ function mapProductoVenta(p: ProductoVentaDTO): POSProduct {
     stock: p.stock,
     image: p.urlImagen || "/placeholder.png",
     sku: p.SKU,
+    barcodeUpc: p.codigoBarras,
   };
 }
 
@@ -43,6 +45,7 @@ function mapCarritoItem(item: ProductoCarritoDTO): CartItem {
       stock: 0,
       image: item.urlImagen || "/placeholder.png",
       sku: "",
+      barcodeUpc: "",
     },
     qty: item.cantidad,
   };
@@ -187,6 +190,23 @@ export default function POSPage() {
     [handleAuthError],
   );
 
+  const handleScan = useCallback(
+    async (codigo: string) => {
+      const producto = products.find((p) => p.barcodeUpc === codigo);
+      if (!producto) {
+        setCheckoutError({ error: `Código no encontrado: ${codigo}` });
+        return;
+      }
+      await addToCart(producto);
+    },
+    [products, addToCart],
+  );
+
+  useBarcodeScanner({
+    onScan: handleScan,
+    enabled: !modalOpen, // pausa el escaneo mientras el modal de éxito está abierto
+  });
+
   const increment = useCallback(
     async (id: number) => {
       try {
@@ -210,6 +230,7 @@ export default function POSPage() {
         if (!currentItem) return;
         const newQty = currentItem.qty - 1;
         if (newQty < 1) {
+          console.log("cantidad: ", newQty);
           const data = await posApi.eliminarProductoCarrito(String(id));
           setCart(data.map(mapCarritoItem));
           return;
@@ -332,7 +353,14 @@ export default function POSPage() {
 
         {/* Feedback de checkout */}
         {checkoutError && (
-          <div className="mx-6 mb-3 px-4 py-3 rounded-md text-sm bg-red-50 border border-red-200 text-red-800 shadow-sm">
+          <div className="mx-6 mb-3 px-4 py-3 rounded-md text-sm bg-red-50 border border-red-200 text-red-800 shadow-sm relative">
+            <button
+              onClick={() => setCheckoutError(null)}
+              aria-label="Cerrar"
+              className="absolute right-4 text-red-400 hover:text-red-700 bg-transparent border-none cursor-pointer text-md leading-none font-bold w-5 h-5 flex items-center justify-center transition-all"
+            >
+              ×
+            </button>
             {checkoutError.error === "STOCK_INSUFICIENTE" &&
             checkoutError.detalles ? (
               <div className="flex flex-col gap-1.5">

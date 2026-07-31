@@ -29,6 +29,7 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Buscar producto o escanear código..."
+        data-allow-scan="true"
         className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 bg-white text-[13px] text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#1a2e5a]/20 focus:border-[#1a2e5a]/40 transition-all shadow-sm"
       />
 

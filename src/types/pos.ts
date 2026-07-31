@@ -8,6 +8,7 @@ export interface POSProduct {
   stock: number | null;
   image: string;
   sku: string;
+  barcodeUpc: string;
 }
 
 /** Ítem dentro del carrito de compras del POS. */

@@ -42,7 +42,7 @@ export class CarritoBO implements ICarritoBO {
    * @param {string} idProducto - ID del producto.
    * @param {number} cantidad - Nueva cantidad.
    */
-  cambiarCantidad(idProducto: string, cantidad: number): void {
+  async cambiarCantidad(idProducto: string, cantidad: number): Promise<void> {
     const item = this.items.find((i) => i.idProducto === idProducto);
     if (item) {
       item.cantidad = cantidad;
