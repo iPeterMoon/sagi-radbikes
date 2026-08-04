@@ -11,7 +11,7 @@ async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, { ...options, credentials: "include" });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: "Request failed" }));
-    const err = new Error(body.error || "Request failed") as Error & {
+    const err = new Error(body.mensaje || body.error || "Request failed") as Error & {
       detalles?: unknown;
     };
     err.detalles = body.detalles;
@@ -78,4 +78,5 @@ export const posApi = {
       body: JSON.stringify({ folio }),
     });
   },
+
 };

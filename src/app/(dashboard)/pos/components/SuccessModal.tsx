@@ -7,6 +7,7 @@ import { useState } from "react";
 interface SuccessModalProps {
   isOpen: boolean;
   resumen: VentaResumenDTO | null;
+  printError: string | null;
   onClose: () => void;
   onNewSale: () => void;
   onPrint: (resumen: VentaResumenDTO) => void;
@@ -15,6 +16,7 @@ interface SuccessModalProps {
 export default function SuccessModal({
   isOpen,
   resumen,
+  printError,
   onClose,
   onNewSale,
   onPrint,
@@ -73,6 +75,12 @@ export default function SuccessModal({
           La transacción se ha completado correctamente y el inventario ha sido actualizado.
         </p>
 
+        {printError && (
+          <div className="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 border border-red-200 text-red-800">
+            {printError}
+          </div>
+        )}
+
         {/* Buttons - Stacked Vertically */}
         <div className="space-y-3 mb-6">
           {/* Nueva Venta Button (Primary) */}
@@ -90,7 +98,7 @@ export default function SuccessModal({
             className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-gray-300 px-6 py-3 font-semibold text-gray-600 transition hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50"
           >
             <Printer className="h-5 w-5" />
-            {isPrinting ? "Generando..." : "Imprimir Recibo"}
+            {isPrinting ? "Imprimiendo..." : printError? "Reintentar Impresión" : "Imprimir Recibo"}
           </button>
         </div>
 

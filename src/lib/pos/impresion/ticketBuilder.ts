@@ -17,6 +17,14 @@ function crearImpresora(): ThermalPrinter {
     });
 }
 
+function conTimeout<T>(promesa: Promise<T>, ms: number, mensajeTimeout: string): Promise<T> {
+  return Promise.race([
+    promesa,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(mensajeTimeout)), ms),
+    ),
+  ]);
+}
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
@@ -81,5 +89,13 @@ export async function imprimirTicket(venta: VentaTicketDTO): Promise<void> {
     printer.println("¡Gracias por su compra!");
     printer.cut();
 
-    await printer.execute();
+    try {
+        await conTimeout(printer.execute(), 1000, "IMPRESORA_TIMEOUT");
+    } catch(err: any) {
+        if(err.message === "IMPRESORA_TIMEOUT") {
+            throw new Error(err.message);
+        } else {
+            throw new Error("IMPRESORA_ERROR");
+        }
+    }
 }

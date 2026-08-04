@@ -163,6 +163,7 @@ export default function POSPage() {
       !q ||
       p.name.toLowerCase().includes(q) ||
       p.sku.toLowerCase().includes(q) ||
+      p.barcodeUpc?.toLowerCase().includes(q) ||
       p.category.toLowerCase().includes(q);
     const matchCategory =
       activeCategory === "Todas" || p.category === activeCategory;
@@ -321,15 +322,19 @@ export default function POSPage() {
   const handleNewSale = useCallback(() => {
     clearCart();
     setVentaResumen(null);
+    setPrintError(null);
   }, [clearCart]);
+
+  const [printError, setPrintError] = useState<string | null>(null);
 
   /** Manejador para imprimir recibo */
   const handlePrintReceipt = useCallback(async (resumen: VentaResumenDTO) => {
     try {
+      setPrintError(null);
       await posApi.imprimirTicket(resumen.folio);
     } catch (error: any) {
       console.error("Error al imprimir ticket:", error);
-      setCheckoutError(mapCheckoutError(error));
+      setPrintError(error.message || "Ocurrió un error al imprimir el ticket.");
     }
   }, []);
 
@@ -413,6 +418,7 @@ export default function POSPage() {
       <SuccessModal
         isOpen={modalOpen}
         resumen={ventaResumen}
+        printError={printError}
         onClose={() => setModalOpen(false)}
         onNewSale={handleNewSale}
         onPrint={handlePrintReceipt}
