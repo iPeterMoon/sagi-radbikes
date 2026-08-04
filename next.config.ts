@@ -20,6 +20,12 @@ const nextConfig: NextConfig = {
     ],
   },
   output: "standalone",
+  outputFileTracingIncludes: {
+    "/api/print": [
+      "./node_modules/@node-escpos/**/*",
+      "./node_modules/usb/**/*",
+    ],
+  },
   turbopack: {
     root: path.resolve(process.cwd()),
   }

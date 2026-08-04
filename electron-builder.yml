@@ -24,6 +24,7 @@ mac:
   target: dmg
   category: public.app-category.business
   icon: build/icon.icns
+  identity: null
 
 win:
   target: nsis

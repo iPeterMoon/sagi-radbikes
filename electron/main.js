@@ -64,6 +64,7 @@ function startNextServer() {
     nextServerProcess = spawn(process.execPath, [serverPath], {
       env: {
         ...process.env,
+        ELECTRON_RUN_AS_NODE: '1',
         PORT: String(PORT),
         NODE_ENV: 'production',
         HOSTNAME: '127.0.0.1',

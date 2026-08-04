@@ -90,7 +90,7 @@ export async function imprimirTicket(venta: VentaTicketDTO): Promise<void> {
     printer.cut();
 
     try {
-        await conTimeout(printer.execute(), 1000, "IMPRESORA_TIMEOUT");
+        await conTimeout(printer.execute(), 3000, "IMPRESORA_TIMEOUT");
     } catch(err: any) {
         if(err.message === "IMPRESORA_TIMEOUT") {
             throw new Error(err.message);
