@@ -1,7 +1,8 @@
-const { app, BrowserWindow, Menu, shell } = require('electron');
-const path = require('path');
-const { spawn } = require('child_process');
-const net = require('net');
+const { app, BrowserWindow, Menu, shell } = require("electron");
+const path = require("path");
+const { spawn } = require("child_process");
+const net = require("net");
+const fs = require("fs");
 
 const isDev = !app.isPackaged;
 const PORT = process.env.PORT || 3000;
@@ -15,35 +16,73 @@ let nextServerProcess;
  * Ahí es donde vive el server.js autocontenido que genera Next.js.
  */
 function getStandaloneServerPath() {
-  return path.join(process.resourcesPath, 'app', 'server.js');
+  return path.join(process.resourcesPath, "app", "server.js");
 }
 
 /**
  * Espera hasta que el servidor Next.js responda en el puerto,
  * para no abrir la ventana antes de que esté listo.
  */
-function waitForPort(port, host = '127.0.0.1', timeoutMs = 45000) {
+function waitForPort(port, host = "127.0.0.1", timeoutMs = 45000) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
 
     (function check() {
       const socket = net.createConnection(port, host);
 
-      socket.once('connect', () => {
+      socket.once("connect", () => {
         socket.end();
         resolve();
       });
 
-      socket.once('error', () => {
+      socket.once("error", () => {
         socket.destroy();
         if (Date.now() - start > timeoutMs) {
-          reject(new Error(`Timeout esperando el servidor Next.js en el puerto ${port}`));
+          reject(
+            new Error(
+              `Timeout esperando el servidor Next.js en el puerto ${port}`,
+            ),
+          );
         } else {
           setTimeout(check, 300);
         }
       });
     })();
   });
+}
+
+/**
+ * Lee el archivo runtime.env empaquetado junto a la app y devuelve
+ * sus variables como objeto plano. En dev no hace nada porque el
+ * .env de la raíz ya se carga normalmente por Next.js
+ */
+function loadRuntimeEnv() {
+  if (isDev) return {};
+
+  const envPath = path.join(process.resourcesPath, "runtime.env");
+  if (!fs.existsSync(envPath)) {
+    console.error("No se encontró runtime.env en: ", envPath);
+    return {};
+  }
+
+  const contenido = fs.readFileSync(envPath, "utf-8");
+  const env = {};
+  for (const linea of contenido.split("\n")) {
+    const limpia = linea.trim();
+    if (!limpia || limpia.startsWith("#")) continue;
+    const idx = limpia.indexOf("=");
+    if (idx === -1) continue;
+    const key = limpia.slice(0, idx).trim();
+    let value = limpia.slice(idx + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    env[key] = value;
+  }
+  return env;
 }
 
 /**
@@ -64,23 +103,26 @@ function startNextServer() {
     nextServerProcess = spawn(process.execPath, [serverPath], {
       env: {
         ...process.env,
-        ELECTRON_RUN_AS_NODE: '1',
+        ...loadRuntimeEnv(),
+        ELECTRON_RUN_AS_NODE: "1",
         PORT: String(PORT),
-        NODE_ENV: 'production',
-        HOSTNAME: '127.0.0.1',
+        NODE_ENV: "production",
+        HOSTNAME: "127.0.0.1",
       },
-      stdio: 'inherit',
+      stdio: "inherit",
       cwd: path.dirname(serverPath),
     });
 
-    nextServerProcess.on('error', (err) => {
-      console.error('Error al iniciar el servidor Next.js:', err);
+    nextServerProcess.on("error", (err) => {
+      console.error("Error al iniciar el servidor Next.js:", err);
       reject(err);
     });
 
-    nextServerProcess.on('exit', (code) => {
+    nextServerProcess.on("exit", (code) => {
       if (code !== null && code !== 0) {
-        console.error(`El servidor Next.js terminó inesperadamente con código ${code}`);
+        console.error(
+          `El servidor Next.js terminó inesperadamente con código ${code}`,
+        );
       }
     });
 
@@ -97,7 +139,7 @@ async function createWindow() {
     // extra antes de cargar la URL para evitar una pantalla en blanco.
     await new Promise((resolve) => setTimeout(resolve, isDev ? 1500 : 300));
   } catch (err) {
-    console.error('No se pudo iniciar el servidor de la aplicación:', err);
+    console.error("No se pudo iniciar el servidor de la aplicación:", err);
     app.quit();
     return;
   }
@@ -108,7 +150,7 @@ async function createWindow() {
     minWidth: 1024,
     minHeight: 700,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -124,10 +166,10 @@ async function createWindow() {
   // se manda al navegador del sistema en vez de abrir dentro de la app.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
-    return { action: 'deny' };
+    return { action: "deny" };
   });
 
-  mainWindow.on('closed', () => {
+  mainWindow.on("closed", () => {
     mainWindow = null;
   });
 }
@@ -141,18 +183,18 @@ function stopNextServer() {
 
 app.whenReady().then(createWindow);
 
-app.on('window-all-closed', () => {
+app.on("window-all-closed", () => {
   stopNextServer();
-  if (process.platform !== 'darwin') {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-app.on('before-quit', () => {
+app.on("before-quit", () => {
   stopNextServer();
 });
 
-app.on('activate', () => {
+app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }

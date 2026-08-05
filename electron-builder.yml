@@ -1,5 +1,5 @@
-appId: com.tuempresa.pos
-productName: MiPOS
+appId: com.radbikes.pos
+productName: Rad Bikes
 directories:
   output: dist
 
@@ -19,6 +19,8 @@ extraResources:
     to: app/.next/static
   - from: public
     to: app/public
+  - from: runtime.env
+    to: runtime.env
 
 mac:
   target: dmg
