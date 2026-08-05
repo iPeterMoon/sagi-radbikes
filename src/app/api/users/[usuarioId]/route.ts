@@ -37,11 +37,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ u
     }
 }
 
-export async function PATCH(req: NextRequest,{ params}: { params: Promise<{ id: string}>}) {
+export async function PATCH(req: NextRequest,{ params}: { params: Promise<{ usuarioId: string}>}) {
     try {
-        const { id } = await params;
+        const { usuarioId } = await params;
         
-        const exito = await servicio.alternarActivo(BigInt(id));
+        const exito = await servicio.alternarActivo(BigInt(usuarioId));
         return NextResponse.json({ success: exito }, { status: 200 });
     } catch (error: any) {
         console.error("Error al alternar estado de usuario:", error);
