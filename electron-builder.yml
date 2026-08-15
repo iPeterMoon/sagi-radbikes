@@ -5,22 +5,8 @@ directories:
 
 files:
   - electron/**/*
-  - package.json
 
-# Copia el build standalone de Next.js, sus assets estáticos y la carpeta
-# public dentro de los recursos de la app empaquetada, manteniendo la misma
-# estructura relativa que espera el server.js autocontenido.
-extraResources:
-  - from: .next/standalone
-    to: app
-    filter:
-      - '!**/.env*'
-  - from: .next/static
-    to: app/.next/static
-  - from: public
-    to: app/public
-  - from: runtime.env
-    to: runtime.env
+afterPack: scripts/afterPack.js
 
 mac:
   target: dmg
@@ -35,4 +21,3 @@ win:
 linux:
   target: AppImage
   category: Office
-  icon: build/icon.png

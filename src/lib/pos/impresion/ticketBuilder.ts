@@ -1,6 +1,7 @@
 // lib/pos/impresion/ticketBuilder.ts
 
 import { ThermalPrinter, PrinterTypes, CharacterSet } from "node-thermal-printer";
+import { spawn } from "child_process";
 import { NEGOCIO_CONFIG } from "../negocio-config";
 import { VentaTicketDTO } from "../negocio/DTOsSalida";
 import path from "path";
@@ -10,7 +11,7 @@ const LOGO_PATH = path.join(process.cwd(), "public", "logo-ticket.png");
 function crearImpresora(): ThermalPrinter {
     return new ThermalPrinter({
         type: PrinterTypes.EPSON,
-        interface: process.env.PRINTER_INTERFACE || "/dev/usb/lp0",
+        interface: "tcp://127.0.0.1",
         width: 42,
         characterSet: CharacterSet.PC852_LATIN2,
         
@@ -34,11 +35,6 @@ const money = (n: number) => `$${n.toFixed(2)}`;
  */
 export async function imprimirTicket(venta: VentaTicketDTO): Promise<void> {
     const printer = crearImpresora();
-
-    const conectada = await printer.isPrinterConnected();
-    if (!conectada) {
-        throw new Error("IMPRESORA_DESCONECTADA");
-    }
 
     printer.alignCenter();
     try {
@@ -69,6 +65,9 @@ export async function imprimirTicket(venta: VentaTicketDTO): Promise<void> {
 
     for (const item of venta.items) {
         printer.println(item.nombre);
+        if (item.atributos) {
+            printer.println(`  ${item.atributos}`);
+        }
         printer.leftRight(
             `  ${item.cantidad} x ${money(item.precioUnitario)}`,
             money(item.cantidad * item.precioUnitario),
@@ -89,8 +88,30 @@ export async function imprimirTicket(venta: VentaTicketDTO): Promise<void> {
     printer.println("¡Gracias por su compra!");
     printer.cut();
 
+    const buffer = printer.getBuffer();
+
+    const enviarACups = new Promise<void> ((resolve, reject) => {
+        const nombreImpresora = process.env.PRINTER_NAME || "EPSON_TM_T88V";
+        const lp = spawn("lp", ["-d", nombreImpresora, "-o", "raw"]);
+        
+        lp.stdin.write(buffer);
+        lp.stdin.end();
+
+        lp.on("close", (code) => {
+            if (code == 0){
+                resolve();
+            } else {
+                reject(new Error("IMPRESORA_ERROR"));
+            }
+        });
+
+        lp.on("error", () => {
+            reject(new Error("IMPRESORA_ERROR"));
+        });
+    });
+
     try {
-        await conTimeout(printer.execute(), 3000, "IMPRESORA_TIMEOUT");
+        await conTimeout(enviarACups, 3000, "IMPRESORA_TIMEOUT");
     } catch(err: any) {
         if(err.message === "IMPRESORA_TIMEOUT") {
             throw new Error(err.message);

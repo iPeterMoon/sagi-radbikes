@@ -28,7 +28,8 @@ const nextConfig: NextConfig = {
   },
   turbopack: {
     root: path.resolve(process.cwd()),
-  }
+  },
+  serverExternalPackages: ['node-thermal-printer'],
 };
 
 export default nextConfig;

@@ -10,7 +10,7 @@
     "electron:build": "npm run build && electron-builder",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate && electron-rebuild -f -w usb"
+    "postinstall": "electron-builder install-app-deps && prisma generate && electron-rebuild -f -w usb"
   },
   "dependencies": {
     "@boxicons/react": "^1.0.3",
@@ -22,6 +22,7 @@
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.3.1",
+    "escpos-usb": "^3.0.0-alpha.4",
     "jsonwebtoken": "^9.0.3",
     "next": "^16.2.12",
     "node-thermal-printer": "^4.6.0",
