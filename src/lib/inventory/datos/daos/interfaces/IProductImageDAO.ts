@@ -7,17 +7,20 @@ import { product_images } from "@prisma/client";
  */
 export interface IProductImageDAO {
   /**
-   * Crea y almacena un nuevo registro de imagen para un producto.
+   * Crea y almacena un nuevo registro de imagen para un producto o, si se indica `variantId`,
+   * para una variante específica de ese producto.
    *
    * @param img El archivo de imagen proporcionado por Multer.
    * @param productId El identificador único numérico del producto al que pertenece la imagen.
-   * @param isMain Indicador opcional para establecer si esta será la imagen principal del producto.
+   * @param isMain Indicador opcional para establecer si esta será la imagen principal (del producto o de la variante, según corresponda).
+   * @param variantId Identificador opcional de la variante a la que pertenece la imagen. Si no viene, la imagen es general del producto.
    * @returns Una promesa que resuelve con la entidad product_images creada.
    */
   create(
     img: File,
     productId: bigint,
     isMain?: boolean,
+    variantId?: bigint,
   ): Promise<product_images>;
 
   /**
@@ -67,4 +70,12 @@ export interface IProductImageDAO {
    * @returns Una promesa que resuelve con un booleano indicando el éxito de la eliminación masiva.
    */
   deleteByProduct(productId: bigint): Promise<boolean>;
+
+  /**
+   * Obtiene todas las imágenes asociadas a una variante específica.
+   *
+   * @param variantId El identificador único numérico de la variante.
+   * @returns Una promesa que resuelve con un arreglo de entidades product_images.
+   */
+  getByVariant(variantId: bigint): Promise<product_images[]>;
 }

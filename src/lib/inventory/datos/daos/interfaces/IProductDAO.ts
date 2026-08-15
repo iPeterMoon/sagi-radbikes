@@ -5,10 +5,11 @@ import { IGenericDAO } from "./IGenericDAO";
  * Contrato para el Acceso a Datos (DAO) de los productos.
  * Hereda las operaciones CRUD base e incluye métodos de consulta y
  * manipulación específicos para la entidad de productos en la base de datos.
+ * El SKU, código de barras y stock autoritativos viven en `IProductVariantDAO`.
  */
 export interface IProductDAO extends IGenericDAO<products> {
   /**
-   * Obtiene una lista de productos cuyo stock actual sea menor al umbral especificado.
+   * Obtiene una lista de productos cuyo stock de referencia sea menor al umbral especificado.
    *
    * @param threshold El límite de cantidad en stock para realizar la búsqueda.
    * @returns Una promesa que resuelve con un arreglo de entidades products.
@@ -47,17 +48,10 @@ export interface IProductDAO extends IGenericDAO<products> {
   getActive(): Promise<products[]>;
 
   /**
-   * Busca y obtiene un producto específico a partir de su SKU (Stock Keeping Unit).
+   * Obtiene una lista de productos que coinciden con múltiples criterios de búsqueda opcionales,
+   * incluyendo relaciones con imágenes, subcategorías, categorías, marcas, atributos físicos y variantes.
    *
-   * @param sku El código SKU único del producto a buscar.
-   * @returns Una promesa que resuelve con la entidad products encontrada, o null si no existe.
-   */
-  getBySKU(sku: string): Promise<products | null>;
-
-  /**
-   * Obtiene una lista de productos que coinciden con múltiples criterios de búsqueda opcionales.
-   *
-   * @param search Término de búsqueda general (por ejemplo, nombre o descripción del producto).
+   * @param search Término de búsqueda general (por ejemplo, nombre, descripción del producto o SKU de alguna variante).
    * @param categoryId El identificador de la categoría para filtrar, o null para omitir.
    * @param brandId El identificador de la marca para filtrar, o null para omitir.
    * @param minPrice El precio mínimo para filtrar, o null para omitir.
@@ -71,21 +65,4 @@ export interface IProductDAO extends IGenericDAO<products> {
     minPrice: number | null,
     maxPrice: number | null,
   ): Promise<products[]>;
-
-  /**
-   * Busca y obtiene un producto específico a partir de su código de barras.
-   *
-   * @param barcode El código de barras único del producto.
-   * @returns Una promesa que resuelve con la entidad products encontrada, o null si no existe.
-   */
-  getByBarcode(barcode: string): Promise<products | null>;
-
-  /**
-   * Disminuye la cantidad en stock de un producto específico.
-   *
-   * @param id El identificador único numérico del producto.
-   * @param quantity La cantidad a restar del stock actual.
-   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
-   */
-  decreaseStock(id: bigint, quantity: number): Promise<boolean>;
 }

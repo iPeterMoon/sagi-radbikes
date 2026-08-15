@@ -6,11 +6,15 @@ import { ICategoriaBO } from "./interfaces/ICategoriaBO";
 import { IMarcaBO } from "./interfaces/IMarcaBO";
 import { ISubCategoriaBO } from "./interfaces/ISubCategoriaBO";
 import { IEtiquetaBO } from "./interfaces/IEtiquetaBO";
+import { IVarianteBO } from "./interfaces/IVarianteBO";
 import {
   CrearProductoDTO,
   ActualizarProductoDTO,
   FiltroProductoDTO,
   CrearEtiquetaDTO,
+  CrearVarianteDTO,
+  ActualizarVarianteDTO,
+  CrearAtributoVarianteDTO,
 } from "./DTOsEntrada";
 import {
   ProductoDTO,
@@ -18,12 +22,15 @@ import {
   MarcaDTO,
   SubCategoriaDTO,
   EtiquetaDTO,
+  VarianteDTO,
+  AtributoVarianteDTO,
 } from "./DTOsSalida";
 import { ProductoBO } from "./BOs/ProductoBO";
 import { CategoriaBO } from "./BOs/CategoriaBO";
 import { MarcaBO } from "./BOs/MarcaBO";
 import { SubCategoriaBO } from "./BOs/SubCategoriaBO";
 import { EtiquetaBO } from "./BOs/EtiquetaBO";
+import { VarianteBO } from "./BOs/VarianteBO";
 
 /**
  * Orquesta las operaciones del catálogo de inventario delegando la lógica de negocio
@@ -35,6 +42,7 @@ export class ServicioInventario implements IServicioInventario {
   private marcaBO: IMarcaBO;
   private subCategoriaBO: ISubCategoriaBO;
   private etiquetaBO: IEtiquetaBO;
+  private varianteBO: IVarianteBO;
 
   /**
    * Inicializa una nueva instancia de ServicioInventario.
@@ -47,6 +55,7 @@ export class ServicioInventario implements IServicioInventario {
     this.marcaBO = new MarcaBO(accesoDatos);
     this.subCategoriaBO = new SubCategoriaBO(accesoDatos);
     this.etiquetaBO = new EtiquetaBO(accesoDatos);
+    this.varianteBO = new VarianteBO(accesoDatos);
   }
 
   /**
@@ -99,17 +108,6 @@ export class ServicioInventario implements IServicioInventario {
    */
   async eliminarProducto(id: string): Promise<boolean> {
     return this.productoBO.eliminar(id);
-  }
-
-  /**
-   * Ajusta la cantidad de existencias de un producto específico.
-   *
-   * @param id El identificador único del producto.
-   * @param cantidad La cantidad a restar (o ajustar) en el inventario.
-   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
-   */
-  async ajustarStock(id: string, cantidad: number): Promise<boolean> {
-    return this.productoBO.restarStock(id, cantidad);
   }
 
   /**
@@ -194,22 +192,25 @@ export class ServicioInventario implements IServicioInventario {
   }
 
   /**
-   * Agrega imágenes a un producto específico.
+   * Agrega imágenes a un producto específico, o a una de sus variantes si se indica `idVariante`.
    *
    * @param idProducto El identificador único del producto.
    * @param archivos Arreglo de archivos de imagen provenientes de la petición.
    * @param mainImageIndex Índice opcional que indica cuál será la imagen principal.
+   * @param idVariante Identificador opcional de la variante a la que pertenecen las imágenes.
    * @returns Una promesa que resuelve cuando la operación se completa.
    */
   async agregarImagenes(
     idProducto: string,
     archivos: File[],
     mainImageIndex?: number,
+    idVariante?: string,
   ): Promise<void> {
     return this.productoBO.agregarImagenes(
       idProducto,
       archivos,
       mainImageIndex,
+      idVariante,
     );
   }
 
@@ -261,5 +262,106 @@ export class ServicioInventario implements IServicioInventario {
    */
   async eliminarEtiqueta(idEtiqueta: string): Promise<boolean> {
     return this.etiquetaBO.eliminar(idEtiqueta);
+  }
+
+  /**
+   * Obtiene las variantes asociadas a un producto.
+   *
+   * @param idProducto El identificador único del producto.
+   * @returns Una promesa que resuelve con un arreglo de objetos VarianteDTO.
+   */
+  async obtenerVariantes(idProducto: string): Promise<VarianteDTO[]> {
+    return this.varianteBO.obtenerPorProducto(idProducto);
+  }
+
+  /**
+   * Crea una nueva variante de producto.
+   *
+   * @param variante Objeto DTO con los datos de la variante a crear.
+   * @returns Una promesa que resuelve con la VarianteDTO creada.
+   */
+  async crearVariante(variante: CrearVarianteDTO): Promise<VarianteDTO> {
+    return this.varianteBO.crear(variante);
+  }
+
+  /**
+   * Actualiza la información de una variante existente.
+   *
+   * @param variante Objeto DTO con los datos actualizados de la variante.
+   * @returns Una promesa que resuelve con la VarianteDTO actualizada.
+   */
+  async actualizarVariante(
+    variante: ActualizarVarianteDTO,
+  ): Promise<VarianteDTO> {
+    return this.varianteBO.actualizar(variante);
+  }
+
+  /**
+   * Elimina una variante del catálogo.
+   *
+   * @param idVariante El identificador único de la variante a eliminar.
+   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
+   */
+  async eliminarVariante(idVariante: string): Promise<boolean> {
+    return this.varianteBO.eliminar(idVariante);
+  }
+
+  /**
+   * Ajusta la cantidad de existencias de una variante específica, sumando o restando
+   * una cantidad relativa al stock actual.
+   *
+   * @param idVariante El identificador único de la variante.
+   * @param cantidad Cantidad a sumar (positiva) o restar (negativa) del inventario.
+   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
+   */
+  async ajustarStockVariante(
+    idVariante: string,
+    cantidad: number,
+  ): Promise<boolean> {
+    return this.varianteBO.ajustarStock(idVariante, cantidad);
+  }
+
+  /**
+   * Actualiza el estado (activo/inactivo) de una variante.
+   *
+   * @param idVariante El identificador único de la variante.
+   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
+   */
+  async actualizarEstadoVariante(idVariante: string): Promise<boolean> {
+    return this.varianteBO.actualizarEstado(idVariante);
+  }
+
+  /**
+   * Obtiene los atributos asociados a una variante.
+   *
+   * @param idVariante El identificador único de la variante.
+   * @returns Una promesa que resuelve con un arreglo de objetos AtributoVarianteDTO.
+   */
+  async obtenerAtributosVariante(
+    idVariante: string,
+  ): Promise<AtributoVarianteDTO[]> {
+    return this.varianteBO.obtenerAtributosPorVariante(idVariante);
+  }
+
+  /**
+   * Crea un nuevo atributo para ser utilizado en una variante.
+   *
+   * @param atributo Objeto DTO con los datos del atributo.
+   * @returns Una promesa que resuelve con la AtributoVarianteDTO creada.
+   */
+  async crearAtributoVariante(
+    atributo: CrearAtributoVarianteDTO,
+  ): Promise<AtributoVarianteDTO> {
+    return this.varianteBO.crearAtributo(atributo);
+  }
+
+  /**
+   * Elimina un atributo de variante del catálogo.
+   *
+   * @param idAtributo El identificador único del atributo.
+   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
+   */
+  async eliminarAtributoVariante(idAtributo: string): Promise<boolean> {
+    return this.varianteBO.eliminarAtributo(idAtributo);
   }
 }

@@ -1,14 +1,28 @@
 import Image from "next/image";
 import { Product } from "@/types/inventory";
-import { getStockStatus, formatPrice } from "@/lib/utils";
+import { getWorstStockStatus, formatPrice } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 import Toggle from "@/components/ui/Toggle";
 import { IconEdit, IconTrash, IconSearch } from "@/components/ui/Icons";
 import { ProductTableProps } from "@/types/inventory";
 
 /**
+ * Calcula el precio a mostrar para un producto con variantes: si no tiene
+ * variantes o todas comparten el mismo precio, muestra ese valor; si varía,
+ * muestra "Desde $X" con el precio mínimo entre sus variantes.
+ */
+function getDisplayPrice(product: Product): string {
+  if (product.variants.length === 0) return "—";
+  const prices = product.variants.map((v) => v.price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  return min === max ? `$${formatPrice(min)}` : `Desde $${formatPrice(min)}`;
+}
+
+/**
  * Tabla de productos del catálogo.
- * Muestra imagen, nombre, SKU, categoría, marca, precio, stock, estado y controles.
+ * Muestra imagen, nombre, cantidad de variantes, categoría, marca, precio
+ * (agregado desde sus variantes), stock total de variantes activas, estado y controles.
  * Si no hay productos muestra un mensaje de lista vacía.
  */
 export default function ProductTable({
@@ -52,7 +66,12 @@ export default function ProductTable({
         </thead>
         <tbody>
           {products.map((product: Product) => {
-            const status = getStockStatus(product.stock, product.minStock);
+            const activeVariants = product.variants.filter((v) => v.active);
+            const totalStock = activeVariants.reduce(
+              (acc, v) => acc + v.stock,
+              0,
+            );
+            const status = getWorstStockStatus(activeVariants);
             const stockColor =
               status === "CRÍTICO"
                 ? "text-red-500"
@@ -77,7 +96,10 @@ export default function ProductTable({
                         {product.name}
                       </div>
                       <div className="text-[11px] text-gray-400">
-                        {product.sku}
+                        <span className="inline-block bg-gray-100 text-gray-500 rounded-full px-1.5 py-0.5">
+                          {product.variants.length} variante
+                          {product.variants.length === 1 ? "" : "s"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -91,10 +113,10 @@ export default function ProductTable({
                 </td>
                 <td className={`${tdClass} text-center`}>{product.brand}</td>
                 <td className={`${tdClass} text-center font-semibold`}>
-                  ${formatPrice(product.price)}
+                  {getDisplayPrice(product)}
                 </td>
                 <td className={`${tdClass} text-center font-bold ${stockColor}`}>
-                  {product.stock}
+                  {totalStock}
                 </td>
                 <td className={`${tdClass} text-center`}>
                   <Badge status={status} />

@@ -6,12 +6,14 @@ import { IBrandDAO } from "./IBrandDAO";
 import { ISubCategoryDAO } from "./ISubCategoryDAO";
 import { IProductImageDAO } from "./IProductImageDAO";
 import { ILabelDAO } from "./ILabelDAO";
+import { IProductVariantDAO } from "./IProductVariantDAO";
+import { IVariantAttributeDAO } from "./IVariantAttributeDAO";
 
 /**
  * Interfaz que centraliza el acceso a todos los DAOs del catálogo.
  * Proporciona acceso a la base de datos Prisma, almacenamiento Supabase,
  * y todos los Data Access Objects necesarios para gestionar productos,
- * categorías, marcas, subcategorías, imágenes y etiquetas.
+ * categorías, marcas, subcategorías, imágenes, etiquetas, variantes y sus atributos.
  */
 export interface ICatalogoAccesoDatos {
   /** Cliente Prisma para acceso a base de datos PostgreSQL. */
@@ -37,4 +39,10 @@ export interface ICatalogoAccesoDatos {
 
   /** DAO para operaciones sobre etiquetas/labels. */
   readonly labelDAO: ILabelDAO;
+
+  /** DAO para operaciones sobre variantes de producto (SKU, precio, stock autoritativos). */
+  readonly variantDAO: IProductVariantDAO;
+
+  /** DAO para operaciones sobre atributos de variantes de producto. */
+  readonly variantAttributeDAO: IVariantAttributeDAO;
 }

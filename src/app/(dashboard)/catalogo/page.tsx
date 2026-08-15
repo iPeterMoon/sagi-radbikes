@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ModalType, Product } from "@/types/inventory";
 import { inventarioApi } from "@/lib/api/inventario";
-import { getStockStatus } from "@/lib/utils";
+import { getWorstStockStatus } from "@/lib/utils";
 import ProductTable from "./components/ProductTable";
 import ProductFormModal from "./components/ProductFormModal";
 import { DeleteConfirmationModal } from "./components/DeleteConfirmationModal";
@@ -27,14 +27,11 @@ function mapDtoToProduct(dto: any): Product {
   return {
     id: Number(dto.idProducto),
     name: dto.nombre,
-    sku: dto.sku,
-    barcode: dto.codigoDeBarras,
     brand: dto.marca?.nombre || "",
     category: dto.categoria?.nombre || "",
     subcategory: dto.subcategoria?.nombre || "",
-    price: dto.precio,
-    stock: dto.stock,
-    minStock: dto.minStock || 0,
+    referencePrice: dto.precioReferencia || 0,
+    referenceMinStock: dto.minStockReferencia || 0,
     description: dto.descripcion,
     tags: (dto.etiquetas || []).map((etiqueta: any) => ({
       name: etiqueta.nombre,
@@ -42,6 +39,23 @@ function mapDtoToProduct(dto: any): Product {
     })),
     active: dto.activo ?? true,
     image: imageUrl,
+    variants: (dto.variantes || []).map((v: any) => {
+      const variantMainImage = v.imagenes?.find((img: any) => img.esPrincipal);
+      return {
+        id: Number(v.idVariante),
+        sku: v.sku,
+        barcode: v.codigoDeBarras,
+        price: v.precio,
+        stock: v.stock,
+        minStock: v.minStock ?? null,
+        active: v.activo ?? true,
+        image: variantMainImage?.url || v.imagenes?.[0]?.url || imageUrl,
+        attributes: (v.atributos || []).map((atributo: any) => ({
+          name: atributo.nombre,
+          value: atributo.valor,
+        })),
+      };
+    }),
   };
 }
 
@@ -122,21 +136,16 @@ export default function InventarioPage() {
     if (
       q &&
       !p.name.toLowerCase().includes(q) &&
-      !p.sku.toLowerCase().includes(q) &&
+      !p.variants.some((v) => v.sku.toLowerCase().includes(q)) &&
       !p.brand.toLowerCase().includes(q)
     )
       return false;
     if (filterCategory && p.category !== filterCategory) return false;
-    if (
-      filterStatus === "bajo" &&
-      getStockStatus(p.stock, p.minStock) !== "BAJO"
-    )
-      return false;
-    if (
-      filterStatus === "critico" &&
-      getStockStatus(p.stock, p.minStock) !== "CRÍTICO"
-    )
-      return false;
+
+    const activeVariants = p.variants.filter((v) => v.active);
+    const status = getWorstStockStatus(activeVariants);
+    if (filterStatus === "bajo" && status !== "BAJO") return false;
+    if (filterStatus === "critico" && status !== "CRÍTICO") return false;
     return true;
   });
 
@@ -160,10 +169,10 @@ export default function InventarioPage() {
         const updatedProduct = await inventarioApi.actualizarProducto({
           idProducto: data.id.toString(),
           nombre: data.name,
-          precio: data.price,
-          stock: data.stock,
-          codigoDeBarras: data.barcode,
-          minStock: data.minStock,
+          precio: data.referencePrice,
+          stock: 0,
+          codigoDeBarras: "",
+          minStock: data.referenceMinStock,
           descripcion: data.description,
           idCategoria: attributeIds?.categoryId ?? "",
           imagenesNuevas: [],
@@ -197,10 +206,10 @@ export default function InventarioPage() {
       } else {
         const createdProduct = await inventarioApi.crearProducto({
           nombre: data.name,
-          precio: data.price,
-          stock: data.stock,
-          codigoDeBarras: data.barcode,
-          minStock: data.minStock,
+          precio: data.referencePrice,
+          stock: 0,
+          codigoDeBarras: "",
+          minStock: data.referenceMinStock,
           descripcion: data.description,
           idCategoria: attributeIds?.categoryId ?? "",
           idMarca: attributeIds?.brandId ?? "",
@@ -223,8 +232,15 @@ export default function InventarioPage() {
         });
         loadProducts();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving product:", error);
+      setModal({
+        type: "sales-history-error",
+        title: "Error al guardar",
+        subtitle: "No se pudieron guardar los cambios del producto",
+        infoText: error?.message || "Ocurrió un error inesperado.",
+        suggestionText: "Revisá los datos e intentá guardar de nuevo.",
+      });
     }
   };
 

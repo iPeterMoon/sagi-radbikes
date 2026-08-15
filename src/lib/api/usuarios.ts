@@ -1,4 +1,4 @@
-import { UsuarioDTO, NuevoUsuarioDTO, RolDTO, NuevoRolDTO } from "@/types/dtos";
+import { UsuarioDTO, NuevoUsuarioDTO, ActualizarUsuarioDTO, RolDTO, NuevoRolDTO } from "@/types/dtos";
 
 const API_BASE_USUARIOS = "/api/users";
 const API_BASE_ROLES = "/api/roles";
@@ -29,7 +29,7 @@ export const usuariosApi = {
     });
   },
 
-  async actualizarUsuario(usuario: UsuarioDTO): Promise<UsuarioDTO> {
+  async actualizarUsuario(usuario: ActualizarUsuarioDTO): Promise<UsuarioDTO> {
     return fetchApi<UsuarioDTO>(`${API_BASE_USUARIOS}/${usuario.idUsuario}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

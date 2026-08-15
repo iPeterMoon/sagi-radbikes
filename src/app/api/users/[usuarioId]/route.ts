@@ -22,7 +22,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ usua
         return NextResponse.json(usuarioActualizado, { status: 200 });
     } catch (error: any) {
         console.error("Error al actualizar usuario:", error);
-        return NextResponse.json({ error: "Error al actualizar usuario" }, { status: 500 });
+        return NextResponse.json({ error: error.message || "Error al actualizar usuario" }, { status: 400 });
     }
 }
 

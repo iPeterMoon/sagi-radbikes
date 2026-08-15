@@ -15,31 +15,46 @@ export type ModalType =
   | { type: "success-delete" }
   | null;
 
-/** Atributo clave-valor de un producto (ej. color, talla). */
+/** Atributo clave-valor de un producto o variante (ej. color, talla). */
 export interface ProductTag {
   name: string;
   value: string;
+}
+
+/** Variante vendible de un producto (SKU, precio y stock autoritativos). */
+export interface ProductVariant {
+  id: number;
+  sku: string;
+  barcode: string;
+  price: number;
+  stock: number;
+  /** `null` cuando las notificaciones de stock bajo están desactivadas para esta variante. */
+  minStock: number | null;
+  active: boolean;
+  /** URL de la imagen principal de la variante (si no tiene, usar la imagen general del producto). */
+  image: string;
+  attributes: ProductTag[];
 }
 
 /** Modelo de producto usado en la capa de presentación del catálogo. */
 export interface Product {
   id: number;
   name: string;
-  sku: string;
-  barcode: string;
   brand: string;
   category: string;
   subcategory: string;
-  price: number;
-  stock: number;
-  /** Stock mínimo para alertas. */
-  minStock: number;
+  /** Precio de referencia/plantilla, usado para pre-llenar el precio al crear una variante. */
+  referencePrice: number;
+  /** Stock mínimo de referencia/plantilla, usado para pre-llenar el stock mínimo al crear una variante. */
+  referenceMinStock: number;
   description: string;
   tags: ProductTag[];
   /** Indica si el producto está activo y visible en el catálogo. */
   active: boolean;
   /** URL de la imagen principal. */
   image: string;
+  /** Variantes vendibles del producto (SKU, precio y stock autoritativos). */
+  variants: ProductVariant[];
 }
 
 /** Datos del formulario de producto (sin campos generados por el servidor). */

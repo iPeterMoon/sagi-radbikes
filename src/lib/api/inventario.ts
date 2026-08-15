@@ -8,6 +8,11 @@ import {
   CrearProductoDTO,
   ActualizarProductoDTO,
   FiltroProductoDTO,
+  VarianteDTO,
+  CrearVarianteDTO,
+  ActualizarVarianteDTO,
+  AtributoVarianteDTO,
+  CrearAtributoVarianteDTO,
 } from "@/types/dtos";
 
 /** URL base para los endpoints del inventario. */
@@ -71,7 +76,7 @@ export const inventarioApi = {
   async actualizarProducto(
     producto: ActualizarProductoDTO,
   ): Promise<ProductoDTO> {
-    return fetchApi<ProductoDTO>(`${API_BASE}/productos`, {
+    return fetchApi<ProductoDTO>(`${API_BASE}/productos/${producto.idProducto}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(producto),
@@ -82,19 +87,6 @@ export const inventarioApi = {
   async eliminarProducto(id: string): Promise<boolean> {
     return fetchApi<boolean>(`${API_BASE}/productos/${id}`, {
       method: "DELETE",
-    });
-  },
-
-  /**
-   * Resta stock a un producto (para registrar una venta).
-   * @param id - ID del producto
-   * @param cantidad - Cantidad a restar
-   */
-  async ajustarStock(id: string, cantidad: number): Promise<boolean> {
-    return fetchApi<boolean>(`${API_BASE}/productos/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cantidad }),
     });
   },
 
@@ -165,17 +157,22 @@ export const inventarioApi = {
    * @param idProducto - ID del producto destino
    * @param archivos - Archivos de imagen a subir
    * @param mainImageIndex - Índice del archivo que será la imagen principal
+   * @param idVariante - ID de la variante a la que pertenecen las imágenes (opcional)
    */
   async agregarImagenes(
     idProducto: string,
     archivos: File[],
     mainImageIndex?: number,
+    idVariante?: string,
   ): Promise<void> {
     const formData = new FormData();
     formData.append("idProducto", idProducto);
     archivos.forEach((file) => formData.append("archivos", file));
     if (mainImageIndex !== undefined) {
       formData.append("mainImageIndex", mainImageIndex.toString());
+    }
+    if (idVariante) {
+      formData.append("idVariante", idVariante);
     }
     await fetchApi<void>(`${API_BASE}/productos/${idProducto}/imagenes`, {
       method: "POST",
@@ -222,6 +219,94 @@ export const inventarioApi = {
   /** Elimina una etiqueta por su ID. */
   async eliminarEtiqueta(idEtiqueta: string): Promise<boolean> {
     return fetchApi<boolean>(`${API_BASE}/etiquetas/${idEtiqueta}`, {
+      method: "DELETE",
+    });
+  },
+
+  /** Obtiene las variantes de un producto específico. */
+  async obtenerVariantes(idProducto: string): Promise<VarianteDTO[]> {
+    return fetchApi<VarianteDTO[]>(
+      `${API_BASE}/productos/${idProducto}/variantes`,
+    );
+  },
+
+  /** Crea una nueva variante para un producto. */
+  async crearVariante(
+    idProducto: string,
+    variante: Omit<CrearVarianteDTO, "idProducto">,
+  ): Promise<VarianteDTO> {
+    return fetchApi<VarianteDTO>(
+      `${API_BASE}/productos/${idProducto}/variantes`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(variante),
+      },
+    );
+  },
+
+  /** Actualiza una variante existente. */
+  async actualizarVariante(
+    variante: ActualizarVarianteDTO,
+  ): Promise<VarianteDTO> {
+    return fetchApi<VarianteDTO>(`${API_BASE}/variantes/${variante.idVariante}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(variante),
+    });
+  },
+
+  /** Elimina una variante por su ID. */
+  async eliminarVariante(idVariante: string): Promise<boolean> {
+    return fetchApi<boolean>(`${API_BASE}/variantes/${idVariante}`, {
+      method: "DELETE",
+    });
+  },
+
+  /** Ajusta el stock de una variante sumando (positivo) o restando (negativo) una cantidad relativa. */
+  async ajustarStockVariante(
+    idVariante: string,
+    cantidad: number,
+  ): Promise<boolean> {
+    return fetchApi<boolean>(`${API_BASE}/variantes/${idVariante}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "adjustStock", cantidad }),
+    });
+  },
+
+  /** Actualiza el estado de activación (activo/inactivo) de una variante. */
+  async actualizarEstadoVariante(idVariante: string): Promise<boolean> {
+    return fetchApi<boolean>(`${API_BASE}/variantes/${idVariante}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "toggleStatus" }),
+    });
+  },
+
+  /** Obtiene los atributos (clave-valor) de una variante específica. */
+  async obtenerAtributosVariante(
+    idVariante: string,
+  ): Promise<AtributoVarianteDTO[]> {
+    return fetchApi<AtributoVarianteDTO[]>(
+      `${API_BASE}/atributos-variante/${idVariante}`,
+    );
+  },
+
+  /** Crea un nuevo atributo asociado a una variante. */
+  async crearAtributoVariante(
+    atributo: CrearAtributoVarianteDTO,
+  ): Promise<AtributoVarianteDTO> {
+    return fetchApi<AtributoVarianteDTO>(`${API_BASE}/atributos-variante`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(atributo),
+    });
+  },
+
+  /** Elimina un atributo de variante por su ID. */
+  async eliminarAtributoVariante(idAtributo: string): Promise<boolean> {
+    return fetchApi<boolean>(`${API_BASE}/atributos-variante/${idAtributo}`, {
       method: "DELETE",
     });
   },

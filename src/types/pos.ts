@@ -1,4 +1,7 @@
-/** Producto representado en el Punto de Venta. */
+/**
+ * Producto representado en el Punto de Venta.
+ * `id` corresponde al ID de la **variante** vendida (product_variants.id), no al producto padre.
+ */
 export interface POSProduct {
   id: number;
   name: string;
@@ -9,6 +12,10 @@ export interface POSProduct {
   image: string;
   sku: string;
   barcodeUpc: string;
+  /** Atributos que distinguen a esta variante (ej. Color: Rojo) */
+  variantAttributes?: { name: string; value: string }[];
+  /** ID del producto padre del que se desprende esta variante */
+  parentProductId?: number;
 }
 
 /** Ítem dentro del carrito de compras del POS. */

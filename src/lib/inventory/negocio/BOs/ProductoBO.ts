@@ -52,6 +52,9 @@ export class ProductoBO implements IProductoBO {
       subcategory: { include: { categories: true } },
       brands: true,
       product_physical: true,
+      product_variants: {
+        include: { product_variant_attributes: true, product_images: true },
+      },
     });
     return producto ? ProductoMapper.toDTO(producto as any) : null;
   }
@@ -81,27 +84,37 @@ export class ProductoBO implements IProductoBO {
   }
 
   /**
-   * Crea un nuevo producto generando un SKU único automáticamente.
+   * Crea un nuevo producto y, en la misma operación, su primera variante vendible
+   * con un SKU generado automáticamente. Los valores de precio/stock/código de barras/stock
+   * mínimo del DTO se usan como los de esa variante inicial; el producto solo conserva
+   * `precio` y `minStock` como valores de referencia/plantilla.
    * Si el DTO incluye etiquetas, las asocia al producto creado.
    *
    * @param dto Datos del nuevo producto.
    * @returns El DTO del producto recién creado y registrado.
    */
   async crear(dto: CrearProductoDTO): Promise<ProductoDTO> {
-    const sku = `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const entity = {
       name: dto.nombre,
       price: dto.precio,
-      stock: dto.stock,
-      barcode_upc: dto.codigoDeBarras || null,
       min_stock: dto.minStock ?? 0,
       description: dto.descripcion,
-      SKU: sku,
       brand_id: BigInt(dto.idMarca),
       subcategory_id: BigInt(dto.idSubCategoria),
       is_active: true,
     };
     const created = await this.accesoDatos.productDAO.create(entity);
+
+    const sku = `SKU-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    await this.accesoDatos.variantDAO.create({
+      product_id: created.id,
+      SKU: sku,
+      barcode_upc: dto.codigoDeBarras || null,
+      price: dto.precio,
+      stock: dto.stock,
+      min_stock: dto.minStock ?? 0,
+      is_active: true,
+    });
 
     if (dto.etiquetas) {
       for (const etiqueta of dto.etiquetas) {
@@ -117,7 +130,9 @@ export class ProductoBO implements IProductoBO {
   }
 
   /**
-   * Actualiza los datos de un producto existente.
+   * Actualiza los datos de referencia de un producto existente (nombre, precio y stock
+   * mínimo de plantilla, descripción, marca y subcategoría). Ya no modifica stock, SKU
+   * ni código de barras, que ahora viven exclusivamente en sus variantes.
    * Reemplaza completamente las etiquetas si se proveen en el DTO.
    *
    * @param dto Datos actualizados del producto, incluyendo su ID.
@@ -127,8 +142,6 @@ export class ProductoBO implements IProductoBO {
     const entity = {
       name: dto.nombre,
       price: dto.precio,
-      stock: dto.stock,
-      barcode_upc: dto.codigoDeBarras || null,
       min_stock: dto.minStock ?? 0,
       description: dto.descripcion,
       brand_id: BigInt(dto.idMarca),
@@ -173,31 +186,20 @@ export class ProductoBO implements IProductoBO {
   }
 
   /**
-   * Disminuye la cantidad de stock disponible de un producto específico.
-   *
-   * @param id El identificador único del producto.
-   * @param cantidad La cantidad de unidades que se restarán del inventario actual.
-   * @returns Un valor booleano indicando si la operación fue exitosa.
-   */
-  async restarStock(id: string, cantidad: number): Promise<boolean> {
-    return await this.accesoDatos.productDAO.decreaseStock(
-      BigInt(id),
-      cantidad,
-    );
-  }
-
-  /**
-   * Sube y asocia nuevas imágenes a un producto en Supabase Storage.
+   * Sube y asocia nuevas imágenes a un producto en Supabase Storage. Si se indica
+   * `idVariante`, las imágenes quedan asociadas a esa variante en particular.
    *
    * @param idProducto ID del producto destino.
    * @param archivos Archivos de imagen a subir provenientes de Multer.
    * @param mainImageIndex Índice opcional que indica cuál de los archivos es la imagen principal.
+   * @param idVariante Identificador opcional de la variante a la que pertenecen las imágenes.
    * @returns Promesa vacía que se resuelve al terminar la subida y asociación de imágenes.
    */
   async agregarImagenes(
     idProducto: string,
     archivos: File[],
     mainImageIndex?: number,
+    idVariante?: string,
   ): Promise<void> {
     for (let i = 0; i < archivos.length; i++) {
       const isMain = mainImageIndex !== undefined && i === mainImageIndex;
@@ -205,6 +207,7 @@ export class ProductoBO implements IProductoBO {
         archivos[i],
         BigInt(idProducto),
         isMain,
+        idVariante ? BigInt(idVariante) : undefined,
       );
     }
   }

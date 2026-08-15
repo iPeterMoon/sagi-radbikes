@@ -1,11 +1,11 @@
-import { products } from "@prisma/client";
+import { product_variants } from "@prisma/client";
 import { IGenericDAO } from "./IGenericDAO";
 
-/** Contrato específico del DAO de Productos. */
-export interface IProductoDAO extends IGenericDAO<products> {
-  getActivos(): Promise<products[]>;
-  getBySKU(sku: string): Promise<products | null>;
-  getByCodigoBarras(codigo: string): Promise<products | null>;
+/** Contrato específico del DAO de Variantes de Producto. */
+export interface IProductoDAO extends IGenericDAO<product_variants> {
+  getActivos(): Promise<product_variants[]>;
+  getBySKU(sku: string): Promise<product_variants | null>;
+  getByCodigoBarras(codigo: string): Promise<product_variants | null>;
   restarStock(id: bigint, cantidad: number): Promise<boolean>;
-  buscarPorNombreOSKU(busqueda: string): Promise<products[]>;
+  buscarPorNombreOSKU(busqueda: string): Promise<product_variants[]>;
 }

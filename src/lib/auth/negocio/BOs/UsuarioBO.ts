@@ -3,6 +3,7 @@ import { AuthAccesoDatos } from "../../datos/AuthAccesoDatos";
 import { LoginDTO } from "../DTOsEntrada/LoginDTO";
 import { UsuarioDTO } from "../DTOsSalida/UsuarioDTO";
 import { NuevoUsuarioDTO } from "../DTOsEntrada/NuevoUsuarioDTO";
+import { ActualizarUsuarioDTO } from "../DTOsEntrada/ActualizarUsuarioDTO";
 import { SesionDTO } from "../DTOsSalida/SesionDTO";
 import { UsuarioMapper } from "../mappers/UsuarioMapper";
 import { PasswordEncoder } from "../PasswordEncoder";
@@ -183,7 +184,7 @@ export class UsuarioBO implements IUsuarioBO {
    * @returns UsuarioDTO del usuario actualizado
    * @throws Error si el usuario no existe o si hay conflictos con username/email
    */
-  async actualizar(id: number | bigint, usuario: UsuarioDTO): Promise<UsuarioDTO> {
+  async actualizar(id: number | bigint, usuario: ActualizarUsuarioDTO): Promise<UsuarioDTO> {
     try {
       const existente = await this.accesoDatos.usuarioDAO.getById(id);
       if (!existente) {
@@ -233,14 +234,20 @@ export class UsuarioBO implements IUsuarioBO {
         )
       }
 
-      const usuarioActualizado = await this.accesoDatos.usuarioDAO.update(id, {
+      const datosActualizados: Record<string, unknown> = {
         username: usuario.username,
         nombre: usuario.nombre,
         apellido: usuario.apellido,
         email: usuario.email,
         telefono: usuario.telefono,
         is_active: usuario.is_active
-      });
+      };
+
+      if (usuario.password) {
+        datosActualizados.password = await PasswordEncoder.encode(usuario.password);
+      }
+
+      const usuarioActualizado = await this.accesoDatos.usuarioDAO.update(id, datosActualizados);
 
       const usuarioConRoles = await this.accesoDatos.usuarioDAO.getByUsernameWithRoles(usuarioActualizado.username!);
 

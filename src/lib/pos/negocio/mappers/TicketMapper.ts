@@ -15,9 +15,13 @@ export class TicketMapper {
       total: Number(venta.total),
       metodoPago: venta.payments?.[0]?.paymentMethod ?? "N/A",
       items: venta.sale_details.map((d: any) => ({
-        nombre: d.products?.name ?? `Producto ${d.product_id}`,
+        nombre: d.product_variants?.products?.name ?? `Producto ${d.variant_id}`,
         cantidad: d.quantity,
         precioUnitario: Number(d.unitPrice),
+        atributos:
+          (d.product_variants?.product_variant_attributes ?? [])
+            .map((a: any) => `${a.name}: ${a.value}`)
+            .join(", ") || undefined,
       })),
     };
   }

@@ -1,12 +1,12 @@
 import { CategoriaDTO } from "./CategoriaDTO";
 
 /**
- * Presentación depurada de un producto que se envía a la interfaz (Punto de Venta) 
+ * Presentación depurada de una variante de producto que se envía a la interfaz (Punto de Venta)
  * escondiendo metadatos irrelevantes de Prisma.
  */
 export interface ProductoVentaDTO {
-  /** ID del producto */
-  idProducto: string;
+  /** ID de la variante */
+  idVariante: string;
   /** Nombre público */
   nombre: string;
   /** Precio de venta vigente */
@@ -19,8 +19,12 @@ export interface ProductoVentaDTO {
   SKU: string;
   /** Identificador global escaneable */
   codigoBarras: string;
-  /** Enlace a la imagen principal del producto (si existe) */
+  /** Enlace a la imagen principal de la variante (si existe) */
   urlImagen: string;
   /** Información anidada de la subcategoría/categoría a la que pertenece */
   categoria: CategoriaDTO;
+  /** Atributos que distinguen a esta variante (ej. Color: Rojo) */
+  atributos: { nombre: string; valor: string }[];
+  /** ID del producto padre del que se desprende esta variante */
+  idProductoPadre: string;
 }

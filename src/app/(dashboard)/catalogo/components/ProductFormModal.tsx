@@ -3,22 +3,25 @@
 import { useState, useRef, useEffect, ChangeEvent } from "react";
 import Image from "next/image";
 import { Product, ProductTag, ProductFormModalProps } from "@/types/inventory";
+import { VarianteDTO } from "@/types/dtos";
 import { inventarioApi } from "@/lib/api/inventario";
 import AddAttributeModal, { AttributeType } from "./AddAttributeModal";
+import VariantFormModal, { VariantFormData } from "./VariantFormModal";
+import AjustarStockModal from "./AjustarStockModal";
 
 type CategoryOption = { idCategoria: string; nombre: string };
 type BrandOption = { idMarca: string; nombre: string };
 import {
   IconX,
   IconTag,
-  IconBarcode,
   IconLayers,
   IconGrid,
   IconHash,
-  IconBox,
   IconAlertTri,
   IconPlus,
   IconUpload,
+  IconEdit,
+  IconTrash,
 } from "@/components/ui/Icons";
 
 /** Clases Tailwind reutilizables para los campos del formulario. */
@@ -48,10 +51,12 @@ function FieldWithIcon({
   );
 }
 
-type FormState = Omit<Product, "id" | "price" | "stock" | "minStock"> & {
-  price: number | string;
-  stock: number | string;
-  minStock: number | string;
+type FormState = Omit<
+  Product,
+  "id" | "referencePrice" | "referenceMinStock" | "variants"
+> & {
+  referencePrice: number | string;
+  referenceMinStock: number | string;
 };
 
 export default function ProductFormModal({
@@ -69,20 +74,27 @@ export default function ProductFormModal({
       ? { ...product }
       : {
           name: "",
-          sku: "",
-          barcode: "",
           brand: "",
           category: "",
           subcategory: "",
-          price: "",
-          stock: "",
-          minStock: 5,
+          referencePrice: "",
+          referenceMinStock: 5,
           description: "",
           tags: [],
           active: true,
           image: "",
         },
   );
+
+  // Variantes vendibles del producto (SKU, precio y stock autoritativos).
+  const [variantes, setVariantes] = useState<VarianteDTO[]>([]);
+  const [variantModal, setVariantModal] = useState<
+    { mode: "add" } | { mode: "edit"; variant: VarianteDTO } | null
+  >(null);
+  const [deleteVariantTarget, setDeleteVariantTarget] =
+    useState<VarianteDTO | null>(null);
+  const [adjustStockTarget, setAdjustStockTarget] =
+    useState<VarianteDTO | null>(null);
 
   // IDs para mapear nombres a IDs
   const [brandId, setBrandId] = useState<string>("");
@@ -161,11 +173,14 @@ export default function ProductFormModal({
             }
           }
 
-          // Cargar todas las imágenes del producto desde el backend
+          // Cargar todas las imágenes y variantes del producto desde el backend
           try {
             const productDetail = await inventarioApi.obtenerProductoPorId(
               product.id.toString(),
             );
+
+            setVariantes(productDetail?.variantes ?? []);
+
             if (
               productDetail &&
               productDetail.imagenes &&
@@ -257,6 +272,75 @@ export default function ProductFormModal({
       "tags",
       form.tags.filter((_, i) => i !== index),
     );
+
+  const reloadVariantes = async () => {
+    if (!product) return;
+    const dtos = await inventarioApi.obtenerVariantes(product.id.toString());
+    setVariantes(dtos);
+  };
+
+  const handleSaveVariant = async (
+    data: VariantFormData,
+    newImageFiles: File[],
+    imageMeta: { mainImageIndex?: number; newMainImageId?: string; deletedImageIds?: string[] },
+  ) => {
+    if (!product) return;
+    let idVariante: string;
+    if (variantModal?.mode === "edit") {
+      idVariante = variantModal.variant.idVariante;
+      await inventarioApi.actualizarVariante({
+        idVariante,
+        precio: data.precio,
+        stock: data.stock,
+        minStock: data.minStock,
+        codigoDeBarras: data.codigoDeBarras,
+        activo: data.activo,
+        atributos: data.atributos,
+      });
+    } else {
+      const created = await inventarioApi.crearVariante(product.id.toString(), {
+        precio: data.precio,
+        stock: data.stock,
+        minStock: data.minStock,
+        codigoDeBarras: data.codigoDeBarras,
+        atributos: data.atributos,
+      });
+      idVariante = created.idVariante;
+    }
+
+    for (const idImagen of imageMeta.deletedImageIds ?? []) {
+      await inventarioApi.eliminarImagen(idImagen);
+    }
+
+    if (newImageFiles.length > 0) {
+      await inventarioApi.agregarImagenes(
+        product.id.toString(),
+        newImageFiles,
+        imageMeta.mainImageIndex,
+        idVariante,
+      );
+    }
+
+    if (imageMeta.newMainImageId) {
+      await inventarioApi.establecerImagenPrincipal(imageMeta.newMainImageId);
+    }
+
+    setVariantModal(null);
+    await reloadVariantes();
+  };
+
+  const handleDeleteVariant = async () => {
+    if (!deleteVariantTarget) return;
+    await inventarioApi.eliminarVariante(deleteVariantTarget.idVariante);
+    setDeleteVariantTarget(null);
+    await reloadVariantes();
+  };
+
+  const handleAdjustStock = async (delta: number) => {
+    if (!adjustStockTarget) return;
+    await inventarioApi.ajustarStockVariante(adjustStockTarget.idVariante, delta);
+    await reloadVariantes();
+  };
 
   const handleValidateAttribute = (
     value: string,
@@ -441,7 +525,6 @@ export default function ProductFormModal({
     if (!subcategoryId) e.subcategory = "La subcategoría es requerida";
 
     const normalizedName = form.name.trim().toLowerCase();
-    const normalizedBarcode = form.barcode.trim().toLowerCase();
     const existingOtherProducts = existingProducts.filter(
       (p) => p.id !== product?.id,
     );
@@ -455,42 +538,20 @@ export default function ProductFormModal({
     }
 
     if (
-      form.barcode.trim() &&
-      existingOtherProducts.some(
-        (p) => p.barcode.trim().toLowerCase() === normalizedBarcode,
-      )
+      form.referencePrice !== "" &&
+      (Number.isNaN(Number(form.referencePrice)) ||
+        Number(form.referencePrice) < 0)
     ) {
-      e.barcode = "Ya existe un producto con ese código de barras";
+      e.referencePrice = "El precio de referencia no puede ser negativo";
     }
 
     if (
-      form.price === "" ||
-      form.price === null ||
-      Number.isNaN(Number(form.price))
+      form.referenceMinStock !== "" &&
+      (Number.isNaN(Number(form.referenceMinStock)) ||
+        Number(form.referenceMinStock) < 0)
     ) {
-      e.price = "El precio es requerido";
-    } else if (typeof form.price === "number" && form.price < 0) {
-      e.price = "El precio no puede ser negativo";
-    }
-
-    if (
-      form.stock === "" ||
-      form.stock === null ||
-      Number.isNaN(Number(form.stock))
-    ) {
-      e.stock = "El stock es requerido";
-    } else if (typeof form.stock === "number" && form.stock < 0) {
-      e.stock = "El stock no puede ser negativo";
-    }
-
-    if (
-      form.minStock === "" ||
-      form.minStock === null ||
-      Number.isNaN(Number(form.minStock))
-    ) {
-      e.minStock = "El stock mínimo es requerido";
-    } else if (typeof form.minStock === "number" && form.minStock < 0) {
-      e.minStock = "El stock mínimo no puede ser negativo";
+      e.referenceMinStock =
+        "El stock mínimo de referencia no puede ser negativo";
     }
 
     if (!form.image.trim()) {
@@ -540,9 +601,13 @@ export default function ProductFormModal({
             brand: form.brand,
             category: form.category,
             subcategory: form.subcategory,
-            price: Number(form.price),
-            stock: Number(form.stock),
-            minStock: Number(form.minStock),
+            referencePrice:
+              form.referencePrice === "" ? 0 : Number(form.referencePrice),
+            referenceMinStock:
+              form.referenceMinStock === ""
+                ? 0
+                : Number(form.referenceMinStock),
+            variants: product?.variants ?? [],
           },
           selectedFiles.map((item) => item.file),
           {
@@ -613,24 +678,6 @@ export default function ProductFormModal({
               </FieldWithIcon>
               {errors.name && (
                 <p className="text-red-500 text-[11px] mt-1">{errors.name}</p>
-              )}
-            </div>
-
-            <div className="mb-3">
-              <label className={twLabel}>Código de barras</label>
-              <FieldWithIcon icon={<IconBarcode />}>
-                <input
-                  id="codigoBarras"
-                  value={form.barcode}
-                  onChange={(e) => set("barcode", e.target.value)}
-                  placeholder="7501000..."
-                  className={`${twField} pl-8 ${errors.barcode ? "border-red-500" : ""}`}
-                />
-              </FieldWithIcon>
-              {errors.barcode && (
-                <p className="text-red-500 text-[11px] mt-1">
-                  {errors.barcode}
-                </p>
               )}
             </div>
 
@@ -767,9 +814,9 @@ export default function ProductFormModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
-                <label className={twLabel}>Precio de venta</label>
+                <label className={twLabel}>Precio de referencia</label>
                 <div className="relative">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[13px]">
                     $
@@ -778,67 +825,48 @@ export default function ProductFormModal({
                     id="precio"
                     type="number"
                     min={0}
-                    value={form.price}
+                    value={form.referencePrice}
                     onChange={(e) =>
                       set(
-                        "price",
+                        "referencePrice",
                         e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
-                    className={`${twField} pl-6 ${errors.price ? "border-red-500" : ""}`}
+                    className={`${twField} pl-6 ${errors.referencePrice ? "border-red-500" : ""}`}
                   />
                 </div>
-                {errors.price && (
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Solo se usa para pre-llenar el precio al crear una variante.
+                </p>
+                {errors.referencePrice && (
                   <p className="text-red-500 text-[11px] mt-1">
-                    {errors.price}
+                    {errors.referencePrice}
                   </p>
                 )}
               </div>
               <div>
-                <label className={twLabel}>
-                  {isEdit ? "Stock actual" : "Stock inicial"}
-                </label>
-                <FieldWithIcon icon={<IconBox />}>
-                  <input
-                    id="stock"
-                    type="number"
-                    min={0}
-                    value={form.stock}
-                    onChange={(e) =>
-                      set(
-                        "stock",
-                        e.target.value === "" ? "" : Number(e.target.value),
-                      )
-                    }
-                    className={`${twField} pl-8 ${errors.stock ? "border-red-500" : ""}`}
-                  />
-                </FieldWithIcon>
-                {errors.stock && (
-                  <p className="text-red-500 text-[11px] mt-1">
-                    {errors.stock}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className={twLabel}>Stock mín. aceptable</label>
+                <label className={twLabel}>Stock mín. de referencia</label>
                 <FieldWithIcon icon={<IconAlertTri />}>
                   <input
                     id="stockMin"
                     type="number"
                     min={0}
-                    value={form.minStock}
+                    value={form.referenceMinStock}
                     onChange={(e) =>
                       set(
-                        "minStock",
+                        "referenceMinStock",
                         e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
-                    className={`${twField} pl-8 ${errors.minStock ? "border-red-500" : ""}`}
+                    className={`${twField} pl-8 ${errors.referenceMinStock ? "border-red-500" : ""}`}
                   />
                 </FieldWithIcon>
-                {errors.minStock && (
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Solo se usa para pre-llenar el stock mínimo al crear una variante.
+                </p>
+                {errors.referenceMinStock && (
                   <p className="text-red-500 text-[11px] mt-1">
-                    {errors.minStock}
+                    {errors.referenceMinStock}
                   </p>
                 )}
               </div>
@@ -920,6 +948,113 @@ export default function ProductFormModal({
                     ))}
                   </div>
                 </>
+              )}
+            </div>
+
+            <div className={`${twSection} mb-3`}>
+              <div className="flex items-center justify-between mb-2">
+                <label className={`${twLabel} mb-0`}>Variantes</label>
+                {isEdit && (
+                  <button
+                    type="button"
+                    onClick={() => setVariantModal({ mode: "add" })}
+                    className="bg-blue-600 text-white border-none rounded-lg px-3 py-1.5 cursor-pointer text-[12px] font-semibold hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-1"
+                  >
+                    <IconPlus size={11} /> Agregar variante
+                  </button>
+                )}
+              </div>
+
+              {!isEdit && (
+                <p className="text-[12px] text-gray-500">
+                  Guarda el producto para poder agregar sus variantes (SKU, precio y stock).
+                </p>
+              )}
+
+              {isEdit && variantes.length === 0 && (
+                <p className="text-[12px] text-gray-500">
+                  Este producto todavía no tiene variantes.
+                </p>
+              )}
+
+              {isEdit && variantes.length > 0 && (
+                <div className="overflow-x-auto -mx-1">
+                  <table className="w-full border-collapse text-[12px]">
+                    <thead>
+                      <tr className="text-left text-gray-400 uppercase text-[10px] tracking-[0.06em]">
+                        <th className="px-1 py-1.5 font-bold">SKU</th>
+                        <th className="px-1 py-1.5 font-bold">Atributos</th>
+                        <th className="px-1 py-1.5 font-bold text-right">
+                          Precio
+                        </th>
+                        <th className="px-1 py-1.5 font-bold text-right">
+                          Stock
+                        </th>
+                        <th className="px-1 py-1.5 font-bold text-center">
+                          Activo
+                        </th>
+                        <th className="px-1 py-1.5 font-bold text-center">
+                          Acciones
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {variantes.map((v) => (
+                        <tr key={v.idVariante} className="border-t border-gray-200">
+                          <td className="px-1 py-1.5 font-mono text-gray-600">
+                            {v.sku}
+                          </td>
+                          <td className="px-1 py-1.5 text-gray-600">
+                            {v.atributos
+                              .map((a) => `${a.nombre}: ${a.valor}`)
+                              .join(", ") || "—"}
+                          </td>
+                          <td className="px-1 py-1.5 text-right text-gray-700">
+                            ${v.precio}
+                          </td>
+                          <td className="px-1 py-1.5 text-right text-gray-700">
+                            {v.stock}
+                          </td>
+                          <td className="px-1 py-1.5 text-center">
+                            <span
+                              className={`inline-block w-2 h-2 rounded-full ${v.activo ? "bg-green-500" : "bg-gray-300"}`}
+                            />
+                          </td>
+                          <td className="px-1 py-1.5">
+                            <div className="flex gap-1 justify-center">
+                              <button
+                                type="button"
+                                onClick={() => setAdjustStockTarget(v)}
+                                title="Ajustar stock (+/-)"
+                                className="w-6 h-6 rounded-md border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer text-[13px] font-bold leading-none"
+                              >
+                                ±
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setVariantModal({ mode: "edit", variant: v })
+                                }
+                                title="Editar variante"
+                                className="w-6 h-6 rounded-md border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
+                              >
+                                <IconEdit size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteVariantTarget(v)}
+                                title="Eliminar variante"
+                                className="w-6 h-6 rounded-md border border-red-200 bg-white flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                              >
+                                <IconTrash size={12} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 
@@ -1058,6 +1193,62 @@ export default function ProductFormModal({
           onSave={handleSaveAttribute}
           validate={handleValidateAttribute}
         />
+      )}
+
+      {variantModal && (
+        <VariantFormModal
+          variant={variantModal.mode === "edit" ? variantModal.variant : null}
+          referencePrice={
+            form.referencePrice === "" ? 0 : Number(form.referencePrice)
+          }
+          referenceMinStock={
+            form.referenceMinStock === "" ? 0 : Number(form.referenceMinStock)
+          }
+          onClose={() => setVariantModal(null)}
+          onSave={handleSaveVariant}
+        />
+      )}
+
+      {adjustStockTarget && (
+        <AjustarStockModal
+          variante={adjustStockTarget}
+          onClose={() => setAdjustStockTarget(null)}
+          onAdjust={handleAdjustStock}
+        />
+      )}
+
+      {deleteVariantTarget && (
+        <div
+          onClick={() => setDeleteVariantTarget(null)}
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-1010 p-4 backdrop-blur-sm"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl w-full max-w-90 overflow-hidden shadow-2xl border border-gray-100 p-5"
+          >
+            <h3 className="font-bold text-gray-900 text-[15px] mb-2">
+              ¿Eliminar variante?
+            </h3>
+            <p className="text-[13px] text-gray-500 mb-4">
+              Esta acción no se puede deshacer. Se eliminará la variante{" "}
+              <strong>{deleteVariantTarget.sku}</strong>.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteVariantTarget(null)}
+                className="px-4 py-1.5 rounded-lg border border-gray-200 bg-white cursor-pointer text-[13px] font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteVariant}
+                className="px-4 py-1.5 rounded-lg border-none bg-red-500 text-white cursor-pointer text-[13px] font-semibold hover:bg-red-600 transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

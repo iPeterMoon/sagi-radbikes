@@ -1,3 +1,5 @@
+import { UsuarioDTO } from "@/types/dtos";
+
 /** DTO con credenciales de inicio de sesión. */
 export interface LoginDTO {
   usuario: string;
@@ -7,11 +9,7 @@ export interface LoginDTO {
 /** DTO con información de sesión activa. */
 export interface SesionDTO {
   token: string;
-  usuario: {
-    id: string;
-    nombre: string;
-    rol: string;
-  };
+  usuario: UsuarioDTO;
 }
 
 /** URL base para los endpoints de autenticación. */
@@ -66,7 +64,7 @@ export const authApi = {
    * Valida el token de sesión activo (cookie httpOnly) contra el servidor.
    * @returns Datos del usuario si el token es válido
    */
-  async validate(): Promise<any> {
-    return fetchApi<any>(`${API_BASE}/validate`);
+  async validate(): Promise<UsuarioDTO> {
+    return fetchApi<UsuarioDTO>(`${API_BASE}/validate`);
   },
 };

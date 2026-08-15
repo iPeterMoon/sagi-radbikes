@@ -3,6 +3,9 @@ import {
   ActualizarProductoDTO,
   FiltroProductoDTO,
   CrearEtiquetaDTO,
+  CrearVarianteDTO,
+  ActualizarVarianteDTO,
+  CrearAtributoVarianteDTO,
 } from "../DTOsEntrada";
 import {
   ProductoDTO,
@@ -10,12 +13,15 @@ import {
   MarcaDTO,
   SubCategoriaDTO,
   EtiquetaDTO,
+  VarianteDTO,
+  AtributoVarianteDTO,
 } from "../DTOsSalida";
 
 /**
  * Contrato que define las operaciones disponibles para el servicio de inventario.
  * Proporciona los métodos necesarios para la gestión completa del catálogo,
- * incluyendo productos, categorías, marcas, subcategorías, imágenes y etiquetas.
+ * incluyendo productos, categorías, marcas, subcategorías, imágenes, etiquetas,
+ * variantes y sus atributos.
  */
 export interface IServicioInventario {
   /**
@@ -57,15 +63,6 @@ export interface IServicioInventario {
    * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
    */
   eliminarProducto(id: string): Promise<boolean>;
-
-  /**
-   * Ajusta la cantidad de existencias de un producto específico.
-   *
-   * @param id El identificador único del producto.
-   * @param cantidad La cantidad a sumar o restar del inventario.
-   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
-   */
-  ajustarStock(id: string, cantidad: number): Promise<boolean>;
 
   /**
    * Actualiza el estado de visibilidad o disponibilidad de un producto.
@@ -131,17 +128,19 @@ export interface IServicioInventario {
   crearSubCategoria(subCategoria: SubCategoriaDTO): Promise<SubCategoriaDTO>;
 
   /**
-   * Agrega una o más imágenes a un producto específico.
+   * Agrega una o más imágenes a un producto específico, o a una de sus variantes si se indica `idVariante`.
    *
    * @param idProducto El identificador único del producto.
    * @param archivos Arreglo de archivos de imagen provenientes de la petición.
    * @param mainImageIndex Índice opcional que indica qué imagen debe ser la principal.
+   * @param idVariante Identificador opcional de la variante a la que pertenecen las imágenes.
    * @returns Una promesa que resuelve cuando se agregan las imágenes correctamente.
    */
   agregarImagenes(
     idProducto: string,
     archivos: File[],
     mainImageIndex?: number,
+    idVariante?: string,
   ): Promise<void>;
 
   /**
@@ -183,4 +182,80 @@ export interface IServicioInventario {
    * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
    */
   eliminarEtiqueta(idEtiqueta: string): Promise<boolean>;
+
+  /**
+   * Obtiene las variantes asociadas a un producto.
+   *
+   * @param idProducto El identificador único del producto.
+   * @returns Una promesa que resuelve con un arreglo de objetos VarianteDTO.
+   */
+  obtenerVariantes(idProducto: string): Promise<VarianteDTO[]>;
+
+  /**
+   * Crea una nueva variante de producto.
+   *
+   * @param variante Objeto DTO con los datos de la variante a crear.
+   * @returns Una promesa que resuelve con la VarianteDTO creada.
+   */
+  crearVariante(variante: CrearVarianteDTO): Promise<VarianteDTO>;
+
+  /**
+   * Actualiza la información de una variante existente.
+   *
+   * @param variante Objeto DTO con los datos actualizados de la variante.
+   * @returns Una promesa que resuelve con la VarianteDTO actualizada.
+   */
+  actualizarVariante(variante: ActualizarVarianteDTO): Promise<VarianteDTO>;
+
+  /**
+   * Elimina una variante del catálogo.
+   *
+   * @param idVariante El identificador único de la variante a eliminar.
+   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
+   */
+  eliminarVariante(idVariante: string): Promise<boolean>;
+
+  /**
+   * Ajusta la cantidad de existencias de una variante específica, sumando o restando
+   * una cantidad relativa al stock actual.
+   *
+   * @param idVariante El identificador único de la variante.
+   * @param cantidad Cantidad a sumar (positiva) o restar (negativa) del inventario.
+   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
+   */
+  ajustarStockVariante(idVariante: string, cantidad: number): Promise<boolean>;
+
+  /**
+   * Actualiza el estado (activo/inactivo) de una variante.
+   *
+   * @param idVariante El identificador único de la variante.
+   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
+   */
+  actualizarEstadoVariante(idVariante: string): Promise<boolean>;
+
+  /**
+   * Obtiene los atributos asociados a una variante.
+   *
+   * @param idVariante El identificador único de la variante.
+   * @returns Una promesa que resuelve con un arreglo de objetos AtributoVarianteDTO.
+   */
+  obtenerAtributosVariante(idVariante: string): Promise<AtributoVarianteDTO[]>;
+
+  /**
+   * Crea un nuevo atributo para ser utilizado en una variante.
+   *
+   * @param atributo Objeto DTO con los datos del atributo.
+   * @returns Una promesa que resuelve con la AtributoVarianteDTO creada.
+   */
+  crearAtributoVariante(
+    atributo: CrearAtributoVarianteDTO,
+  ): Promise<AtributoVarianteDTO>;
+
+  /**
+   * Elimina un atributo de variante del catálogo.
+   *
+   * @param idAtributo El identificador único del atributo.
+   * @returns Una promesa que resuelve con un booleano indicando el éxito de la operación.
+   */
+  eliminarAtributoVariante(idAtributo: string): Promise<boolean>;
 }

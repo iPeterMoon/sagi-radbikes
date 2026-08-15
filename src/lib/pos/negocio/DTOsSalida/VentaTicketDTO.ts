@@ -10,5 +10,7 @@ export interface VentaTicketDTO {
     nombre: string;
     cantidad: number;
     precioUnitario: number;
+    /** Texto de los atributos de la variante (ej. "Color: Rojo"), si aplica */
+    atributos?: string;
   }>;
 }

@@ -1,4 +1,5 @@
 import { NuevoUsuarioDTO } from "../DTOsEntrada/NuevoUsuarioDTO";
+import { ActualizarUsuarioDTO } from "../DTOsEntrada/ActualizarUsuarioDTO";
 import { UsuarioDTO } from "../DTOsSalida";
 /**
  * Interfaz que define las operaciones del servicio de gestion de usuarios. Esta interfaz actúa como una fachada
@@ -36,7 +37,7 @@ export interface IServicioUsuarios {
      * @returns UsuarioDTO del usuario actualizado
      * @throws Error si el usuario no existe o si hay conflictos con username/email
      */
-    actualizar(id: number | bigint, usuario: UsuarioDTO): Promise<UsuarioDTO>;
+    actualizar(id: number | bigint, usuario: ActualizarUsuarioDTO): Promise<UsuarioDTO>;
 
     /**
      * Elimina un usuario del sistema.

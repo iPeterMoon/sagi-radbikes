@@ -1,7 +1,8 @@
-export type { 
-  LoginDTO, 
-  NuevoRolDTO, 
-  NuevoUsuarioDTO 
+export type {
+  LoginDTO,
+  NuevoRolDTO,
+  NuevoUsuarioDTO,
+  ActualizarUsuarioDTO,
 } from "@/lib/auth/negocio/DTOsEntrada";
 export type {
   RolDTO,
@@ -15,6 +16,8 @@ export type {
   SubCategoriaDTO,
   ImagenProductoDTO,
   EtiquetaDTO,
+  AtributoVarianteDTO,
+  VarianteDTO,
   ProductoDTO,
 } from "@/lib/inventory/negocio/DTOsSalida";
 export type {
@@ -22,6 +25,9 @@ export type {
   ActualizarProductoDTO,
   FiltroProductoDTO,
   CrearEtiquetaDTO,
+  CrearVarianteDTO,
+  ActualizarVarianteDTO,
+  CrearAtributoVarianteDTO,
 } from "@/lib/inventory/negocio/DTOsEntrada";
 export type {
   CrearVentaDTO,

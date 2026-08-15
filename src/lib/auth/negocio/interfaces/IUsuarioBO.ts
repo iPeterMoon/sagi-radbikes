@@ -1,6 +1,7 @@
 import { LoginDTO } from "../DTOsEntrada/LoginDTO";
 import { UsuarioDTO } from "../DTOsSalida/UsuarioDTO";
 import { NuevoUsuarioDTO } from "../DTOsEntrada/NuevoUsuarioDTO";
+import { ActualizarUsuarioDTO } from "../DTOsEntrada/ActualizarUsuarioDTO";
 import { SesionDTO } from "../DTOsSalida/SesionDTO";
 
 /**
@@ -62,7 +63,7 @@ export interface IUsuarioBO {
    * @returns UsuarioDTO del usuario actualizado
    * @throws Error si el usuario no existe o si hay conflictos con username/email
    */
-  actualizar(id: number | bigint, usuario: UsuarioDTO): Promise<UsuarioDTO>;
+  actualizar(id: number | bigint, usuario: ActualizarUsuarioDTO): Promise<UsuarioDTO>;
 
   /**
    * Elimina un usuario del sistema.

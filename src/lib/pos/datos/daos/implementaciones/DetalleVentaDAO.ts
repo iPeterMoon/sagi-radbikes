@@ -18,7 +18,7 @@ export class DetalleVentaDAO extends GenericDAO<sale_details> implements IDetall
   async getByVenta(idVenta: bigint): Promise<sale_details[]> {
     return await this.db.findMany({
       where: { sale_id: idVenta },
-      include: { products: true },
+      include: { product_variants: { include: { products: true } } },
     });
   }
 
@@ -30,7 +30,7 @@ export class DetalleVentaDAO extends GenericDAO<sale_details> implements IDetall
   async createMany(
     detalles: Array<{
       sale_id: bigint;
-      product_id: bigint;
+      variant_id: bigint;
       quantity: number;
       unitPrice: number;
     }>,

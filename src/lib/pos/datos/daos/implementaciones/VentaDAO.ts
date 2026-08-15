@@ -34,7 +34,7 @@ export class VentaDAO extends GenericDAO<sales> implements IVentaDAO {
     return await this.db.findFirst({
       where: { folio },
       include: {
-        sale_details: { include: { products: true }},
+        sale_details: { include: { product_variants: { include: { products: true, product_variant_attributes: true } } } },
         payments: true
       },
     });

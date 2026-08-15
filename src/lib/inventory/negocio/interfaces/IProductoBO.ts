@@ -67,26 +67,20 @@ export interface IProductoBO {
   eliminar(id: string): Promise<boolean>;
 
   /**
-   * Reduce la cantidad de stock disponible para un producto.
-   *
-   * @param id Identificador del producto.
-   * @param cantidad Número de unidades a restar.
-   * @returns Una promesa que indica si se pudo realizar la resta.
-   */
-  restarStock(id: string, cantidad: number): Promise<boolean>;
-
-  /**
-   * Sube y vincula archivos de imagen a un producto específico.
+   * Sube y vincula archivos de imagen a un producto específico, o a una de sus variantes
+   * si se indica `idVariante`.
    *
    * @param idProducto Identificador del producto destino.
    * @param archivos Arreglo de archivos binarios de imagen.
    * @param mainImageIndex Índice opcional para marcar una imagen como principal.
+   * @param idVariante Identificador opcional de la variante a la que pertenecen las imágenes.
    * @returns Una promesa que se resuelve al finalizar la operación.
    */
   agregarImagenes(
     idProducto: string,
     archivos: File[],
     mainImageIndex?: number,
+    idVariante?: string,
   ): Promise<void>;
 
   /**

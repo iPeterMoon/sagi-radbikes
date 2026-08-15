@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usuariosApi } from "@/lib/api/usuarios";
 import { Usuario, ModalUsuarioType, FiltroEstado } from "@/types/usuarios";
-import { UsuarioDTO, RolDTO } from "@/types/dtos";
+import { UsuarioDTO, ActualizarUsuarioDTO, RolDTO } from "@/types/dtos";
 import { IconSearch, IconPlus } from "@/components/ui/Icons";
 import UsuarioFormModal from "./components/UsuarioFormModal";
 import { NuevoUsuarioDTO } from "@/types/dtos";
@@ -86,9 +86,10 @@ export default function UsuariosPage() {
   const handleSave = async (data: NuevoUsuarioDTO | Usuario) => {
     try {
       if (modal?.type === "edit") {
-        const dto: UsuarioDTO = {
+        const dto: ActualizarUsuarioDTO = {
           idUsuario: (data as Usuario).idUsuario,
           username: (data as Usuario).username,
+          password: (data as Usuario).password,
           nombre: (data as Usuario).nombre,
           apellido: (data as Usuario).apellido,
           email: (data as Usuario).email,

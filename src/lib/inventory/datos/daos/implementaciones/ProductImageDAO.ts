@@ -53,11 +53,13 @@ export class ProductImageDAO implements IProductImageDAO {
    *
    * @param img El archivo de imagen proporcionado por Multer.
    * @param productId El identificador del producto asociado.
+   * @param variantId Identificador opcional de la variante asociada, incluido en la ruta si viene.
    * @returns Una cadena con la ruta y el nombre único del archivo.
    */
   private getUniqueFileName(
     img: File,
     productId: bigint,
+    variantId?: bigint,
   ): string {
     const safeName = this.normalizeFileName(img.name || "image");
     const randomId =
@@ -66,16 +68,20 @@ export class ProductImageDAO implements IProductImageDAO {
         ? (globalThis as any).crypto.randomUUID()
         : Math.random().toString(36).substring(2, 10);
 
-    return `${productId}/${Date.now()}-${randomId}_${safeName}`;
+    const basePath = variantId ? `${productId}/${variantId}` : `${productId}`;
+    return `${basePath}/${Date.now()}-${randomId}_${safeName}`;
   }
 
   /**
    * Crea un nuevo registro de imagen, subiendo el archivo a Supabase Storage
-   * y guardando la referencia en la base de datos.
+   * y guardando la referencia en la base de datos. Si se indica `variantId`, la imagen
+   * queda asociada a esa variante en particular; de lo contrario es una imagen general
+   * del producto (fallback para todas sus variantes).
    *
    * @param img El archivo de imagen a subir.
    * @param productId El identificador único numérico del producto.
-   * @param isMain Indica si la imagen debe ser establecida como la principal del producto.
+   * @param isMain Indica si la imagen debe ser establecida como la principal (del producto o de la variante).
+   * @param variantId Identificador opcional de la variante a la que pertenece la imagen.
    * @returns Una promesa que resuelve con la entidad product_images creada.
    * @throws Error si ocurre un problema al subir la imagen a Supabase.
    */
@@ -83,8 +89,9 @@ export class ProductImageDAO implements IProductImageDAO {
     img: File,
     productId: bigint,
     isMain: boolean = false,
+    variantId?: bigint,
   ): Promise<product_images> {
-    const fileName = this.getUniqueFileName(img, productId);
+    const fileName = this.getUniqueFileName(img, productId, variantId);
 
     const { error: uploadError } = await this.supabase.storage
       .from(this.BUCKET_NAME)
@@ -104,7 +111,9 @@ export class ProductImageDAO implements IProductImageDAO {
 
     if (isMain) {
       await this.db.updateMany({
-        where: { product_id: productId, is_main_image: true },
+        where: variantId
+          ? { variant_id: variantId, is_main_image: true }
+          : { product_id: productId, is_main_image: true },
         data: { is_main_image: false },
       });
     }
@@ -112,6 +121,7 @@ export class ProductImageDAO implements IProductImageDAO {
     return await this.db.create({
       data: {
         product_id: productId,
+        variant_id: variantId ?? null,
         image_url: urlData.publicUrl,
         is_main_image: isMain,
       },
@@ -184,7 +194,9 @@ export class ProductImageDAO implements IProductImageDAO {
       if (!image) return false;
 
       await this.db.updateMany({
-        where: { product_id: image.product_id, is_main_image: true },
+        where: image.variant_id
+          ? { variant_id: image.variant_id, is_main_image: true }
+          : { product_id: image.product_id, is_main_image: true },
         data: { is_main_image: false },
       });
 
@@ -229,5 +241,17 @@ export class ProductImageDAO implements IProductImageDAO {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Obtiene todas las imágenes asociadas a una variante específica.
+   *
+   * @param variantId El identificador único numérico de la variante.
+   * @returns Una promesa que resuelve con un arreglo de entidades product_images.
+   */
+  async getByVariant(variantId: bigint): Promise<product_images[]> {
+    return await this.db.findMany({
+      where: { variant_id: variantId },
+    });
   }
 }

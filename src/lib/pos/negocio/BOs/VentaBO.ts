@@ -7,6 +7,7 @@ import { IVentaBO } from "../interfaces/IVentaBO";
 import { DetalleStockDTO } from "../DTOsSalida/DetalleStockDTO";
 import { TicketMapper } from "../mappers/TicketMapper";
 import { VentaTicketDTO } from "../DTOsSalida";
+import { product_variants, products } from "@prisma/client";
 
 /**
  * Objeto de Negocio (Business Object) encargado de las reglas de negocio de las Ventas.
@@ -42,10 +43,10 @@ export class VentaBO implements IVentaBO {
   async verificarStock(productos: ProductoCarritoDTO[]): Promise<DetalleStockDTO[]> {
     const errores: DetalleStockDTO[] = [];
     for (const item of productos) {
-      const producto = await this.accesoDatos.productoDAO.getById(BigInt(item.idProducto));
+      const producto = await this.accesoDatos.productoDAO.getById(BigInt(item.idVariante), { products: true }) as (product_variants & { products: products }) | null;
       if (!producto || (producto.stock ?? 0) < item.cantidad) {
         errores.push(new DetalleStockDTO(
-          (producto as any)?.name || `ID: ${item.idProducto}`,
+          producto?.products?.name || `ID: ${item.idVariante}`,
           item.cantidad,
           producto?.stock ?? 0
         ));
@@ -100,7 +101,7 @@ export class VentaBO implements IVentaBO {
     // Creación de las partidas/detalles de la venta
     const detalles = dto.productos.map((p) => ({
       sale_id: venta.id,
-      product_id: BigInt(p.idProducto),
+      variant_id: BigInt(p.idVariante),
       quantity: p.cantidad,
       unitPrice: p.precioUnitario,
     }));
@@ -114,7 +115,10 @@ export class VentaBO implements IVentaBO {
     });
 
     for (const item of dto.productos) {
-      await this.accesoDatos.productoDAO.restarStock(BigInt(item.idProducto), item.cantidad);
+      const descontado = await this.accesoDatos.productoDAO.restarStock(BigInt(item.idVariante), item.cantidad);
+      if (!descontado) {
+        throw new Error(`Stock insuficiente para completar la venta del producto ${item.idVariante}`);
+      }
     }
 
     return VentaMapper.toResumenDTO(venta, pago, subtotal, importeIVA);

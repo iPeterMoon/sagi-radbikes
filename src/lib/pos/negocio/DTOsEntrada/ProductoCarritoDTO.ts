@@ -1,10 +1,10 @@
-/** 
- * Data Transfer Object que representa un producto individual 
- * almacenado dentro del estado del carrito en memoria.
+/**
+ * Data Transfer Object que representa una variante de producto individual
+ * almacenada dentro del estado del carrito en memoria.
  */
 export interface ProductoCarritoDTO {
-    /** Identificador único del producto */
-    idProducto: string;
+    /** Identificador único de la variante */
+    idVariante: string;
     /** Nombre descriptivo del artículo */
     nombre: string;
     /** Unidades seleccionadas para la compra */

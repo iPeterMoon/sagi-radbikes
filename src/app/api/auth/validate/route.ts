@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const usuario = await servicio.validarToken(token);
 
     if (usuario) {
-      return NextResponse.json({ valid: true }, { status: 200 });
+      return NextResponse.json(usuario, { status: 200 });
     } else {
       return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }

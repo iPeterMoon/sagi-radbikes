@@ -24,21 +24,25 @@ import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 
 function mapProductoVenta(p: ProductoVentaDTO): POSProduct {
   return {
-    id: Number(p.idProducto),
-    name: p.nombre,
+    id: Number(p.idVariante),
+    name: `${p.nombre}${
+      p.atributos?.length ? " — " + p.atributos.map((a) => a.valor).join(", ") : ""
+    }`,
     category: p.categoria?.nombre ?? "Sin categoría",
     price: p.precio,
     stock: p.stock,
     image: p.urlImagen || "/placeholder.png",
     sku: p.SKU,
     barcodeUpc: p.codigoBarras,
+    variantAttributes: p.atributos?.map((a) => ({ name: a.nombre, value: a.valor })),
+    parentProductId: Number(p.idProductoPadre),
   };
 }
 
 function mapCarritoItem(item: ProductoCarritoDTO): CartItem {
   return {
     product: {
-      id: Number(item.idProducto),
+      id: Number(item.idVariante),
       name: item.nombre,
       category: "Sin categoría",
       price: item.precioUnitario,
@@ -174,7 +178,7 @@ export default function POSPage() {
     async (product: POSProduct) => {
       try {
         const data = await posApi.agregarProductoCarrito({
-          idProducto: String(product.id),
+          idVariante: String(product.id),
           nombre: product.name,
           cantidad: 1,
           precioUnitario: product.price,
@@ -292,7 +296,7 @@ export default function POSPage() {
           paymentMethod === "tarjeta" ? "tarjeta_debito" : paymentMethod,
         porcentajeImpuesto: 16,
         productos: cart.map((item) => ({
-          idProducto: String(item.product.id),
+          idVariante: String(item.product.id),
           nombre: item.product.name,
           cantidad: item.qty,
           precioUnitario: item.product.price,

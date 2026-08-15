@@ -92,6 +92,7 @@ export default function UsuarioFormModal({
           ...usuario!,
           idUsuario: usuario!.idUsuario,
           username: form.username,
+          password: form.password || undefined,
           nombre: form.nombre,
           apellido: form.apellido,
           email: form.email,

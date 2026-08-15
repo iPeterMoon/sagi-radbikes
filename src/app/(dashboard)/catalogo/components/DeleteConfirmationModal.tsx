@@ -64,7 +64,10 @@ export function DeleteConfirmationModal({
             <div className="text-sm font-semibold text-gray-900">
               {product.name}
             </div>
-            <div className="text-xs text-gray-400">{product.sku}</div>
+            <div className="text-xs text-gray-400">
+              {product.variants.length} variante
+              {product.variants.length === 1 ? "" : "s"}
+            </div>
           </div>
         </div>
 

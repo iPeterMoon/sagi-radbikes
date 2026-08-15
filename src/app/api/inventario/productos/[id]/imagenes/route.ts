@@ -22,8 +22,11 @@ export async function POST(
     const mainImageIndex = formData.get("mainImageIndex")
       ? Number(formData.get("mainImageIndex"))
       : undefined;
+    const idVariante = formData.get("idVariante")
+      ? String(formData.get("idVariante"))
+      : undefined;
 
-    await servicio.agregarImagenes(id, archivos, mainImageIndex);
+    await servicio.agregarImagenes(id, archivos, mainImageIndex, idVariante);
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

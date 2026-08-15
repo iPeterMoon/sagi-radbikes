@@ -4,10 +4,13 @@ import { MarcaDTO } from "./MarcaDTO";
 import { SubCategoriaDTO } from "./SubCategoriaDTO";
 import { ImagenProductoDTO } from "./ImagenProductoDTO";
 import { EtiquetaDTO } from "./EtiquetaDTO";
+import { VarianteDTO } from "./VarianteDTO";
 
 /**
  * Objeto de Transferencia de Datos (DTO) que representa la información completa
  * y detallada de un producto, diseñada para ser presentada al cliente o consumidor.
+ * El SKU, precio y stock autoritativos viven en sus variantes (`VarianteDTO`); los
+ * campos `precioReferencia`/`minStockReferencia` aquí son solo valores de plantilla.
  */
 export interface ProductoDTO {
   /**
@@ -21,24 +24,9 @@ export interface ProductoDTO {
   nombre: string;
 
   /**
-   * El código interno de unidad de mantenimiento de existencias (SKU).
+   * El precio de referencia/plantilla del producto, usado para pre-llenar el precio al crear una variante.
    */
-  sku: string;
-
-  /**
-   * El código de barras universal (UPC) asignado al producto.
-   */
-  codigoDeBarras: string;
-
-  /**
-   * El precio de venta vigente para el producto.
-   */
-  precio: number;
-
-  /**
-   * La cantidad total de unidades disponibles actualmente en el inventario.
-   */
-  stock: number;
+  precioReferencia: number;
 
   /**
    * La descripción detallada que especifica las características y bondades del producto.
@@ -46,7 +34,7 @@ export interface ProductoDTO {
   descripcion: string;
 
   /**
-   * Una colección de objetos que contienen la información de las imágenes asociadas al producto.
+   * Una colección de objetos que contienen la información de las imágenes generales del producto.
    */
   imagenes: ImagenProductoDTO[];
 
@@ -66,12 +54,13 @@ export interface ProductoDTO {
   subcategoria: SubCategoriaDTO;
 
   /**
-   * El límite inferior de existencias definido para alertar sobre el reabastecimiento.
+   * El límite inferior de existencias de referencia/plantilla, usado para pre-llenar el stock mínimo al crear una variante.
    */
-  minStock: number;
+  minStockReferencia: number;
 
   /**
-   * El estado lógico del inventario (por ejemplo: NORMAL, BAJO o CRÍTICO) según la disponibilidad actual.
+   * El estado lógico del inventario (por ejemplo: NORMAL, BAJO o CRÍTICO), calculado agregando
+   * el stock y stock mínimo de las variantes activas del producto.
    */
   estadoStock: EstadoStock;
 
@@ -84,4 +73,9 @@ export interface ProductoDTO {
    * Una lista de atributos dinámicos o etiquetas clave-valor que complementan la información del producto.
    */
   etiquetas: EtiquetaDTO[];
+
+  /**
+   * Las variantes vendibles del producto (SKU, precio y stock autoritativos).
+   */
+  variantes: VarianteDTO[];
 }

@@ -1,5 +1,6 @@
 import { IAuthAccesoDatos } from "../datos/IAuthAccesoDatos";
 import { NuevoUsuarioDTO } from "./DTOsEntrada/NuevoUsuarioDTO";
+import { ActualizarUsuarioDTO } from "./DTOsEntrada/ActualizarUsuarioDTO";
 import { UsuarioDTO } from "./DTOsSalida";
 import { IServicioUsuarios } from "./interfaces/IServicioUsuarios";
 import { IUsuarioBO } from "./interfaces/IUsuarioBO";
@@ -53,7 +54,7 @@ export class ServicioUsuarios implements IServicioUsuarios {
      * @returns UsuarioDTO del usuario actualizado
      * @throws Error si el usuario no existe o si hay conflictos con username/email
      */
-    async actualizar(id: number | bigint, usuario: UsuarioDTO): Promise<UsuarioDTO> {
+    async actualizar(id: number | bigint, usuario: ActualizarUsuarioDTO): Promise<UsuarioDTO> {
         return await this.usuarioBO.actualizar(id, usuario);
     }
 

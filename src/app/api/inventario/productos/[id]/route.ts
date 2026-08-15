@@ -83,8 +83,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     if (body.action === 'adjustStock') {
-      result = await servicio.ajustarStock(id, body.cantidad);
-      return NextResponse.json({ success: result }, { status: 200 });
+      return NextResponse.json(
+        { error: "El stock ya no se ajusta a nivel de producto. Use PATCH /api/inventario/variantes/{id} con action 'adjustStock'." },
+        { status: 400 },
+      );
     }
 
     return NextResponse.json({ error: "Acción no válida" }, { status: 400 });
