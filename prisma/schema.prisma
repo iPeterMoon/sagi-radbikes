@@ -36,12 +36,18 @@ model payments {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model product_images {
-  id            BigInt   @id @default(autoincrement())
-  created_at    DateTime @default(now()) @db.Timestamptz(6)
-  image_url     String?
-  product_id    BigInt
-  is_main_image Boolean?
-  products      products @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id               BigInt            @id @default(autoincrement())
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  image_url        String?
+  product_id       BigInt
+  /// Si es NULL, es una imagen general del producto (fallback para todas las variantes).
+  /// Si tiene valor, es específica de esa variante.
+  variant_id       BigInt?
+  is_main_image    Boolean?
+  products         products          @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product_variants product_variants? @relation(fields: [variant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([variant_id])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -60,20 +66,55 @@ model products {
   id               BigInt             @id @default(autoincrement())
   created_at       DateTime           @default(now()) @db.Timestamptz(6)
   name             String?
+  /// Precio de referencia/plantilla. Ya NO es el precio de venta autoritativo —
+  /// solo se usa para pre-llenar el campo `price` al crear una variante nueva.
   price            Float?             @db.Real
-  stock            Int?
   description      String?
+  /// Stock mínimo de referencia/plantilla, mismo rol que `price` arriba.
   min_stock        Int?
-  SKU              String             @unique
-  barcode_upc      String?
   is_active        Boolean            @default(true)
   subcategory_id   BigInt?
   brand_id         BigInt?
   product_images   product_images[]
   product_physical product_physical[]
+  product_variants product_variants[]
   brands           brands?            @relation(fields: [brand_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "products_metadata_brand_id_fkey")
   subcategory      subcategory?       @relation(fields: [subcategory_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "products_metadata_subcategory_id_fkey")
-  sale_details     sale_details[]
+}
+
+/// Variante vendible de un producto (ej. color, talla). Contiene el SKU, código de
+/// barras, precio y stock autoritativos — el producto padre solo guarda valores de referencia.
+model product_variants {
+  id          BigInt   @id @default(autoincrement())
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  product_id  BigInt
+  SKU         String   @unique
+  barcode_upc String?
+  price       Float?   @db.Real
+  stock       Int?
+  min_stock   Int?
+  is_active   Boolean  @default(true)
+
+  products                   products                     @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product_variant_attributes product_variant_attributes[]
+  product_images             product_images[]
+  sale_details               sale_details[]
+
+  @@index([product_id])
+}
+
+/// Par atributo/valor de una variante (ej. name="Color", value="Rojo"). Mismo patrón
+/// EAV que product_physical, pero a nivel de variante en vez de producto.
+model product_variant_attributes {
+  id         BigInt   @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  name       String?
+  value      String?
+  variant_id BigInt
+
+  product_variants product_variants @relation(fields: [variant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([variant_id])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -88,14 +129,14 @@ model roles {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model sale_details {
-  id         BigInt    @id @default(autoincrement())
-  created_at DateTime  @default(now()) @db.Timestamptz(6)
-  quantity   Int?      @default(1)
-  unitPrice  Float?    @db.Real
-  sale_id    BigInt?
-  product_id BigInt?
-  products   products? @relation(fields: [product_id], references: [id], onDelete: Restrict)
-  sales      sales?    @relation(fields: [sale_id], references: [id], onDelete: Cascade)
+  id               BigInt            @id @default(autoincrement())
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  quantity         Int?              @default(1)
+  unitPrice        Float?            @db.Real
+  sale_id          BigInt?
+  variant_id       BigInt?
+  product_variants product_variants? @relation(fields: [variant_id], references: [id], onDelete: Restrict)
+  sales            sales?            @relation(fields: [sale_id], references: [id], onDelete: Cascade)
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -127,12 +168,12 @@ model subcategory {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model user_role {
-  id          BigInt   @id @default(autoincrement())
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
-  role_id     BigInt?
-  user_id     BigInt
-  roles       roles?   @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users       users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id         BigInt   @id @default(autoincrement())
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  role_id    BigInt?
+  user_id    BigInt
+  roles      roles?   @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -146,7 +187,7 @@ model users {
   apellido   String?     @db.VarChar
   email      String?     @db.VarChar
   telefono   String?     @unique @db.VarChar
-  is_active  Boolean    @default(true)
+  is_active  Boolean     @default(true)
   sales      sales[]
   user_role  user_role[]
 }
