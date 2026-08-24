@@ -39,3 +39,9 @@ export type {
   ProductoVentaDTO,
   VentaResumenDTO,
 } from "@/lib/pos/negocio/DTOsSalida"
+export type {
+  DashboardResumenDTO,
+  VentasPeriodoDTO,
+  MargenPeriodoDTO,
+  TopProductoDTO,
+} from "@/lib/dashboard/negocio/DTOsSalida/DashboardResumenDTO";
