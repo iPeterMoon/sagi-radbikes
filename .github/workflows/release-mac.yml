@@ -36,6 +36,18 @@ jobs:
           EOF
 
       - name: Compilar app de Mac (.dmg)
+        # next build ejecuta las rutas de API para recolectar sus datos estáticos,
+        # así que necesita estas variables como env reales del proceso (no alcanza
+        # con runtime.env, que solo lo lee Electron en tiempo de ejecución).
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.PROD_DIRECT_URL }}
+          JWT_SECRET: ${{ secrets.PROD_JWT_SECRET }}
+          SESSION_TIMEOUT_HOURS: ${{ secrets.PROD_SESSION_TIMEOUT_HOURS }}
+          SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_BUCKET_IMAGES: ${{ secrets.PROD_SUPABASE_BUCKET_IMAGES }}
+          PRINTER_INTERFACE: ${{ secrets.PROD_PRINTER_INTERFACE }}
         run: npm run electron:build -- --mac
 
       - name: Publicar en GitHub Releases
