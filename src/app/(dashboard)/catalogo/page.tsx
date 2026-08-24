@@ -3,9 +3,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ModalType, Product } from "@/types/inventory";
+import { ModalType, Product, ProductSortKey, SortDirection } from "@/types/inventory";
 import { inventarioApi } from "@/lib/api/inventario";
-import { getWorstStockStatus } from "@/lib/utils";
+import {
+  getProductMinPrice,
+  getProductStatus,
+  getProductTotalStock,
+  STOCK_STATUS_RANK,
+} from "@/lib/utils";
 import ProductTable from "./components/ProductTable";
 import ProductFormModal from "./components/ProductFormModal";
 import { DeleteConfirmationModal } from "./components/DeleteConfirmationModal";
@@ -78,6 +83,8 @@ export default function InventarioPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<ModalType>(null);
+  const [sortKey, setSortKey] = useState<ProductSortKey>("nombre");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   /** Estado de carga para la página. */
   const [isLoading, setIsLoading] = useState(true);
@@ -144,15 +151,45 @@ export default function InventarioPage() {
       return false;
     if (filterCategory && p.category !== filterCategory) return false;
 
-    const activeVariants = p.variants.filter((v) => v.active);
-    const status = getWorstStockStatus(activeVariants);
+    const status = getProductStatus(p);
     if (filterStatus === "bajo" && status !== "BAJO") return false;
     if (filterStatus === "critico" && status !== "CRÍTICO") return false;
     return true;
   });
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE) || 1;
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const sorted = [...filtered].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "nombre":
+        cmp = a.name.localeCompare(b.name, "es");
+        break;
+      case "precio":
+        cmp = getProductMinPrice(a) - getProductMinPrice(b);
+        break;
+      case "stock":
+        cmp = getProductTotalStock(a) - getProductTotalStock(b);
+        break;
+      case "estado":
+        cmp =
+          STOCK_STATUS_RANK[getProductStatus(a)] -
+          STOCK_STATUS_RANK[getProductStatus(b)];
+        break;
+    }
+    return sortDirection === "asc" ? cmp : -cmp;
+  });
+
+  const handleSort = (key: ProductSortKey) => {
+    if (key === sortKey) {
+      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+    setPage(1);
+  };
+
+  const totalPages = Math.ceil(sorted.length / PER_PAGE) || 1;
+  const paginated = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const handleSave = async (
     data: Product,
@@ -383,6 +420,9 @@ export default function InventarioPage() {
               onEdit={(p) => setModal({ type: "edit", product: p })}
               onDelete={handleDelete}
               onToggle={handleToggle}
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              onSort={handleSort}
             />
 
             {/* Pagination */}

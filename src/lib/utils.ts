@@ -1,4 +1,4 @@
-import { StockStatus } from "@/types/inventory";
+import { Product, StockStatus } from "@/types/inventory";
 
 /**
  * Calcula el estado de stock de una variante.
@@ -21,7 +21,8 @@ export function getStockStatus(
   return "NORMAL";
 }
 
-const STOCK_STATUS_RANK: Record<StockStatus, number> = {
+/** Severidad relativa de cada `StockStatus`, usada para ordenar y comparar estados. */
+export const STOCK_STATUS_RANK: Record<StockStatus, number> = {
   NORMAL: 0,
   BAJO: 1,
   "CRÍTICO": 2,
@@ -53,5 +54,26 @@ export function getWorstStockStatus(
  */
 export function formatPrice(price: number): string {
   return price.toLocaleString("es-MX", { minimumFractionDigits: 2 });
+}
+
+/** Variantes activas de un producto. */
+export function getActiveVariants(product: Product) {
+  return product.variants.filter((v) => v.active);
+}
+
+/** Stock total sumado entre las variantes activas de un producto. */
+export function getProductTotalStock(product: Product): number {
+  return getActiveVariants(product).reduce((acc, v) => acc + v.stock, 0);
+}
+
+/** Peor estado de stock entre las variantes activas de un producto. */
+export function getProductStatus(product: Product): StockStatus {
+  return getWorstStockStatus(getActiveVariants(product));
+}
+
+/** Precio mínimo entre las variantes de un producto, o 0 si no tiene variantes. */
+export function getProductMinPrice(product: Product): number {
+  if (product.variants.length === 0) return 0;
+  return Math.min(...product.variants.map((v) => v.price));
 }
 

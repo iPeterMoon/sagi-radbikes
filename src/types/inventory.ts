@@ -94,12 +94,21 @@ export interface TopbarProps {
   onToggleSidebar: () => void;
 }
 
+/** Campo por el cual se puede ordenar la tabla de productos. */
+export type ProductSortKey = "nombre" | "precio" | "stock" | "estado";
+
+/** Dirección de ordenamiento de la tabla de productos. */
+export type SortDirection = "asc" | "desc";
+
 /** Props de la tabla de productos. */
 export interface ProductTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
   onToggle: (id: number) => void;
+  sortKey: ProductSortKey;
+  sortDirection: SortDirection;
+  onSort: (key: ProductSortKey) => void;
 }
 
 /** Props del modal de creación/edición de producto. */
