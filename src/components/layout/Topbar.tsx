@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { TopbarProps } from "@/types/inventory";
 import { authApi } from "@/lib/api/auth";
+import { MODULOS } from "@/lib/modulos";
 import Image from "next/image";
 import CambiarUsuarioModal from "./CambiarUsuarioModal";
 
@@ -35,6 +37,8 @@ function HamburgerIcon({ open }: { open: boolean }) {
  * el título de sección y la información del usuario activo.
  */
 export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
+  const pathname = usePathname();
+  const seccionActual = MODULOS.find((modulo) => pathname.startsWith(modulo.ruta))?.label ?? "";
   const [usuario, setUsuario] = useState<{
     idUsuario?: string;
     username: string;
@@ -97,7 +101,7 @@ export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
             alt="Logo RAD Bikes"
             width={32}
             height={32}
-
+          
           />
 
         </div>
@@ -107,7 +111,7 @@ export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
       {/* Section title */}
       <div className="flex-1 text-center">
         <span className="text-blue-200 text-[15px] font-medium hidden sm:inline-block">
-          Inventario
+          {seccionActual}
         </span>
       </div>
 
