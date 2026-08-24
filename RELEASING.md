@@ -14,6 +14,7 @@ En **Settings → Secrets and variables → Actions** del repo, cargar (si todav
 - `PROD_SUPABASE_SERVICE_ROLE_KEY`
 - `PROD_SUPABASE_BUCKET_IMAGES`
 - `PROD_PRINTER_INTERFACE`
+- `PROD_PRINTER_NAME`
 
 Esto se hace una sola vez (o cuando cambie alguna credencial de producción) — no hace falta repetirlo en cada release.
 

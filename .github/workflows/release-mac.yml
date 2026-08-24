@@ -38,6 +38,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY=${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_BUCKET_IMAGES=${{ secrets.PROD_SUPABASE_BUCKET_IMAGES }}
           PRINTER_INTERFACE=${{ secrets.PROD_PRINTER_INTERFACE }}
+          PRINTER_NAME=${{ secrets.PROD_PRINTER_NAME }}
           EOF
 
       - name: Compilar app de Mac (.dmg)
@@ -53,6 +54,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PROD_SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_BUCKET_IMAGES: ${{ secrets.PROD_SUPABASE_BUCKET_IMAGES }}
           PRINTER_INTERFACE: ${{ secrets.PROD_PRINTER_INTERFACE }}
+          PRINTER_NAME: ${{ secrets.PROD_PRINTER_NAME }}
         # --publish never: electron-builder publica automáticamente a GitHub
         # Releases cuando detecta que corrió a partir de un tag, y para eso
         # pide su propio GH_TOKEN. Ya tenemos un paso aparte (softprops/action-gh-release)
