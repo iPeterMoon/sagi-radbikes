@@ -4,4 +4,6 @@ export interface NuevoRolDTO {
     nombre: string;
     /** Descripción del rol y sus permisos asociados. */
     descripcion: string;
+    /** Ids de los módulos de la app a los que da acceso este rol. Vacío si se omite. */
+    modulos?: string[];
 }

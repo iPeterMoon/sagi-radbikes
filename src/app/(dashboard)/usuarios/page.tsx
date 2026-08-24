@@ -7,6 +7,7 @@ import { Usuario, ModalUsuarioType, FiltroEstado } from "@/types/usuarios";
 import { UsuarioDTO, ActualizarUsuarioDTO, RolDTO } from "@/types/dtos";
 import { IconSearch, IconPlus } from "@/components/ui/Icons";
 import UsuarioFormModal from "./components/UsuarioFormModal";
+import TablaAccesosRol from "./components/TablaAccesosRol";
 import { NuevoUsuarioDTO } from "@/types/dtos";
 import Toggle from "@/components/ui/Toggle";
 
@@ -184,6 +185,13 @@ export default function UsuariosPage() {
           <IconPlus /> Nuevo usuario
         </button>
       </div>
+
+      {!isLoading && roles.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-gray-900 mb-3">Accesos por rol</h2>
+          <TablaAccesosRol roles={roles} onRolesChange={setRoles} />
+        </section>
+      )}
 
       <div className="flex gap-2.5 mb-4 flex-wrap items-center">
         <div className="relative flex-[1_1_280px] min-w-50">

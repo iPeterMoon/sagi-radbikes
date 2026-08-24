@@ -3,6 +3,7 @@ import { PrismaFactory } from "@/lib/PrismaFactory";
 import { UsuarioDAO } from "./daos/implementaciones/UsuarioDAO";
 import { UsuarioRolDAO } from "./daos/implementaciones/UsuarioRolDAO";
 import { RolDAO } from "./daos/implementaciones/RolDAO";
+import { RolModuloDAO } from "./daos/implementaciones/RolModuloDAO";
 import { IAuthAccesoDatos } from "./IAuthAccesoDatos";
 
 /**
@@ -14,6 +15,7 @@ export class AuthAccesoDatos implements IAuthAccesoDatos {
   public readonly usuarioDAO: UsuarioDAO;
   public readonly usuarioRolDAO: UsuarioRolDAO;
   public readonly rolDAO: RolDAO;
+  public readonly rolModuloDAO: RolModuloDAO;
 
   /**
    * Constructor de la clase AuthAccesoDatos. Inicializa el cliente de Prisma y todas las instancias de los DAOs
@@ -24,5 +26,6 @@ export class AuthAccesoDatos implements IAuthAccesoDatos {
     this.usuarioDAO = new UsuarioDAO(this.prisma);
     this.usuarioRolDAO = new UsuarioRolDAO(this.prisma);
     this.rolDAO = new RolDAO(this.prisma);
+    this.rolModuloDAO = new RolModuloDAO(this.prisma);
   }
 }

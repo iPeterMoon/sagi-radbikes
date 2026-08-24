@@ -1,6 +1,6 @@
 import { PrismaClient, roles } from "@prisma/client";
 import { GenericDAO } from "./GenericDAO";
-import { IRolDAO } from "../interfaces/IRolDAO";
+import { IRolDAO, RolConModulos } from "../interfaces/IRolDAO";
 
 /**
  * DAO específico para la entidad "Rol". Extiende la implementación 
@@ -26,5 +26,24 @@ export class RolDAO extends GenericDAO<roles> implements IRolDAO {
       where: { name: { equals: nombre, mode: "insensitive" } },
     });
   }
-  
+
+  /**
+   * Obtiene todos los roles con sus accesos a módulos incluidos.
+   * @returns Una promesa que resuelve en un array de roles con sus módulos.
+   */
+  async getAllConModulos(): Promise<RolConModulos[]> {
+    return await this.db.findMany({ include: { role_module_access: true } });
+  }
+
+  /**
+   * Obtiene un rol por su ID con sus accesos a módulos incluidos.
+   * @param id - El ID del rol.
+   * @returns Una promesa que resuelve en el rol encontrado (con módulos) o null si no existe.
+   */
+  async getByIdConModulos(id: bigint): Promise<RolConModulos | null> {
+    return await this.db.findUnique({
+      where: { id },
+      include: { role_module_access: true },
+    });
+  }
 }

@@ -6,4 +6,6 @@ export interface RolDTO {
   nombre: string;
   /** Descripción del rol y sus permisos asociados. */
   descripcion: string | null;
+  /** Ids de los módulos de la app a los que da acceso este rol (ej. "catalogo", "reportes"). */
+  modulos: string[];
 }

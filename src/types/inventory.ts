@@ -77,6 +77,8 @@ export interface BadgeProps {
 export interface ToggleProps {
   checked: boolean;
   onChange: () => void;
+  /** Si es `true`, el toggle no responde a clicks y se ve atenuado. */
+  disabled?: boolean;
 }
 
 /** Props del componente `Sidebar`. */

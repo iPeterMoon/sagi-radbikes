@@ -1,5 +1,8 @@
-import { roles } from "@prisma/client";
+import { roles, role_module_access } from "@prisma/client";
 import { RolDTO } from "../DTOsSalida/RolDTO";
+
+/** Entidad `roles` con sus accesos a módulos incluidos (opcional). */
+type RolEntity = roles & { role_module_access?: role_module_access[] };
 
 /**
  * Mapper de rol de usuario.
@@ -7,15 +10,17 @@ import { RolDTO } from "../DTOsSalida/RolDTO";
  */
 export class RolMapper {
   /**
-   * Convierte una entidad de rol a DTO.
+   * Convierte una entidad de rol a DTO. Si la entidad no trae
+   * `role_module_access` incluido, `modulos` queda vacío.
    * @param entity - Entidad `roles` de Prisma
    * @returns RolDTO
    */
-  static toDTO(entity: roles): RolDTO {
+  static toDTO(entity: RolEntity): RolDTO {
     return {
       idRol: String(entity.id),
       nombre: entity.name,
       descripcion: entity.description,
+      modulos: (entity.role_module_access ?? []).map((acceso) => acceso.module),
     };
   }
 
@@ -38,7 +43,7 @@ export class RolMapper {
    * @param entities - Lista de entidades `roles`
    * @returns Array de RolDTO
    */
-  static toDTOArray(entities: roles[]): RolDTO[] {
+  static toDTOArray(entities: RolEntity[]): RolDTO[] {
     return entities.map((entity) => this.toDTO(entity));
   }
 }

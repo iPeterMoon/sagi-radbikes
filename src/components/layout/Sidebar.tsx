@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SidebarProps } from "@/types/inventory";
 import { authApi } from "@/lib/api/auth";
+import { MODULOS, ModuloId } from "@/lib/modulos";
 import {
   IconDashboard,
   IconCatalog,
@@ -11,7 +13,7 @@ import {
   IconReports,
   IconLogout,
 } from "@/components/ui/Icons";
-import { User } from "@boxicons/react";
+import { User, Cog } from "@boxicons/react";
 
 interface NavItem {
   id: string;
@@ -20,27 +22,54 @@ interface NavItem {
   Icon: React.FC;
 }
 
+/** Ícono de cada módulo, por id. La lista/orden/labels vienen de `MODULOS`. */
+const ICONOS_POR_MODULO: Record<ModuloId, React.FC> = {
+  dashboard: IconDashboard,
+  catalogo: IconCatalog,
+  pos: IconPOS,
+  reportes: IconReports,
+  usuarios: User,
+  configuracion: Cog,
+};
+
 /** Elementos de navegación principal del sistema. */
-const NAV_ITEMS: NavItem[] = [
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    href: "/dashboard",
-    Icon: IconDashboard,
-  },
-  { id: "catalogo", label: "Catálogo", href: "/catalogo", Icon: IconCatalog },
-  { id: "pos", label: "Punto de Venta", href: "/pos", Icon: IconPOS },
-  { id: "reportes", label: "Reportes", href: "/reportes", Icon: IconReports },
-  { id: "usuarios", label: "Usuarios", href: "/usuarios", Icon: User},
-];
+const NAV_ITEMS: NavItem[] = MODULOS.map((modulo) => ({
+  id: modulo.id,
+  label: modulo.label,
+  href: modulo.ruta,
+  Icon: ICONOS_POR_MODULO[modulo.id],
+}));
 
 /**
  * Barra lateral de navegación.
  * Muestra los enlaces principales y el botón de cerrar sesión.
- * Se oculta/expande según la prop `open`.
+ * Se oculta/expande según la prop `open`. Los enlaces se filtran según los
+ * módulos permitidos del usuario logueado (`usuario.modulosPermitidos` en
+ * localStorage) — es solo UX, la protección real está en `src/proxy.ts`.
  */
 export default function Sidebar({ active, open, onLogout }: SidebarProps) {
   const router = useRouter();
+  const [modulosPermitidos, setModulosPermitidos] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    const leerModulosPermitidos = () => {
+      try {
+        const usuarioStr = localStorage.getItem("usuario");
+        const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+        setModulosPermitidos(usuario?.modulosPermitidos ?? null);
+      } catch {
+        setModulosPermitidos(null);
+      }
+    };
+
+    leerModulosPermitidos();
+    window.addEventListener("usuarioUpdated", leerModulosPermitidos);
+    return () => window.removeEventListener("usuarioUpdated", leerModulosPermitidos);
+  }, []);
+
+  const navItemsVisibles = modulosPermitidos
+    ? NAV_ITEMS.filter((item) => modulosPermitidos.includes(item.id))
+    : NAV_ITEMS;
 
   /**
    * Maneja el cierre de sesión. Si el Layout padre provee la función onLogout,
@@ -69,7 +98,7 @@ export default function Sidebar({ active, open, onLogout }: SidebarProps) {
     >
       <div className="w-60 flex flex-col flex-1">
         <nav className="flex-1 p-4 px-3">
-          {NAV_ITEMS.map(({ id, label, href, Icon }) => {
+          {navItemsVisibles.map(({ id, label, href, Icon }) => {
             const isActive = active === id;
             return (
               <Link

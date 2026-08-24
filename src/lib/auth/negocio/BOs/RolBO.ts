@@ -26,7 +26,15 @@ export class RolBO implements IRolBO {
                 description: nuevoRol.descripcion,
             });
 
-            return RolMapper.toDTO(rol);;
+            for (const modulo of nuevoRol.modulos ?? []) {
+                await this.accesoDatos.rolModuloDAO.create({
+                    role_id: rol.id,
+                    module: modulo,
+                });
+            }
+
+            const rolConModulos = await this.accesoDatos.rolDAO.getByIdConModulos(rol.id);
+            return RolMapper.toDTO(rolConModulos!);
         } catch (error) {
             throw new Error(`Error al crear un nuevo rol: ${error}`);
         }
@@ -38,7 +46,7 @@ export class RolBO implements IRolBO {
      * @returns Una promesa que resuelve a un arreglo con los DTOs de todos los roles.
      */
     async obtenerTodos(): Promise<RolDTO[]> {
-        const roles = await this.accesoDatos.rolDAO.getAll();
+        const roles = await this.accesoDatos.rolDAO.getAllConModulos();
         return roles.map((rol) => (RolMapper.toDTO(rol)));
     }
 
@@ -49,7 +57,7 @@ export class RolBO implements IRolBO {
      * @returns Una promesa que resuelve al DTO del rol encontrado o nulo si no existe.
      */
     async obtenerPorId(id: string): Promise<RolDTO | null> {
-        const rol = await this.accesoDatos.rolDAO.getById(BigInt(id));
+        const rol = await this.accesoDatos.rolDAO.getByIdConModulos(BigInt(id));
         return rol ? RolMapper.toDTO(rol) : null;
     }
 
@@ -84,12 +92,32 @@ export class RolBO implements IRolBO {
                 }
             }
 
-            const rolActualizado = await this.accesoDatos.rolDAO.update(BigInt(id), {
+            const accesosActuales = await this.accesoDatos.rolModuloDAO.getByRoleId(BigInt(id));
+            const modulosActuales = accesosActuales.map((acceso) => acceso.module);
+            const modulosNuevos = rol.modulos ?? [];
+
+            const modulosAgregar = modulosNuevos.filter((m) => !modulosActuales.includes(m));
+            const modulosQuitar = modulosActuales.filter((m) => !modulosNuevos.includes(m));
+
+            for (const modulo of modulosAgregar) {
+                await this.accesoDatos.rolModuloDAO.create({
+                    role_id: BigInt(id),
+                    module: modulo,
+                });
+            }
+
+            for (const modulo of modulosQuitar) {
+                const accesoId = accesosActuales.find((acceso) => acceso.module === modulo)?.id;
+                await this.accesoDatos.rolModuloDAO.delete(accesoId!);
+            }
+
+            await this.accesoDatos.rolDAO.update(BigInt(id), {
                 name: rol.nombre,
                 description: rol.descripcion,
             });
 
-            return RolMapper.toDTO(rolActualizado);
+            const rolConModulos = await this.accesoDatos.rolDAO.getByIdConModulos(BigInt(id));
+            return RolMapper.toDTO(rolConModulos!);
 
         } catch (error) {
             throw new Error(`Error al actualizar al rol: ${error}`);

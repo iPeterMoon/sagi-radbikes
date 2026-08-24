@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { obtenerModuloDeRuta } from "@/lib/modulos";
 
 /** Ruta de la página de inicio de sesión. */
 const LOGIN_PATH = "/login";
@@ -10,13 +11,20 @@ const LOGIN_PATH = "/login";
  */
 const PUBLIC_FILE_REGEX = /\.[^/]+$/;
 
+/** Resultado de validar un token: si es válido, y a qué módulos da acceso el usuario. */
+interface ResultadoValidacion {
+  valido: boolean;
+  modulosPermitidos: string[];
+}
+
 /**
- * Verifica si un token JWT es válido consultando el endpoint interno de validación.
+ * Verifica si un token JWT es válido consultando el endpoint interno de validación,
+ * y de paso recupera los módulos a los que tiene acceso el usuario del token.
  * @param request - Request original (se usa para construir la URL base)
  * @param token - JWT a validar
- * @returns `true` si el servidor responde 200 OK
+ * @returns Si el token es válido y los módulos permitidos (vacío si no es válido)
  */
-async function isTokenValid(request: NextRequest, token: string): Promise<boolean> {
+async function validarToken(request: NextRequest, token: string): Promise<ResultadoValidacion> {
   try {
     const validateUrl = new URL("/api/auth/validate", request.url);
     const response = await fetch(validateUrl, {
@@ -24,9 +32,13 @@ async function isTokenValid(request: NextRequest, token: string): Promise<boolea
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
-    return response.ok;
+    if (!response.ok) {
+      return { valido: false, modulosPermitidos: [] };
+    }
+    const usuario = await response.json();
+    return { valido: true, modulosPermitidos: usuario.modulosPermitidos ?? [] };
   } catch {
-    return false;
+    return { valido: false, modulosPermitidos: [] };
   }
 }
 
@@ -43,7 +55,10 @@ async function isTokenValid(request: NextRequest, token: string): Promise<boolea
  * 4. Resto de rutas:
  *    - Sin token → redirige a `/login` (o 401 si es API).
  *    - Token inválido → redirige a `/login` limpiando cookie (o 401 si es API).
- *    - Token válido → pasa.
+ *    - Token válido pero el módulo de la ruta no está entre los permitidos del
+ *      usuario → redirige a `/pos` (o 403 si es API). "pos" siempre está
+ *      permitido, así que este redirect nunca vuelve a rebotar.
+ *    - Token válido y módulo permitido → pasa.
  */
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -64,8 +79,8 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const valid = await isTokenValid(request, token);
-    if (valid) {
+    const { valido } = await validarToken(request, token);
+    if (valido) {
       return NextResponse.redirect(new URL("/catalogo", request.url));
     }
 
@@ -82,8 +97,8 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(LOGIN_PATH, request.url));
   }
 
-  const valid = await isTokenValid(request, token);
-  if (!valid) {
+  const { valido, modulosPermitidos } = await validarToken(request, token);
+  if (!valido) {
     if (pathname.startsWith("/api/")) {
       const unauthorizedResponse = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       unauthorizedResponse.cookies.delete("token");
@@ -93,6 +108,14 @@ export default async function proxy(request: NextRequest) {
     const redirectResponse = NextResponse.redirect(new URL(LOGIN_PATH, request.url));
     redirectResponse.cookies.delete("token");
     return redirectResponse;
+  }
+
+  const modulo = obtenerModuloDeRuta(pathname);
+  if (modulo && !modulosPermitidos.includes(modulo)) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "No autorizado para este módulo" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/pos", request.url));
   }
 
   return NextResponse.next();

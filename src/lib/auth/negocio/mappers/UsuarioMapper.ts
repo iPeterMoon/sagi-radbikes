@@ -1,6 +1,12 @@
-import { users, roles } from "@prisma/client";
+import { users, roles, role_module_access } from "@prisma/client";
 import { UsuarioDTO } from "../DTOsSalida/UsuarioDTO";
 import { RolMapper } from "./RolMapper";
+
+/** Rol con sus accesos a módulos incluidos (opcional). */
+type RolConModulos = roles & { role_module_access?: role_module_access[] };
+
+/** Módulo al que tiene acceso implícito cualquier usuario logueado, sin importar sus roles. */
+const MODULO_PISO_IMPLICITO = "pos";
 
 /**
  * Mapper de usuario.
@@ -13,12 +19,20 @@ export class UsuarioMapper {
    * @returns UsuarioDTO sin datos sensibles
    */
   static toDTO(
-    entity: users & { user_role?: Array<{ roles: roles | null}> }
+    entity: users & { user_role?: Array<{ roles: RolConModulos | null }> }
   ): UsuarioDTO {
 
     const rolesFiltrados = entity.user_role
       ?.map((ur) => ur.roles)
       .filter((rol) => rol !== null) || []
+
+    const modulosPermitidos = new Set<string>([MODULO_PISO_IMPLICITO]);
+    for (const rol of rolesFiltrados) {
+      for (const acceso of rol.role_module_access ?? []) {
+        modulosPermitidos.add(acceso.module);
+      }
+    }
+
     return {
       idUsuario: String(entity.id),
       username: entity.username || "",
@@ -28,6 +42,7 @@ export class UsuarioMapper {
       telefono: entity.telefono || "",
       is_active: entity.is_active,
       roles: RolMapper.toDTOArray(rolesFiltrados as any),
+      modulosPermitidos: Array.from(modulosPermitidos),
     };
   }
 

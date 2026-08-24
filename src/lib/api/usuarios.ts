@@ -54,4 +54,12 @@ export const usuariosApi = {
       body: JSON.stringify(rol),
     });
   },
+
+  async actualizarRol(rol: RolDTO): Promise<RolDTO> {
+    return fetchApi<RolDTO>(`${API_BASE_ROLES}/${rol.idRol}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(rol),
+    });
+  },
 };

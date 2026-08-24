@@ -18,4 +18,9 @@ export interface UsuarioDTO {
   is_active: boolean;
   /** Lista de roles asignados al usuario. */
   roles: RolDTO[];
+  /**
+   * Ids de los módulos a los que puede acceder el usuario: la unión de los
+   * módulos de todos sus roles, más "pos" siempre incluido (piso implícito).
+   */
+  modulosPermitidos: string[];
 }

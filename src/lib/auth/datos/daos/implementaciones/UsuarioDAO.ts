@@ -55,7 +55,7 @@ export class UsuarioDAO extends GenericDAO<users> implements IUsuarioDAO {
       include: {
         user_role: {
           include: {
-            roles: true,
+            roles: { include: { role_module_access: true } },
           },
         },
       },
