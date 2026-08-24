@@ -47,3 +47,11 @@ export type {
   MargenPeriodoDTO,
   TopProductoDTO,
 } from "@/lib/dashboard/negocio/DTOsSalida/DashboardResumenDTO";
+export type { FiltroReporteVentasDTO } from "@/lib/reportes/negocio/DTOsEntrada/FiltroReporteVentasDTO";
+export type {
+  ReporteVentasDTO,
+  ResumenReporteVentasDTO,
+  TopProductoReporteDTO,
+  VentaPorDiaDTO,
+  VentaDetalleDTO,
+} from "@/lib/reportes/negocio/DTOsSalida/ReporteVentasDTO";
