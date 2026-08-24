@@ -3,6 +3,7 @@ import type {
   ProductoCarritoDTO,
   ProductoVentaDTO,
   VentaResumenDTO,
+  VendedorActivoDTO,
 } from "@/types/dtos";
 
 const API_BASE = "/api/pos";
@@ -77,6 +78,10 @@ export const posApi = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ folio }),
     });
+  },
+
+  async obtenerVendedoresActivos(): Promise<VendedorActivoDTO[]> {
+    return fetchApi<VendedorActivoDTO[]>(`${API_BASE}/vendedores`);
   },
 
 };

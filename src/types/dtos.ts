@@ -38,6 +38,7 @@ export type {
   PagoDTO,
   ProductoVentaDTO,
   VentaResumenDTO,
+  VendedorActivoDTO,
 } from "@/lib/pos/negocio/DTOsSalida"
 export type { ConfiguracionDTO } from "@/lib/settings/negocio/DTOsSalida/ConfiguracionDTO";
 export type { ActualizarConfiguracionDTO } from "@/lib/settings/negocio/DTOsEntrada/ActualizarConfiguracionDTO";

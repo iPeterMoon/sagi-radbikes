@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { TopbarProps } from "@/types/inventory";
 import { authApi } from "@/lib/api/auth";
 import Image from "next/image";
+import CambiarUsuarioModal from "./CambiarUsuarioModal";
 
 /**
  * Ícono de menú hamburgesa animado.
@@ -34,7 +35,12 @@ function HamburgerIcon({ open }: { open: boolean }) {
  * el título de sección y la información del usuario activo.
  */
 export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
-  const [usuario, setUsuario] = useState<{ username: string; roles: { nombre: string }[] } | null>(null);
+  const [usuario, setUsuario] = useState<{
+    idUsuario?: string;
+    username: string;
+    roles: { nombre: string }[];
+  } | null>(null);
+  const [cambiarUsuarioAbierto, setCambiarUsuarioAbierto] = useState(false);
 
   useEffect(() => {
     const loadUser = () => {
@@ -91,7 +97,7 @@ export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
             alt="Logo RAD Bikes"
             width={32}
             height={32}
-          
+
           />
 
         </div>
@@ -106,7 +112,12 @@ export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
       </div>
 
       {/* User info */}
-      <div className="w-40 flex items-center justify-end gap-2.5 shrink-0">
+      <button
+        type="button"
+        onClick={() => setCambiarUsuarioAbierto(true)}
+        title="Cambiar usuario"
+        className="w-40 flex items-center justify-end gap-2.5 shrink-0 bg-transparent border-none cursor-pointer rounded-lg px-1.5 py-1 hover:bg-white/10 transition-colors"
+      >
         <div className="text-right hidden sm:block">
           <div className="text-white text-[13px] font-semibold">{displayName}</div>
           <div className="text-blue-300 text-[11px]">{roleName}</div>
@@ -114,7 +125,14 @@ export default function Topbar({ sidebarOpen, onToggleSidebar }: TopbarProps) {
         <div className="w-8.5 h-8.5 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
           {initials}
         </div>
-      </div>
+      </button>
+
+      {cambiarUsuarioAbierto && (
+        <CambiarUsuarioModal
+          usuarioActualId={usuario?.idUsuario}
+          onClose={() => setCambiarUsuarioAbierto(false)}
+        />
+      )}
     </header>
   );
 }

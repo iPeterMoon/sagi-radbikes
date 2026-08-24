@@ -288,7 +288,13 @@ export default function POSPage() {
     try {
       const usuarioStr = localStorage.getItem("usuario");
       const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
-      const idUsuario = usuario?.idUsuario || "1";
+      if (!usuario?.idUsuario) {
+        setCheckoutError({
+          error: "No se encontró un usuario logueado. Volvé a iniciar sesión.",
+        });
+        return;
+      }
+      const idUsuario = usuario.idUsuario;
 
       const dto: CrearVentaDTO = {
         idUsuario,
