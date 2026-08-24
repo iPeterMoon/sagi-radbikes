@@ -10,6 +10,11 @@ on:
 jobs:
   build-mac:
     runs-on: macos-latest
+    # El GITHUB_TOKEN por defecto es de solo lectura salvo que se declare acá;
+    # sin esto, el paso de publicar el Release falla con "Resource not
+    # accessible by integration".
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
