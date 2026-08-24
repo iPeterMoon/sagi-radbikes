@@ -29,6 +29,11 @@ export interface ProductoDTO {
   precioReferencia: number;
 
   /**
+   * El costo de referencia/plantilla del producto, usado para pre-llenar el costo al crear una variante.
+   */
+  costoReferencia: number;
+
+  /**
    * La descripción detallada que especifica las características y bondades del producto.
    */
   descripcion: string;

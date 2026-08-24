@@ -69,6 +69,8 @@ model products {
   /// Precio de referencia/plantilla. Ya NO es el precio de venta autoritativo —
   /// solo se usa para pre-llenar el campo `price` al crear una variante nueva.
   price            Float?             @db.Real
+  /// Costo de referencia/plantilla, mismo rol que `price` arriba.
+  cost             Float?             @db.Real
   description      String?
   /// Stock mínimo de referencia/plantilla, mismo rol que `price` arriba.
   min_stock        Int?
@@ -91,6 +93,8 @@ model product_variants {
   SKU         String   @unique
   barcode_upc String?
   price       Float?   @db.Real
+  /// Costo de compra autoritativo de esta variante, usado para calcular márgenes.
+  cost        Float?   @db.Real
   stock       Int?
   min_stock   Int?
   is_active   Boolean  @default(true)
@@ -133,6 +137,9 @@ model sale_details {
   created_at       DateTime          @default(now()) @db.Timestamptz(6)
   quantity         Int?              @default(1)
   unitPrice        Float?            @db.Real
+  /// Costo unitario de la variante al momento de la venta (snapshot para que el
+  /// margen de ventas pasadas no cambie si el costo del producto cambia después).
+  unitCost         Float?            @db.Real
   sale_id          BigInt?
   variant_id       BigInt?
   product_variants product_variants? @relation(fields: [variant_id], references: [id], onDelete: Restrict)
@@ -190,4 +197,12 @@ model users {
   is_active  Boolean     @default(true)
   sales      sales[]
   user_role  user_role[]
+}
+
+/// Configuración general del sistema (fila única/singleton).
+model store_settings {
+  id               BigInt   @id @default(autoincrement())
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  /// Multiplicador sobre el costo para sugerir un precio de venta (ej. 1.5 = 50% de margen).
+  suggested_margin Float    @default(1.5)
 }

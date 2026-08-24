@@ -98,13 +98,20 @@ export class VentaBO implements IVentaBO {
       tax_percentage: dto.porcentajeImpuesto,
     });
 
-    // Creación de las partidas/detalles de la venta
-    const detalles = dto.productos.map((p) => ({
-      sale_id: venta.id,
-      variant_id: BigInt(p.idVariante),
-      quantity: p.cantidad,
-      unitPrice: p.precioUnitario,
-    }));
+    // Creación de las partidas/detalles de la venta. El costo unitario se toma del
+    // servidor (nunca del cliente) para snapshotearlo igual que ya se hace con el precio.
+    const detalles = await Promise.all(
+      dto.productos.map(async (p) => {
+        const variante = await this.accesoDatos.productoDAO.getById(BigInt(p.idVariante));
+        return {
+          sale_id: venta.id,
+          variant_id: BigInt(p.idVariante),
+          quantity: p.cantidad,
+          unitPrice: p.precioUnitario,
+          unitCost: variante?.cost ?? 0,
+        };
+      }),
+    );
     await this.accesoDatos.detalleVentaDAO.createMany(detalles);
 
     // Registro del pago

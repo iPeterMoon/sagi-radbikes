@@ -97,6 +97,7 @@ export class ProductoBO implements IProductoBO {
     const entity = {
       name: dto.nombre,
       price: dto.precio,
+      cost: dto.costo ?? null,
       min_stock: dto.minStock ?? 0,
       description: dto.descripcion,
       brand_id: BigInt(dto.idMarca),
@@ -111,6 +112,7 @@ export class ProductoBO implements IProductoBO {
       SKU: sku,
       barcode_upc: dto.codigoDeBarras || null,
       price: dto.precio,
+      cost: dto.costo ?? null,
       stock: dto.stock,
       min_stock: dto.minStock ?? 0,
       is_active: true,
@@ -142,6 +144,7 @@ export class ProductoBO implements IProductoBO {
     const entity = {
       name: dto.nombre,
       price: dto.precio,
+      cost: dto.costo ?? null,
       min_stock: dto.minStock ?? 0,
       description: dto.descripcion,
       brand_id: BigInt(dto.idMarca),

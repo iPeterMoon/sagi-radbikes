@@ -10,6 +10,7 @@ export interface IDetalleVentaDAO extends IGenericDAO<sale_details> {
       variant_id: bigint;
       quantity: number;
       unitPrice: number;
+      unitCost: number;
     }>
   ): Promise<void>;
 }

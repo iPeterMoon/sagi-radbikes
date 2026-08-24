@@ -31,6 +31,7 @@ function mapDtoToProduct(dto: any): Product {
     category: dto.categoria?.nombre || "",
     subcategory: dto.subcategoria?.nombre || "",
     referencePrice: dto.precioReferencia || 0,
+    referenceCost: dto.costoReferencia || 0,
     referenceMinStock: dto.minStockReferencia || 0,
     description: dto.descripcion,
     tags: (dto.etiquetas || []).map((etiqueta: any) => ({
@@ -46,6 +47,7 @@ function mapDtoToProduct(dto: any): Product {
         sku: v.sku,
         barcode: v.codigoDeBarras,
         price: v.precio,
+        cost: v.costo,
         stock: v.stock,
         minStock: v.minStock ?? null,
         active: v.activo ?? true,
@@ -170,6 +172,7 @@ export default function InventarioPage() {
           idProducto: data.id.toString(),
           nombre: data.name,
           precio: data.referencePrice,
+          costo: data.referenceCost,
           stock: 0,
           codigoDeBarras: "",
           minStock: data.referenceMinStock,
@@ -207,6 +210,7 @@ export default function InventarioPage() {
         const createdProduct = await inventarioApi.crearProducto({
           nombre: data.name,
           precio: data.referencePrice,
+          costo: data.referenceCost,
           stock: 0,
           codigoDeBarras: "",
           minStock: data.referenceMinStock,

@@ -27,6 +27,7 @@ export interface ProductVariant {
   sku: string;
   barcode: string;
   price: number;
+  cost: number;
   stock: number;
   /** `null` cuando las notificaciones de stock bajo están desactivadas para esta variante. */
   minStock: number | null;
@@ -45,6 +46,8 @@ export interface Product {
   subcategory: string;
   /** Precio de referencia/plantilla, usado para pre-llenar el precio al crear una variante. */
   referencePrice: number;
+  /** Costo de referencia/plantilla, usado para pre-llenar el costo al crear una variante. */
+  referenceCost: number;
   /** Stock mínimo de referencia/plantilla, usado para pre-llenar el stock mínimo al crear una variante. */
   referenceMinStock: number;
   description: string;

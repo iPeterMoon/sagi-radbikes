@@ -13,6 +13,7 @@ const ROUTE_TO_ACTIVE: Record<string, string> = {
   "/dashboard": "dashboard",
   "/reportes": "reportes",
   "/usuarios": "usuarios",
+  "/configuracion": "configuracion",
 };
 
 /** Mapeo de rutas a títulos de pestaña. */
@@ -22,6 +23,7 @@ const ROUTE_TO_TITLE: Record<string, string> = {
   "/dashboard": "Dashboard - RAD Bikes",
   "/reportes": "Reportes - RAD Bikes",
   "/usuarios": "Usuarios - RAD Bikes",
+  "/configuracion": "Configuración - RAD Bikes",
 };
 
 /** Rutas donde el main tiene overflow hidden (como POS). */

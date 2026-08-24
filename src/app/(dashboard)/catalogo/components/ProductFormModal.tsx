@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Product, ProductTag, ProductFormModalProps } from "@/types/inventory";
 import { VarianteDTO } from "@/types/dtos";
 import { inventarioApi } from "@/lib/api/inventario";
+import { configuracionApi } from "@/lib/api/configuracion";
 import AddAttributeModal, { AttributeType } from "./AddAttributeModal";
 import VariantFormModal, { VariantFormData } from "./VariantFormModal";
 import AjustarStockModal from "./AjustarStockModal";
@@ -53,9 +54,10 @@ function FieldWithIcon({
 
 type FormState = Omit<
   Product,
-  "id" | "referencePrice" | "referenceMinStock" | "variants"
+  "id" | "referencePrice" | "referenceCost" | "referenceMinStock" | "variants"
 > & {
   referencePrice: number | string;
+  referenceCost: number | string;
   referenceMinStock: number | string;
 };
 
@@ -78,6 +80,7 @@ export default function ProductFormModal({
           category: "",
           subcategory: "",
           referencePrice: "",
+          referenceCost: "",
           referenceMinStock: 5,
           description: "",
           tags: [],
@@ -106,6 +109,21 @@ export default function ProductFormModal({
   const [localSubcategoriesWithIds, setLocalSubcategoriesWithIds] = useState<
     Record<string, Array<{ id: string; nombre: string }>>
   >({});
+
+  const [margenConfigurado, setMargenConfigurado] = useState<number | null>(null);
+  useEffect(() => {
+    configuracionApi
+      .obtener()
+      .then((dto) => setMargenConfigurado(dto.margenGananciaSugerido))
+      .catch(() => setMargenConfigurado(null));
+  }, []);
+
+  const costoReferenciaNumerico =
+    form.referenceCost === "" ? 0 : Number(form.referenceCost);
+  const precioReferenciaSugerido =
+    costoReferenciaNumerico > 0 && margenConfigurado
+      ? costoReferenciaNumerico * margenConfigurado
+      : 0;
 
   useEffect(() => {
     const loadData = async () => {
@@ -291,6 +309,7 @@ export default function ProductFormModal({
       await inventarioApi.actualizarVariante({
         idVariante,
         precio: data.precio,
+        costo: data.costo,
         stock: data.stock,
         minStock: data.minStock,
         codigoDeBarras: data.codigoDeBarras,
@@ -300,6 +319,7 @@ export default function ProductFormModal({
     } else {
       const created = await inventarioApi.crearVariante(product.id.toString(), {
         precio: data.precio,
+        costo: data.costo,
         stock: data.stock,
         minStock: data.minStock,
         codigoDeBarras: data.codigoDeBarras,
@@ -546,6 +566,14 @@ export default function ProductFormModal({
     }
 
     if (
+      form.referenceCost !== "" &&
+      (Number.isNaN(Number(form.referenceCost)) ||
+        Number(form.referenceCost) < 0)
+    ) {
+      e.referenceCost = "El costo de referencia no puede ser negativo";
+    }
+
+    if (
       form.referenceMinStock !== "" &&
       (Number.isNaN(Number(form.referenceMinStock)) ||
         Number(form.referenceMinStock) < 0)
@@ -603,6 +631,8 @@ export default function ProductFormModal({
             subcategory: form.subcategory,
             referencePrice:
               form.referencePrice === "" ? 0 : Number(form.referencePrice),
+            referenceCost:
+              form.referenceCost === "" ? 0 : Number(form.referenceCost),
             referenceMinStock:
               form.referenceMinStock === ""
                 ? 0
@@ -816,6 +846,35 @@ export default function ProductFormModal({
 
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
+                <label className={twLabel}>Costo de referencia</label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[13px]">
+                    $
+                  </span>
+                  <input
+                    id="costo"
+                    type="number"
+                    min={0}
+                    value={form.referenceCost}
+                    onChange={(e) =>
+                      set(
+                        "referenceCost",
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                    className={`${twField} pl-6 ${errors.referenceCost ? "border-red-500" : ""}`}
+                  />
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Solo se usa para pre-llenar el costo al crear una variante.
+                </p>
+                {errors.referenceCost && (
+                  <p className="text-red-500 text-[11px] mt-1">
+                    {errors.referenceCost}
+                  </p>
+                )}
+              </div>
+              <div>
                 <label className={twLabel}>Precio de referencia</label>
                 <div className="relative">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[13px]">
@@ -832,6 +891,11 @@ export default function ProductFormModal({
                         e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
+                    placeholder={
+                      precioReferenciaSugerido > 0
+                        ? `Sugerido: $${precioReferenciaSugerido.toFixed(2)}`
+                        : "0.00"
+                    }
                     className={`${twField} pl-6 ${errors.referencePrice ? "border-red-500" : ""}`}
                   />
                 </div>
@@ -844,32 +908,33 @@ export default function ProductFormModal({
                   </p>
                 )}
               </div>
-              <div>
-                <label className={twLabel}>Stock mín. de referencia</label>
-                <FieldWithIcon icon={<IconAlertTri />}>
-                  <input
-                    id="stockMin"
-                    type="number"
-                    min={0}
-                    value={form.referenceMinStock}
-                    onChange={(e) =>
-                      set(
-                        "referenceMinStock",
-                        e.target.value === "" ? "" : Number(e.target.value),
-                      )
-                    }
-                    className={`${twField} pl-8 ${errors.referenceMinStock ? "border-red-500" : ""}`}
-                  />
-                </FieldWithIcon>
-                <p className="text-[11px] text-gray-400 mt-1">
-                  Solo se usa para pre-llenar el stock mínimo al crear una variante.
+            </div>
+
+            <div className="mb-3">
+              <label className={twLabel}>Stock mín. de referencia</label>
+              <FieldWithIcon icon={<IconAlertTri />}>
+                <input
+                  id="stockMin"
+                  type="number"
+                  min={0}
+                  value={form.referenceMinStock}
+                  onChange={(e) =>
+                    set(
+                      "referenceMinStock",
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
+                  className={`${twField} pl-8 ${errors.referenceMinStock ? "border-red-500" : ""}`}
+                />
+              </FieldWithIcon>
+              <p className="text-[11px] text-gray-400 mt-1">
+                Solo se usa para pre-llenar el stock mínimo al crear una variante.
+              </p>
+              {errors.referenceMinStock && (
+                <p className="text-red-500 text-[11px] mt-1">
+                  {errors.referenceMinStock}
                 </p>
-                {errors.referenceMinStock && (
-                  <p className="text-red-500 text-[11px] mt-1">
-                    {errors.referenceMinStock}
-                  </p>
-                )}
-              </div>
+              )}
             </div>
 
             <div className="mb-3">
@@ -1200,6 +1265,9 @@ export default function ProductFormModal({
           variant={variantModal.mode === "edit" ? variantModal.variant : null}
           referencePrice={
             form.referencePrice === "" ? 0 : Number(form.referencePrice)
+          }
+          referenceCost={
+            form.referenceCost === "" ? 0 : Number(form.referenceCost)
           }
           referenceMinStock={
             form.referenceMinStock === "" ? 0 : Number(form.referenceMinStock)

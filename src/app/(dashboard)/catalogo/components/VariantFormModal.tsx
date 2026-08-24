@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 import Image from "next/image";
 import { VarianteDTO } from "@/types/dtos";
 import { ProductTag } from "@/types/inventory";
+import { configuracionApi } from "@/lib/api/configuracion";
 import {
   IconX,
   IconBarcode,
@@ -14,6 +15,7 @@ import {
 /** Datos que produce el formulario al guardar una variante. */
 export interface VariantFormData {
   precio: number;
+  costo: number;
   stock: number;
   /** `null` cuando las notificaciones de stock bajo están desactivadas para esta variante. */
   minStock: number | null;
@@ -34,6 +36,8 @@ interface VariantFormModalProps {
   variant: VarianteDTO | null;
   /** Precio de referencia del producto padre, usado para pre-llenar el formulario al agregar. */
   referencePrice: number;
+  /** Costo de referencia del producto padre, usado para pre-llenar el costo al agregar. */
+  referenceCost: number;
   /** Stock mínimo de referencia del producto padre, usado para pre-llenar el formulario al agregar. */
   referenceMinStock: number;
   onClose: () => void;
@@ -73,6 +77,7 @@ function FieldWithIcon({
 export default function VariantFormModal({
   variant,
   referencePrice,
+  referenceCost,
   referenceMinStock,
   onClose,
   onSave,
@@ -108,9 +113,15 @@ export default function VariantFormModal({
   const [imagenPrincipal, setImagenPrincipal] =
     useState<string>(originalMainImage);
 
+  // Al crear, el precio arranca vacío para que se vea el placeholder con el precio
+  // sugerido (costo × margen configurado); al editar, se muestra el precio real.
   const [precio, setPrecio] = useState<number | string>(
-    variant?.precio ?? referencePrice,
+    variant ? variant.precio : "",
   );
+  const [costo, setCosto] = useState<number | string>(
+    variant?.costo ?? referenceCost,
+  );
+  const [margenConfigurado, setMargenConfigurado] = useState<number | null>(null);
   const [stock, setStock] = useState<number | string>(variant?.stock ?? 0);
   const [notificarStockBajo, setNotificarStockBajo] = useState(
     variant ? variant.minStock != null : true,
@@ -128,6 +139,19 @@ export default function VariantFormModal({
   const [atributoName, setAtributoName] = useState("");
   const [atributoValue, setAtributoValue] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    configuracionApi
+      .obtener()
+      .then((dto) => setMargenConfigurado(dto.margenGananciaSugerido))
+      .catch(() => setMargenConfigurado(null));
+  }, []);
+
+  const costoNumerico = costo === "" ? 0 : Number(costo);
+  const precioSugerido =
+    costoNumerico > 0 && margenConfigurado
+      ? costoNumerico * margenConfigurado
+      : referencePrice;
 
   const addAtributo = () => {
     if (!atributoName.trim() || !atributoValue.trim()) return;
@@ -198,6 +222,10 @@ export default function VariantFormModal({
       setError("El precio debe ser un número válido mayor o igual a 0");
       return;
     }
+    if (costo !== "" && (Number.isNaN(Number(costo)) || Number(costo) < 0)) {
+      setError("El costo debe ser un número válido mayor o igual a 0");
+      return;
+    }
     if (stock === "" || Number.isNaN(Number(stock)) || Number(stock) < 0) {
       setError("El stock debe ser un número válido mayor o igual a 0");
       return;
@@ -235,6 +263,7 @@ export default function VariantFormModal({
       await onSave(
         {
           precio: Number(precio),
+          costo: costo === "" ? 0 : Number(costo),
           stock: Number(stock),
           minStock: notificarStockBajo ? Number(minStock) : null,
           codigoDeBarras: codigoDeBarras.trim(),
@@ -309,6 +338,23 @@ export default function VariantFormModal({
 
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
+              <label className={twLabel}>Costo</label>
+              <div className="relative">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[13px]">
+                  $
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  value={costo}
+                  onChange={(e) =>
+                    setCosto(e.target.value === "" ? "" : Number(e.target.value))
+                  }
+                  className={`${twField} pl-6`}
+                />
+              </div>
+            </div>
+            <div>
               <label className={twLabel}>Precio</label>
               <div className="relative">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[13px]">
@@ -321,24 +367,30 @@ export default function VariantFormModal({
                   onChange={(e) =>
                     setPrecio(e.target.value === "" ? "" : Number(e.target.value))
                   }
+                  placeholder={
+                    precioSugerido > 0
+                      ? `Sugerido: $${precioSugerido.toFixed(2)}`
+                      : "0.00"
+                  }
                   className={`${twField} pl-6`}
                 />
               </div>
             </div>
-            <div>
-              <label className={twLabel}>Stock</label>
-              <FieldWithIcon icon={<IconBox />}>
-                <input
-                  type="number"
-                  min={0}
-                  value={stock}
-                  onChange={(e) =>
-                    setStock(e.target.value === "" ? "" : Number(e.target.value))
-                  }
-                  className={`${twField} pl-8`}
-                />
-              </FieldWithIcon>
-            </div>
+          </div>
+
+          <div className="mb-3">
+            <label className={twLabel}>Stock</label>
+            <FieldWithIcon icon={<IconBox />}>
+              <input
+                type="number"
+                min={0}
+                value={stock}
+                onChange={(e) =>
+                  setStock(e.target.value === "" ? "" : Number(e.target.value))
+                }
+                className={`${twField} pl-8`}
+              />
+            </FieldWithIcon>
           </div>
 
           <div className="mb-3">

@@ -33,6 +33,7 @@ export class DetalleVentaDAO extends GenericDAO<sale_details> implements IDetall
       variant_id: bigint;
       quantity: number;
       unitPrice: number;
+      unitCost: number;
     }>,
   ): Promise<void> {
     await this.prisma.sale_details.createMany({ data: detalles });

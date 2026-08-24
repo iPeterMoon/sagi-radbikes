@@ -66,10 +66,11 @@ ALTER TABLE "public"."sale_details" DROP COLUMN "product_id",
 ADD COLUMN "variant_id" BIGINT;
 
 -- AddForeignKey
-ALTER TABLE "public"."sale_details" ADD CONSTRAINT "sale_details_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+ALTER TABLE "public"."sale_details" ADD CONSTRAINT "sale_details_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- DropConstraint (products_SKU_key es un UNIQUE constraint, no un índice suelto)
-ALTER TABLE "public"."products" DROP CONSTRAINT "products_SKU_key";
+-- DropIndex (products_SKU_key fue creado en 0_init como CREATE UNIQUE INDEX, no como
+-- constraint con nombre -- DROP CONSTRAINT falla contra una base recién creada/shadow DB).
+DROP INDEX "public"."products_SKU_key";
 
 -- AlterTable
 ALTER TABLE "public"."products" DROP COLUMN "SKU",

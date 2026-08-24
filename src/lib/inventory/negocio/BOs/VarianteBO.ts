@@ -49,6 +49,7 @@ export class VarianteBO implements IVarianteBO {
       SKU: sku,
       barcode_upc: dto.codigoDeBarras || null,
       price: dto.precio,
+      cost: dto.costo ?? null,
       stock: dto.stock,
       min_stock: dto.minStock ?? null,
       is_active: true,
@@ -79,6 +80,7 @@ export class VarianteBO implements IVarianteBO {
     const entity = {
       barcode_upc: dto.codigoDeBarras || null,
       price: dto.precio,
+      cost: dto.costo ?? null,
       stock: dto.stock,
       min_stock: dto.minStock ?? null,
       ...(dto.activo !== undefined ? { is_active: dto.activo } : {}),

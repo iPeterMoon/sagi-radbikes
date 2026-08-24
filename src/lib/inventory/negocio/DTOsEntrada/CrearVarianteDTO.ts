@@ -15,6 +15,11 @@ export interface CrearVarianteDTO {
   precio: number;
 
   /**
+   * El costo de compra de la nueva variante, usado para calcular márgenes.
+   */
+  costo?: number;
+
+  /**
    * La cantidad de unidades iniciales disponibles en el inventario para esta variante.
    */
   stock: number;

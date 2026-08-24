@@ -45,6 +45,7 @@ export class ProductoMapper {
       idProducto: entity.id.toString(),
       nombre: entity.name || "",
       precioReferencia: entity.price || 0,
+      costoReferencia: entity.cost || 0,
       descripcion: entity.description || "",
       imagenes: (entity.product_images || []).map(ImagenProductoMapper.toDTO),
       categoria: entity.subcategory?.categories

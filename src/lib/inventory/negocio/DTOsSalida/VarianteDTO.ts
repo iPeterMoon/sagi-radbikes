@@ -33,6 +33,11 @@ export interface VarianteDTO {
   precio: number;
 
   /**
+   * El costo de compra vigente para esta variante, usado para calcular márgenes.
+   */
+  costo: number;
+
+  /**
    * La cantidad de unidades disponibles actualmente en el inventario para esta variante.
    */
   stock: number;

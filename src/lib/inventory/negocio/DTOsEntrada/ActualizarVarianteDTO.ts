@@ -14,6 +14,11 @@ export interface ActualizarVarianteDTO {
   precio: number;
 
   /**
+   * El nuevo costo de compra de la variante.
+   */
+  costo?: number;
+
+  /**
    * La nueva cantidad de unidades disponibles en el inventario.
    */
   stock: number;

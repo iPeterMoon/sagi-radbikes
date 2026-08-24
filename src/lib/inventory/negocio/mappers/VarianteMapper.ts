@@ -26,6 +26,7 @@ export class VarianteMapper {
       sku: entity.SKU,
       codigoDeBarras: entity.barcode_upc || "",
       precio: entity.price || 0,
+      costo: entity.cost || 0,
       stock: entity.stock || 0,
       minStock: entity.min_stock ?? null,
       activo: entity.is_active ?? true,

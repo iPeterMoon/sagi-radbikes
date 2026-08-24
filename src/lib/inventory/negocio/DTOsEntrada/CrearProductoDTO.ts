@@ -14,6 +14,12 @@ export interface CrearProductoDTO {
   precio: number;
 
   /**
+   * El costo de referencia/plantilla del producto, usado para pre-llenar el
+   * costo al crear una variante y sugerir un precio de venta.
+   */
+  costo?: number;
+
+  /**
    * La cantidad de unidades iniciales disponibles en el inventario al momento de su creación.
    */
   stock: number;

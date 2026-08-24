@@ -19,6 +19,11 @@ export interface ActualizarProductoDTO {
   precio: number;
 
   /**
+   * El nuevo costo de referencia/plantilla del producto.
+   */
+  costo?: number;
+
+  /**
    * La nueva cantidad de unidades disponibles en el inventario.
    */
   stock: number;
