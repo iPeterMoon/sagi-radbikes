@@ -11,12 +11,12 @@ afterPack: scripts/afterPack.js
 mac:
   target: dmg
   category: public.app-category.business
-  icon: build/icon.icns
+  icon: build-assets/icon.icns
   identity: null
 
 win:
   target: nsis
-  icon: build/icon.ico
+  icon: build-assets/icon.ico
 
 linux:
   target: AppImage
