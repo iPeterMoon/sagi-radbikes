@@ -108,6 +108,15 @@ function startNextServer() {
         PORT: String(PORT),
         NODE_ENV: "production",
         HOSTNAME: "127.0.0.1",
+        // node-gyp-build (usado por bcrypt y otros addons nativos) prioriza
+        // node_modules/<paquete>/build/Release/*.node por sobre prebuilds/.
+        // El postinstall (electron-builder install-app-deps) compila bcrypt
+        // desde código fuente para la arch del runner de CI (arm64), y ese
+        // binario viaja empaquetado tal cual, tapando el prebuilds/darwin-x64
+        // correcto que el paquete ya trae de fábrica. Esto obliga a usar
+        // siempre los prebuilds empaquetados, que sí coinciden con la arch
+        // real del proceso que los ejecuta.
+        PREBUILDS_ONLY: "1",
       },
       stdio: "inherit",
       cwd: path.dirname(serverPath),
