@@ -9,7 +9,10 @@ files:
 afterPack: scripts/afterPack.js
 
 mac:
-  target: dmg
+  target:
+    - target: dmg
+      arch:
+        - x64
   category: public.app-category.business
   icon: build-assets/icon.icns
   identity: null
