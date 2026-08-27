@@ -25,24 +25,35 @@ exports.default = async function (context) {
     fs.cpSync(path.join(process.cwd(), '.next', 'static'), path.join(appDest, '.next', 'static'), {recursive: true});
     fs.cpSync(path.join(process.cwd(), 'runtime.env'), path.join(resourcesPath, 'runtime.env'));
 
-    // Turbopack marca ciertos paquetes (bcrypt, pg, node-thermal-printer...)
-    // como "external modules" y en vez de copiarlos deja un symlink en
-    // .next/node_modules/<paquete>-<hash> apuntando con RUTA ABSOLUTA al
-    // checkout del runner de CI (/Users/runner/work/...). Esa ruta no existe
-    // en la máquina del usuario final, así que cualquier require() de esos
-    // paquetes tira "Cannot find module" apenas se usan (login, impresión,
-    // etc). Los recreamos como symlinks relativos hacia el propio
-    // node_modules/ que ya copiamos arriba.
+    // Turbopack marca ciertos paquetes (bcrypt, pg, node-thermal-printer,
+    // @prisma/client...) como "external modules" y en vez de copiarlos deja
+    // un symlink en .next/node_modules/<paquete>-<hash> (o anidado un nivel
+    // más para paquetes con scope, ej. .next/node_modules/@prisma/client-
+    // <hash>) apuntando con RUTA ABSOLUTA al checkout del runner de CI
+    // (/Users/runner/work/...). Esa ruta no existe en la máquina del usuario
+    // final, así que cualquier require() de esos paquetes tira "Cannot find
+    // module" apenas se usan (login, impresión, DB, etc). Los recreamos como
+    // symlinks relativos hacia el propio node_modules/ que ya copiamos
+    // arriba, recorriendo recursivo para llegar a los que tienen scope.
+    function fixTurbopackExternalSymlinks(dir) {
+        for (const entry of fs.readdirSync(dir)) {
+            const linkPath = path.join(dir, entry);
+            const stat = fs.lstatSync(linkPath);
+            if (stat.isSymbolicLink()) {
+                const target = fs.readlinkSync(linkPath);
+                const packageName = target.split('node_modules/').pop();
+                const realTarget = path.join(appDest, 'node_modules', packageName);
+                fs.rmSync(linkPath);
+                fs.symlinkSync(path.relative(dir, realTarget), linkPath);
+            } else if (stat.isDirectory()) {
+                fixTurbopackExternalSymlinks(linkPath);
+            }
+        }
+    }
+
     const externalsDir = path.join(appDest, '.next', 'node_modules');
     if (fs.existsSync(externalsDir)) {
-        for (const entry of fs.readdirSync(externalsDir)) {
-            const linkPath = path.join(externalsDir, entry);
-            if (!fs.lstatSync(linkPath).isSymbolicLink()) continue;
-            const target = fs.readlinkSync(linkPath);
-            const packageName = target.split('node_modules/').pop();
-            fs.rmSync(linkPath);
-            fs.symlinkSync(path.join('..', '..', 'node_modules', packageName), linkPath);
-        }
+        fixTurbopackExternalSymlinks(externalsDir);
     }
 
     console.log('[afterPack] Copia manual completada.');
