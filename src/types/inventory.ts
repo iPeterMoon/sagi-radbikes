@@ -1,3 +1,5 @@
+import { VarianteDTO } from "./dtos";
+
 /** Estado de stock de un producto. */
 export type StockStatus = "NORMAL" | "BAJO" | "CRÍTICO";
 
@@ -6,13 +8,15 @@ export type StockStatus = "NORMAL" | "BAJO" | "CRÍTICO";
  * `null` significa que ningún modal está visible.
  */
 export type ModalType =
-  | { type: "add" }
-  | { type: "edit"; product: Product }
+  | { type: "add"; barcode?: string }
+  | { type: "edit"; product: Product; initialBarcode?: string }
   | { type: "delete"; product: Product }
   | { type: "sales-history-error"; title: string; subtitle: string; infoText: string; suggestionText: string }
   | { type: "success-add"; productImage?: string }
   | { type: "success-edit"; productImage?: string }
   | { type: "success-delete" }
+  | { type: "ajustar-stock-scan"; variante: VarianteDTO }
+  | { type: "producto-no-encontrado"; codigo: string }
   | null;
 
 /** Atributo clave-valor de un producto o variante (ej. color, talla). */
@@ -117,6 +121,8 @@ export interface ProductTableProps {
 export interface ProductFormModalProps {
   product: Product | null;
   existingProducts: Product[];
+  /** Código de barras a pre-llenar al abrir "Agregar variante" (ej. tras un escaneo sin coincidencias). */
+  initialBarcode?: string;
   onClose: () => void;
   onSave: (
     data: Product,

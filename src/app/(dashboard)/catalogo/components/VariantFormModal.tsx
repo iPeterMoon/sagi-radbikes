@@ -40,6 +40,8 @@ interface VariantFormModalProps {
   referenceCost: number;
   /** Stock mínimo de referencia del producto padre, usado para pre-llenar el formulario al agregar. */
   referenceMinStock: number;
+  /** Código de barras a pre-llenar al crear una variante nueva (ej. tras un escaneo sin coincidencias). */
+  initialBarcode?: string;
   onClose: () => void;
   onSave: (
     data: VariantFormData,
@@ -79,6 +81,7 @@ export default function VariantFormModal({
   referencePrice,
   referenceCost,
   referenceMinStock,
+  initialBarcode,
   onClose,
   onSave,
 }: VariantFormModalProps) {
@@ -130,7 +133,7 @@ export default function VariantFormModal({
     variant?.minStock ?? referenceMinStock,
   );
   const [codigoDeBarras, setCodigoDeBarras] = useState(
-    variant?.codigoDeBarras ?? "",
+    variant?.codigoDeBarras ?? initialBarcode ?? "",
   );
   const [activo, setActivo] = useState(variant?.activo ?? true);
   const [atributos, setAtributos] = useState<ProductTag[]>(

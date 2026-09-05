@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ModalType, Product, ProductSortKey, SortDirection } from "@/types/inventory";
+import { ProductoDTO } from "@/types/dtos";
 import { inventarioApi } from "@/lib/api/inventario";
 import {
   getProductMinPrice,
@@ -11,8 +12,10 @@ import {
   getProductTotalStock,
   STOCK_STATUS_RANK,
 } from "@/lib/utils";
+import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import ProductTable from "./components/ProductTable";
 import ProductFormModal from "./components/ProductFormModal";
+import AjustarStockModal from "./components/AjustarStockModal";
 import { DeleteConfirmationModal } from "./components/DeleteConfirmationModal";
 import StatusFeedbackModal from "./components/StatusFeedbackModal";
 import { ErrorFeedbackModal } from "./components/ErrorFeedbackModal";
@@ -73,6 +76,7 @@ function mapDtoToProduct(dto: any): Product {
 export default function InventarioPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [productDtos, setProductDtos] = useState<ProductoDTO[]>([]);
   const [categories, setCategories] = useState<
     { idCategoria: string; nombre: string }[]
   >([]);
@@ -122,6 +126,7 @@ export default function InventarioPage() {
   const loadProducts = async () => {
     try {
       const dtos = await inventarioApi.obtenerProductos();
+      setProductDtos(dtos);
       setProducts(dtos.map(mapDtoToProduct));
     } catch (error) {
       if (!handleAuthError(error)) {
@@ -203,6 +208,7 @@ export default function InventarioPage() {
       deletedImageIds?: string[];
     },
   ) => {
+    const pendingBarcode = modal?.type === "add" ? modal.barcode : undefined;
     try {
       if (modal?.type === "edit") {
         const updatedProduct = await inventarioApi.actualizarProducto({
@@ -267,10 +273,18 @@ export default function InventarioPage() {
           );
         }
 
-        setModal({
-          type: "success-add",
-          productImage: data.image || undefined,
-        });
+        if (pendingBarcode) {
+          setModal({
+            type: "edit",
+            product: mapDtoToProduct(createdProduct),
+            initialBarcode: pendingBarcode,
+          });
+        } else {
+          setModal({
+            type: "success-add",
+            productImage: data.image || undefined,
+          });
+        }
         loadProducts();
       }
     } catch (error: any) {
@@ -315,6 +329,30 @@ export default function InventarioPage() {
     } catch (error) {
       console.error("Error al cambiar el estado del producto:", error);
     }
+  };
+
+  /**
+   * Maneja un código escaneado con el lector USB. Si coincide con una variante
+   * existente, abre el modal de ajuste de stock; si no, ofrece darla de alta.
+   */
+  const handleScan = (codigo: string) => {
+    if (modal !== null) return;
+    for (const p of productDtos) {
+      const variante = p.variantes.find((v) => v.codigoDeBarras === codigo);
+      if (variante) {
+        setModal({ type: "ajustar-stock-scan", variante });
+        return;
+      }
+    }
+    setModal({ type: "producto-no-encontrado", codigo });
+  };
+
+  useBarcodeScanner({ onScan: handleScan, enabled: modal === null && !isLoading });
+
+  const handleAdjustStockScan = async (delta: number) => {
+    if (modal?.type !== "ajustar-stock-scan") return;
+    await inventarioApi.ajustarStockVariante(modal.variante.idVariante, delta);
+    await loadProducts();
   };
 
   const filterBtnClass = (active: boolean, activeColors: string) =>
@@ -463,6 +501,7 @@ export default function InventarioPage() {
         <ProductFormModal
           product={null}
           existingProducts={products}
+          initialBarcode={modal.barcode}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -471,6 +510,7 @@ export default function InventarioPage() {
         <ProductFormModal
           product={modal.product}
           existingProducts={products}
+          initialBarcode={modal.initialBarcode}
           onClose={() => setModal(null)}
           onSave={handleSave}
         />
@@ -489,6 +529,24 @@ export default function InventarioPage() {
           infoText={modal.infoText}
           suggestionText={modal.suggestionText}
           onClose={() => setModal(null)}
+        />
+      )}
+      {modal?.type === "producto-no-encontrado" && (
+        <ErrorFeedbackModal
+          title="Producto no encontrado"
+          subtitle={`No se encontró ningún producto con el código "${modal.codigo}"`}
+          infoText="El código escaneado no coincide con ninguna variante cargada en el catálogo."
+          suggestionText="Podés cargarlo como producto nuevo con este código de barras ya asignado a su primera variante."
+          actionLabel="Agregar Producto"
+          onAction={() => setModal({ type: "add", barcode: modal.codigo })}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {modal?.type === "ajustar-stock-scan" && (
+        <AjustarStockModal
+          variante={modal.variante}
+          onClose={() => setModal(null)}
+          onAdjust={handleAdjustStockScan}
         />
       )}
       {modal?.type === "success-add" && (

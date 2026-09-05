@@ -6,6 +6,9 @@ interface ErrorFeedbackModalProps {
   infoText: string;
   suggestionText: string;
   onClose: () => void;
+  /** Texto del botón de acción secundario (ej. "Agregar Producto"). Si no se pasa, no se muestra. */
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 export function ErrorFeedbackModal({
@@ -13,7 +16,9 @@ export function ErrorFeedbackModal({
   subtitle,
   infoText,
   suggestionText,
-  onClose
+  onClose,
+  actionLabel,
+  onAction,
 }: ErrorFeedbackModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -64,12 +69,26 @@ export function ErrorFeedbackModal({
 
           </div>
 
-          {/* Botón de acción - Azul */}
+          {/* Botón de acción secundario (opcional) */}
+          {actionLabel && onAction && (
+            <button
+              onClick={onAction}
+              className="w-full py-3 px-4 mb-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:ring-4 focus:ring-blue-100 outline-none"
+            >
+              {actionLabel}
+            </button>
+          )}
+
+          {/* Botón de cierre */}
           <button
             onClick={onClose}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:ring-4 focus:ring-blue-100 outline-none"
+            className={
+              actionLabel && onAction
+                ? "w-full py-3 px-4 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-lg border border-gray-200 transition-colors focus:ring-4 focus:ring-gray-100 outline-none"
+                : "w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:ring-4 focus:ring-blue-100 outline-none"
+            }
           >
-            Entendido
+            {actionLabel && onAction ? "Cancelar" : "Entendido"}
           </button>
         </div>
       </div>

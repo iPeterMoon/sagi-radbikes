@@ -64,6 +64,7 @@ type FormState = Omit<
 export default function ProductFormModal({
   product,
   existingProducts,
+  initialBarcode,
   onClose,
   onSave,
 }: ProductFormModalProps) {
@@ -94,6 +95,15 @@ export default function ProductFormModal({
   const [variantModal, setVariantModal] = useState<
     { mode: "add" } | { mode: "edit"; variant: VarianteDTO } | null
   >(null);
+
+  // Si el producto se acaba de crear a partir de un código escaneado sin
+  // coincidencias, abrir directamente "Agregar variante" con ese código.
+  useEffect(() => {
+    if (isEdit && initialBarcode) {
+      setVariantModal({ mode: "add" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [deleteVariantTarget, setDeleteVariantTarget] =
     useState<VarianteDTO | null>(null);
   const [adjustStockTarget, setAdjustStockTarget] =
@@ -1271,6 +1281,9 @@ export default function ProductFormModal({
           }
           referenceMinStock={
             form.referenceMinStock === "" ? 0 : Number(form.referenceMinStock)
+          }
+          initialBarcode={
+            variantModal.mode === "add" ? initialBarcode : undefined
           }
           onClose={() => setVariantModal(null)}
           onSave={handleSaveVariant}
