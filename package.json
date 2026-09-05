@@ -9,6 +9,9 @@
     "build": "next build",
     "electron:build": "npm run build && electron-builder",
     "start": "next start",
+    "build:prod": "node scripts/run-with-prod-env.js build",
+    "start:prod": "node scripts/run-with-prod-env.js start",
+    "prod": "npm run build:prod && npm run start:prod",
     "lint": "eslint",
     "postinstall": "electron-builder install-app-deps && prisma generate && electron-rebuild -f -w usb"
   },
