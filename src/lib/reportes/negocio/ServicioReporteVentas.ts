@@ -45,10 +45,10 @@ export class ServicioReporteVentas {
       throw new Error("Debés indicar una fecha de inicio y una fecha de fin");
     }
 
-    const desde = new Date(`${filtro.desde}T00:00:00`);
-    const finDelDia = new Date(`${filtro.hasta}T00:00:00`);
+    const desde = this.parsearFechaLocal(filtro.desde);
+    const finDelDia = this.parsearFechaLocal(filtro.hasta);
 
-    if (Number.isNaN(desde.getTime()) || Number.isNaN(finDelDia.getTime())) {
+    if (!desde || !finDelDia) {
       throw new Error("Las fechas ingresadas no son válidas");
     }
     if (desde > finDelDia) {
@@ -64,6 +64,33 @@ export class ServicioReporteVentas {
     }
 
     return { desde, hasta };
+  }
+
+  /**
+   * Parsea una fecha en formato `YYYY-MM-DD` a un `Date` en horario local,
+   * rechazando fechas con formato inválido o de calendario inexistente
+   * (ej. `2026-02-30`).
+   * @param valor - Fecha en texto a parsear.
+   * @returns El `Date` correspondiente, o `null` si no es una fecha válida.
+   */
+  private parsearFechaLocal(valor: string): Date | null {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+    if (!match) return null;
+
+    const anio = Number(match[1]);
+    const mes = Number(match[2]);
+    const dia = Number(match[3]);
+    const fecha = new Date(anio, mes - 1, dia);
+
+    if (
+      fecha.getFullYear() !== anio ||
+      fecha.getMonth() !== mes - 1 ||
+      fecha.getDate() !== dia
+    ) {
+      return null;
+    }
+
+    return fecha;
   }
 
   private calcularResumen(ventas: VentaConDetalle[]): ResumenReporteVentasDTO {
