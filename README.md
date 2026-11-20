@@ -1,105 +1,104 @@
-# SAGI - RAD Bikes
+# SAGI RAD Bikes
 
-Sistema de Automatización y Gestión de Inventarios para RAD Bikes.
+Sistema de gestión para tienda de bicicletas (inventario, punto de venta, reportes, usuarios/roles y configuración). Aplicación **monolítica** Next.js (App Router) con empaquetado de escritorio vía Electron.
 
-## Configuración Inicial
+## Arquitectura actual
 
-### 1. Variables de Entorno
+- **Frontend/API:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4.
+- **Base de datos:** PostgreSQL con Prisma 7 (`@prisma/client` + `@prisma/adapter-pg` y pool `pg`). Migraciones en `prisma/migrations/`.
+- **Autenticación/autorización:** JWT en cookie `token` (`src/proxy.ts` como middleware). Módulos configurables por rol: `dashboard`, `catalogo`, `reportes`, `usuarios`, `configuracion`; `pos` es implícito.
+- **Imágenes:** Supabase Storage (cliente en `src/lib/SupabaseFactory.ts`).
+- **Impresión de tickets:** `node-thermal-printer` / `escpos-usb` (ruta `POST /api/print`, requiere hardware y `PRINTER_INTERFACE`).
+- **Escritorio:** Electron (`electron/main.js`, build con `electron-builder`).
 
-Copia los archivos `.env.example` a `.env` en la raíz y en cada microservicio:
+## Requisitos
 
-**Windows (PowerShell):**
+- Node.js 20+ (CI usa 22) y npm.
+- PostgreSQL (local o remoto). Para desarrollo local el proyecto ha usado un contenedor `sagi-radbikes-localdb` en `localhost:55432`.
+- Para compilar dependencias nativas de USB/Electron: `libudev-dev` y `libusb-1.0-0-dev` (Linux).
 
-```bash
-Copy-Item .env.example .env
-Copy-Item services/auth/.env.example services/auth/.env
-Copy-Item services/catalog/.env.example services/catalog/.env
-Copy-Item services/pos/.env.example services/pos/.env
-```
+## Configuración de entorno
 
-**Linux/macOS:**
+- `.env`: valores de **producción** (Supabase remoto). Prisma CLI carga `.env` por defecto vía `prisma.config.ts`.
+- `.env.local`: overrides locales (DB local, `JWT_SECRET` local). No debe usarse con los scripts `db:*:prod`.
+- `.env.smoke`: generado en runtime para smoke tests (gitignored). Nunca debe apuntar a producción.
 
-```bash
-cp .env.example .env
-cp services/auth/.env.example services/auth/.env
-cp services/catalog/.env.example services/catalog/.env
-cp services/pos/.env.example services/pos/.env
-```
+Variables relevantes:
 
-## Ejecución
+- `DATABASE_URL` / `DIRECT_URL`: conexión de app y de migraciones (Prisma 7 usa `DIRECT_URL` en `prisma.config.ts`).
+- `JWT_SECRET`, `SESSION_TIMEOUT_HOURS`
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_BUCKET_IMAGES`
+- `PRINTER_INTERFACE`, `PRINTER_NAME`
 
-### Con Docker (Recomendado)
+> No sobrescribas `.env`/`.env.local` manualmente para migraciones: usa los scripts `db:*` que fuerzan el archivo correcto con `scripts/with-env.mjs`.
 
-```bash
-docker-compose up --build
-```
-
-La aplicación estará disponible en:
-
-- Frontend: http://localhost
-
-#### Prueba de Load Balancing (Escalado de Servicios)
-
-El proyecto utiliza Traefik, el cual balancea la carga automáticamente entre las instancias disponibles. Para probar esto, puedes usar el parámetro `--scale` al levantar los contenedores.
-
-Ejemplo para levantar 3 instancias del servicio de catálogo y 2 del servicio POS:
+## Base de datos y migraciones
 
 ```bash
-docker-compose up --scale catalog-service=3 --scale pos-service=2 --build
+# Local (.env.local)
+npm run db:status:local
+npm run db:deploy:local
+npm run db:check:local
+
+# Producción (.env) — requiere backup previo y ventana de cambio
+npm run db:status:prod
+npm run db:deploy:prod   # crea backup manualmente antes
+npm run db:check:prod
 ```
 
-### Local (sin Docker)
+- `scripts/check-migrations.mjs`: compara migraciones en `prisma/migrations/` contra `_prisma_migrations` (aplicadas y no rolled-back). Falla si hay pendientes.
+- Backup recomendado antes de tocar producción: `pg_dump "$DIRECT_URL" -Fc -f backup.dump`.
+- `.github/workflows/deploy-migrations.yml`: workflow manual (`workflow_dispatch`) con GitHub Environment `production`, backup y artifact. Requiere secreto `PROD_DIRECT_URL`.
 
-**Requisitos:** Node.js v18+, PostgreSQL corriendo
-
-**1. Instalar dependencias:**
+## Desarrollo
 
 ```bash
 npm install
-cd services/auth && npm install && cd ../..
-cd services/catalog && npm install && cd ../..
-cd services/pos && npm install && cd ../..
-cd services/gateway && npm install && cd ../..
+npm run dev            # http://localhost:3000
+npm run electron:dev   # Next + Electron
 ```
 
-**2. Ejecutar migraciones (si aplica):**
+`npm install` ejecuta `postinstall` (`electron-builder install-app-deps`, `prisma generate`, `electron-rebuild -f -w usb`).
+
+## Pruebas
+
+### Unitarias (Vitest)
 
 ```bash
-cd services/auth && npm run migrate && cd ../..
-cd services/catalog && npm run migrate && cd ../..
-cd services/pos && npm run migrate && cd ../..
+npm test
+npm run test:coverage
 ```
 
-**3. Iniciar servicios (abrir terminales diferentes):**
+Los tests unitarios viven en `tests/` y usan mocks (sin DB real). Configuración en `vitest.config.ts`.
 
-Terminal 1:
+### Smoke HTTP (contra una instancia en ejecución)
+
+Requiere que la app esté levantada (`npm run dev` o `npm run start`).
 
 ```bash
-cd services/auth && npm run dev
+# Solo lectura (seguro para entornos con datos reales)
+npm run test:smoke
+
+# Lectura + escritura (SOLO base local/desechable)
+npm run test:smoke:write
+# o contra .env.smoke:
+npm run test:smoke:local
+npm run test:smoke:local:write
 ```
 
-Terminal 2:
+Variables: `SMOKE_BASE_URL`, `SMOKE_USER`, `SMOKE_PASSWORD`, `SMOKE_LIMITED_USER`, `SMOKE_LIMITED_PASSWORD`, `SMOKE_WRITE`, `SMOKE_IMAGES`, `SMOKE_PRINTER`, `SMOKE_REPORT`.
+
+El smoke de escritura crea/edita/elimina datos temporales (producto, variante, etiqueta, atributo, carrito, venta con IVA mixto 16%/0%, rol, usuario, configuración) y limpia en lo posible. Las ventas no se borran vía API.
+
+### Seed determinista para smoke
 
 ```bash
-cd services/catalog && npm run dev
+# Generar .env.smoke apuntando a una DB local (gitignored), luego:
+SMOKE_SEED=1 npm run seed:smoke
 ```
 
-Terminal 3:
+Crea `plunal`/`vendedor_smoke` (password `crujones`), roles con/sin módulos, catálogo mínimo y productos con `has_iva=true/false`. Solo corre con `SMOKE_SEED=1` y contra DB local.
 
-```bash
-cd services/pos && npm run dev
-```
+### CI
 
-Terminal 4:
-
-```bash
-cd services/gateway && npm run dev
-```
-
-Terminal 5:
-
-```bash
-npm run dev
-```
-
-La aplicación estará disponible en http://localhost:3000
+`.github/workflows/ci.yml`: lint (no bloqueante), `tsc --noEmit`, tests unitarios, coverage, Postgres de servicio, `migrate deploy` + diff, seed, build y smoke HTTP con escritura.
