@@ -98,7 +98,7 @@ export class UsuarioDAO extends GenericDAO<users> implements IUsuarioDAO {
    */
   async getByPhone(phone: string): Promise<users | null> {
     return await this.db.findFirst({
-      where: { phone: { equals: phone } }
+      where: { telefono: { equals: phone } }
     })
   }
 

@@ -2,8 +2,8 @@ import { UsuarioDTO } from "@/types/dtos";
 
 /** DTO con credenciales de inicio de sesión. */
 export interface LoginDTO {
-  usuario: string;
-  contrasena: string;
+  username: string;
+  password: string;
 }
 
 /** DTO con información de sesión activa. */

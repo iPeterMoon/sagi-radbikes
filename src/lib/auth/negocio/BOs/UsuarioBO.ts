@@ -157,6 +157,7 @@ export class UsuarioBO implements IUsuarioBO {
         nombre: nuevoUsuario.nombre,
         apellido: nuevoUsuario.apellido,
         email: nuevoUsuario.email,
+        telefono: nuevoUsuario.telefono,
         is_active: nuevoUsuario.is_active ?? true,
       });
 
@@ -191,23 +192,23 @@ export class UsuarioBO implements IUsuarioBO {
         throw new Error("El usuario que desea editar no existe");
       }
 
-      if (usuario.username !== existente.username) {
+      if (usuario.username.toLowerCase() !== (existente.username ?? "").toLowerCase()) {
         const usuarioNombre = await this.accesoDatos.usuarioDAO.getByUsername(usuario.username);
-        if (usuarioNombre) {
+        if (usuarioNombre && usuarioNombre.id !== existente.id) {
           throw new Error("Ya existe un usuario con este nombre");
         }
       }
 
-      if (usuario.email !== existente.email && existente.email !== null ) {
-        const usuarioEmail = await this.accesoDatos.usuarioDAO.getByEmail(usuario.email!);
-        if (usuarioEmail) {
+      if (usuario.email && usuario.email !== existente.email) {
+        const usuarioEmail = await this.accesoDatos.usuarioDAO.getByEmail(usuario.email);
+        if (usuarioEmail && usuarioEmail.id !== existente.id) {
           throw new Error("Este correo ya está asociado con un usuario");
         }
       }
 
-      if (usuario.telefono !== existente.telefono && existente.telefono !== null) {
+      if (usuario.telefono && usuario.telefono !== existente.telefono) {
         const usuarioTelefono = await this.accesoDatos.usuarioDAO.getByPhone(usuario.telefono);
-        if (usuarioTelefono) {
+        if (usuarioTelefono && usuarioTelefono.id !== existente.id) {
           throw new Error("Este telefono ya está asociado con un usuario");
         }
       }
@@ -265,7 +266,7 @@ export class UsuarioBO implements IUsuarioBO {
    */
   async eliminar(id: number | bigint): Promise<boolean> {
     try {
-      const existente = this.accesoDatos.usuarioDAO.getById(id);
+      const existente = await this.accesoDatos.usuarioDAO.getById(id);
       if (!existente) {
         throw new Error("El usuario ya está eliminado o no existe");
       }
@@ -285,7 +286,7 @@ export class UsuarioBO implements IUsuarioBO {
    */
   async alternarActivo(id: number | bigint): Promise<boolean> {
     try {
-      const existente = this.accesoDatos.usuarioDAO.getById(id);
+      const existente = await this.accesoDatos.usuarioDAO.getById(id);
       if (!existente) {
         throw new Error("El usuario que desea actualizar no existe");
       }

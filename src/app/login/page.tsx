@@ -31,7 +31,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await authApi.login({ username, password } as any);
+      await authApi.login({ username, password });
       router.replace("/catalogo");
     } catch (err: any) {
       setError(err.message || "Credenciales incorrectas");

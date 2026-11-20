@@ -78,7 +78,7 @@ export default function CambiarUsuarioModal({
       const sesion = await authApi.login({
         username: seleccionado.username,
         password,
-      } as any);
+      });
       localStorage.setItem("usuario", JSON.stringify(sesion.usuario));
       window.dispatchEvent(new Event("usuarioUpdated"));
       onClose();

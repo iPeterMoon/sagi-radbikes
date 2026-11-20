@@ -132,7 +132,7 @@ export class RolBO implements IRolBO {
      */
     async eliminar(id: string): Promise<boolean> {
         try {
-            const existente = this.accesoDatos.rolDAO.getById(BigInt(id));
+            const existente = await this.accesoDatos.rolDAO.getById(BigInt(id));
             if (!existente) {
                 throw new Error("El rol ya está eliminado o no existe");
             }
