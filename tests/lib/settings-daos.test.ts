@@ -4,7 +4,7 @@ import { ReporteDAO } from "@/lib/dashboard/datos/ReporteDAO";
 import { ReporteVentasDAO } from "@/lib/reportes/datos/ReporteVentasDAO";
 import { prismaDelegateMock } from "../helpers/mocks";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 describe("ConfiguracionDAO", () => {
   let delegate: any;

@@ -11,12 +11,21 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "coverage/**",
     "next-env.d.ts",
     "electron/**"
   ]),
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
+    // Estos scripts corren directo con Node/electron-builder como CommonJS
+    // (package.json no declara "type": "module"): require() es intencional.
+    files: ["scripts/**/*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 ]);

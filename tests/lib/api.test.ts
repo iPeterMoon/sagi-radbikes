@@ -8,7 +8,7 @@ import { reportesApi } from "@/lib/api/reportes";
 import { usuariosApi } from "@/lib/api/usuarios";
 import { fakeResponse } from "../helpers/mocks";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 describe("clientes de API", () => {
   let fetchMock: ReturnType<typeof vi.fn>;

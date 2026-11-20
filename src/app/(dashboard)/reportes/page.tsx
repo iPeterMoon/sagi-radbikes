@@ -199,10 +199,22 @@ export default function ReportesPage() {
   const [exportando, setExportando] = useState(false);
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    let cancelado = false;
+  // El estado "cargando" se activa en el cambio de rango (evento del usuario);
+  // el efecto solo reacciona al resultado de la petición.
+  const cambiarDesde = (valor: string) => {
+    setDesde(valor);
     setLoading(true);
     setError("");
+  };
+
+  const cambiarHasta = (valor: string) => {
+    setHasta(valor);
+    setLoading(true);
+    setError("");
+  };
+
+  useEffect(() => {
+    let cancelado = false;
 
     reportesApi
       .obtenerReporteVentas(desde, hasta)
@@ -461,7 +473,7 @@ export default function ReportesPage() {
             type="date"
             value={desde}
             max={hasta}
-            onChange={(e) => setDesde(e.target.value)}
+            onChange={(e) => cambiarDesde(e.target.value)}
             className="py-2.25 px-3 border border-gray-200 rounded-lg text-[13px] text-gray-700 outline-none bg-white focus:ring-2 focus:ring-blue-500 transition-shadow"
           />
         </div>
@@ -472,7 +484,7 @@ export default function ReportesPage() {
             value={hasta}
             min={desde}
             max={formatearFechaInput(hoy)}
-            onChange={(e) => setHasta(e.target.value)}
+            onChange={(e) => cambiarHasta(e.target.value)}
             className="py-2.25 px-3 border border-gray-200 rounded-lg text-[13px] text-gray-700 outline-none bg-white focus:ring-2 focus:ring-blue-500 transition-shadow"
           />
         </div>

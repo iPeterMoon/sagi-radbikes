@@ -1,5 +1,4 @@
 import { ICatalogoAccesoDatos } from "../datos/daos/interfaces/ICatalogoAccesoDatos";
-import { CatalogoAccesoDatos } from "../datos/CatalogoAccesoDatos";
 import { IServicioInventario } from "./interfaces/IServicioInventario";
 import { IProductoBO } from "./interfaces/IProductoBO";
 import { ICategoriaBO } from "./interfaces/ICategoriaBO";

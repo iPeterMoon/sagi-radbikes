@@ -39,7 +39,6 @@ export class ProductoMapper {
   ): ProductoDTO {
     const variantes = (entity.product_variants || []).map(VarianteMapper.toDTO);
     const variantesActivas = variantes.filter((v) => v.activo);
-    const stockTotal = variantesActivas.reduce((acc, v) => acc + v.stock, 0);
 
     return {
       idProducto: entity.id.toString(),

@@ -9,13 +9,7 @@ import { VariantAttributeDAO } from "@/lib/inventory/datos/daos/implementaciones
 import { ProductImageDAO } from "@/lib/inventory/datos/daos/implementaciones/ProductImageDAO";
 import { prismaDelegateMock } from "../../helpers/mocks";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-function prismaWith(...models: string[]) {
-  const prisma: any = {};
-  for (const model of models) prisma[model] = prismaDelegateMock();
-  return prisma;
-}
+ 
 
 describe("GenericDAO (inventario)", () => {
   let delegate: any;

@@ -3,7 +3,7 @@ import { UsuarioMapper } from "@/lib/auth/negocio/mappers/UsuarioMapper";
 import { RolMapper } from "@/lib/auth/negocio/mappers/RolMapper";
 import { PasswordEncoder } from "@/lib/auth/negocio/PasswordEncoder";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 const role = (over: any = {}) => ({
   id: 2n,

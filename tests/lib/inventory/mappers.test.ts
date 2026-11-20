@@ -9,7 +9,7 @@ import { EtiquetaMapper } from "@/lib/inventory/negocio/mappers/EtiquetaMapper";
 import { AtributoVarianteMapper } from "@/lib/inventory/negocio/mappers/AtributoVarianteMapper";
 import { EstadoStock } from "@/lib/inventory/negocio/enums/EstadoStock";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 const category = (over: any = {}) => ({
   id: 1n,

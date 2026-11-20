@@ -12,7 +12,7 @@
     "build:prod": "node scripts/run-with-prod-env.js build",
     "start:prod": "node scripts/run-with-prod-env.js start",
     "prod": "npm run build:prod && npm run start:prod",
-    "lint": "eslint",
+    "lint": "eslint --max-warnings 0",
     "postinstall": "electron-builder install-app-deps && prisma generate && electron-rebuild -f -w usb",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

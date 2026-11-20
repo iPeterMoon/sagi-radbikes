@@ -4,6 +4,7 @@ import { createServicioUsuarios } from "@/lib/auth/factory";
 const servicio = createServicioUsuarios();
 
 export async function GET(req: NextRequest) {
+    void req; // La firma de la ruta recibe el request, pero este GET no lo usa.
     try {
         const usuarios = await servicio.obtenerTodos();
         return NextResponse.json(usuarios, { status: 200 });

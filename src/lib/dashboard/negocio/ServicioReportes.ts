@@ -1,7 +1,6 @@
 import { ReporteDAO } from "../datos/ReporteDAO";
 import {
   DashboardResumenDTO,
-  VentasPeriodoDTO,
   MargenPeriodoDTO,
   TopProductoDTO,
 } from "./DTOsSalida/DashboardResumenDTO";

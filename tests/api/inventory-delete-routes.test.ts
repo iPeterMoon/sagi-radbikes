@@ -19,7 +19,7 @@ import { DELETE as atributoDELETE } from "@/app/api/inventario/atributos-variant
 import { GET as etiquetasGET } from "@/app/api/inventario/etiquetas/[productoId]/route";
 import { DELETE as etiquetaDELETE } from "@/app/api/inventario/etiquetas/etiqueta/[idEtiqueta]/route";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 const req = (url: string, method = "GET") =>
   new NextRequest(`http://localhost:3000${url}`, { method });

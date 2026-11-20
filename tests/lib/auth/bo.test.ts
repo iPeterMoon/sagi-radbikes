@@ -5,7 +5,7 @@ import { RolBO } from "@/lib/auth/negocio/BOs/RolBO";
 import { PasswordEncoder } from "@/lib/auth/negocio/PasswordEncoder";
 import { authAccesoMock } from "../../helpers/mocks";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 const JWT_SECRET = process.env.JWT_SECRET || "default-secret-key";
 

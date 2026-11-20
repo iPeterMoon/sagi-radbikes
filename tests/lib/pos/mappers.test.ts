@@ -3,7 +3,7 @@ import { ProductoMapper } from "@/lib/pos/negocio/mappers/ProductoMapper";
 import { VentaMapper } from "@/lib/pos/negocio/mappers/VentaMapper";
 import { TicketMapper } from "@/lib/pos/negocio/mappers/TicketMapper";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 describe("ProductoMapper (POS)", () => {
   it("prefiere la imagen principal de la variante", () => {

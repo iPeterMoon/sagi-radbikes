@@ -3,7 +3,7 @@ import { ServicioReportes } from "@/lib/dashboard/negocio/ServicioReportes";
 import { ServicioReporteVentas } from "@/lib/reportes/negocio/ServicioReporteVentas";
 import { ServicioConfiguracion } from "@/lib/settings/negocio/ServicioConfiguracion";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 /** Miércoles 13 de mayo de 2026, 15:30 hora local. */
 const AHORA = new Date(2026, 4, 13, 15, 30, 0);

@@ -5,7 +5,7 @@ import { UsuarioRolDAO } from "@/lib/auth/datos/daos/implementaciones/UsuarioRol
 import { RolModuloDAO } from "@/lib/auth/datos/daos/implementaciones/RolModuloDAO";
 import { prismaDelegateMock } from "../../helpers/mocks";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 describe("UsuarioDAO", () => {
   let delegate: any;

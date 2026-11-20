@@ -85,7 +85,7 @@ export class UsuarioBO implements IUsuarioBO {
    * @param token - JWT de la sesión activa
   */
   async logout(token: string): Promise<void> {
-    // TODO: Agregar token a blacklist o tabla de tokens invalidados
+    void token; // TODO: Agregar token a blacklist o tabla de tokens invalidados
   }
 
   /**

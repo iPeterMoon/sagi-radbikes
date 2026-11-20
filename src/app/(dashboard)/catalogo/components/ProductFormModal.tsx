@@ -96,16 +96,8 @@ export default function ProductFormModal({
   const [variantes, setVariantes] = useState<VarianteDTO[]>([]);
   const [variantModal, setVariantModal] = useState<
     { mode: "add" } | { mode: "edit"; variant: VarianteDTO } | null
-  >(null);
+  >(isEdit && initialBarcode ? { mode: "add" } : null);
 
-  // Si el producto se acaba de crear a partir de un código escaneado sin
-  // coincidencias, abrir directamente "Agregar variante" con ese código.
-  useEffect(() => {
-    if (isEdit && initialBarcode) {
-      setVariantModal({ mode: "add" });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const [deleteVariantTarget, setDeleteVariantTarget] =
     useState<VarianteDTO | null>(null);
   const [adjustStockTarget, setAdjustStockTarget] =
@@ -146,6 +138,31 @@ export default function ProductFormModal({
     costoReferenciaNumerico > 0 && margenConfigurado
       ? costoReferenciaNumerico * margenConfigurado
       : 0;
+
+  // Estado del nuevo Modal Externo
+  const [activeSubModal, setActiveSubModal] = useState<AttributeType>(null);
+
+  const [imagesList, setImagesList] = useState<string[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<
+    { src: string; file: File }[]
+  >([]);
+  const [originalImages, setOriginalImages] = useState<string[]>([]);
+  const [deletedOriginalImages, setDeletedOriginalImages] = useState<string[]>(
+    [],
+  );
+  const [originalMainImage, setOriginalMainImage] = useState<string>("");
+  const [productImagesData, setProductImagesData] = useState<
+    Array<{ id: string; url: string; esPrincipal: boolean }>
+  >([]);
+
+  const [tagName, setTagName] = useState("");
+  const [tagValue, setTagValue] = useState("");
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormState, string>>
+  >({});
+
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   useEffect(() => {
     const loadData = async () => {
@@ -271,31 +288,6 @@ export default function ProductFormModal({
 
     loadData();
   }, [product]);
-
-  // Estado del nuevo Modal Externo
-  const [activeSubModal, setActiveSubModal] = useState<AttributeType>(null);
-
-  const [imagesList, setImagesList] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<
-    { src: string; file: File }[]
-  >([]);
-  const [originalImages, setOriginalImages] = useState<string[]>([]);
-  const [deletedOriginalImages, setDeletedOriginalImages] = useState<string[]>(
-    [],
-  );
-  const [originalMainImage, setOriginalMainImage] = useState<string>("");
-  const [productImagesData, setProductImagesData] = useState<
-    Array<{ id: string; url: string; esPrincipal: boolean }>
-  >([]);
-
-  const [tagName, setTagName] = useState("");
-  const [tagValue, setTagValue] = useState("");
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof FormState, string>>
-  >({});
-
-  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
 
   const addTag = () => {
     if (!tagName.trim() || !tagValue.trim()) return;

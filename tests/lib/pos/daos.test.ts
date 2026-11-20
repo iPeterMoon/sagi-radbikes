@@ -5,7 +5,7 @@ import { PagoDAO } from "@/lib/pos/datos/daos/implementaciones/PagoDAO";
 import { ProductoDAO } from "@/lib/pos/datos/daos/implementaciones/ProductoDAO";
 import { prismaDelegateMock } from "../../helpers/mocks";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 describe("VentaDAO", () => {
   let delegate: any;

@@ -4,6 +4,7 @@ import { createServicioCatalogo } from "@/lib/inventory/factory";
 const servicio = createServicioCatalogo();
 
 export async function GET(req: NextRequest) {
+  void req; // La firma de la ruta recibe el request, pero este GET no lo usa.
   try {
     const categorias = await servicio.obtenerCategorias();
     return NextResponse.json(categorias, { status: 200 });

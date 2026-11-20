@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Cliente PostgreSQL
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -36,9 +36,9 @@ jobs:
         run: sudo apt-get install -y libudev-dev libusb-1.0-0-dev
 
       - name: Configurar Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Instalar dependencias
@@ -55,7 +55,7 @@ jobs:
 
       - name: Subir backup como artifact
         if: ${{ inputs.confirmar == 'APPLY' && !inputs.dry_run }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sagi-prod-backup-${{ github.run_number }}
           path: /tmp/sagi-prod-before.dump

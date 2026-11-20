@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 /**
  * Crea un doble de `ICatalogoAccesoDatos` con todos los DAOs mockeados.

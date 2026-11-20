@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ModalType, Product, ProductSortKey, SortDirection } from "@/types/inventory";
 import { ProductoDTO } from "@/types/dtos";
@@ -98,22 +97,25 @@ export default function InventarioPage() {
    * Función auxiliar para manejar errores de autenticación.
    * Si el error contiene "Unauthorized" o "No token provided", redirige al login.
    */
-  const handleAuthError = (error: any) => {
-    const errorMessage = error?.message || "";
-    if (
-      errorMessage.includes("Unauthorized") ||
-      errorMessage.includes("No token provided")
-    ) {
-      // Limpiar la cookie de token
-      document.cookie =
-        "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-      router.replace("/login");
-      return true;
-    }
-    return false;
-  };
+  const handleAuthError = useCallback(
+    (error: any) => {
+      const errorMessage = error?.message || "";
+      if (
+        errorMessage.includes("Unauthorized") ||
+        errorMessage.includes("No token provided")
+      ) {
+        // Limpiar la cookie de token
+        document.cookie =
+          "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+        router.replace("/login");
+        return true;
+      }
+      return false;
+    },
+    [router],
+  );
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const cats = await inventarioApi.obtenerCategorias();
       setCategories(cats);
@@ -122,9 +124,9 @@ export default function InventarioPage() {
         console.error("Error loading categories:", error);
       }
     }
-  };
+  }, [handleAuthError]);
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       const dtos = await inventarioApi.obtenerProductos();
       setProductDtos(dtos);
@@ -134,7 +136,7 @@ export default function InventarioPage() {
         console.error("Error loading products:", error);
       }
     }
-  };
+  }, [handleAuthError]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -144,7 +146,7 @@ export default function InventarioPage() {
       setIsLoading(false);
     };
     fetchInitialData();
-  }, []);
+  }, [loadProducts, loadCategories]);
 
   const filtered = products.filter((p) => {
     const q = search.toLowerCase();

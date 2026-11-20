@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import proxy from "@/proxy";
 import { fakeResponse } from "../helpers/mocks";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 function makeRequest(
   pathname: string,

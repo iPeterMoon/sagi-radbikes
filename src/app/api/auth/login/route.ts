@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { LoginDTO } from "@/lib/api/auth";
 import { createServicioInicioSesion } from "@/lib/auth/factory";
 
 const SESSION_TIMEOUT_HOURS = Number(process.env.SESSION_TIMEOUT_HOURS || "12");

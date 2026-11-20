@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { ProductoBO } from "@/lib/inventory/negocio/BOs/ProductoBO";
 import { VarianteBO } from "@/lib/inventory/negocio/BOs/VarianteBO";
 import { CategoriaBO } from "@/lib/inventory/negocio/BOs/CategoriaBO";
@@ -7,7 +7,7 @@ import { SubCategoriaBO } from "@/lib/inventory/negocio/BOs/SubCategoriaBO";
 import { EtiquetaBO } from "@/lib/inventory/negocio/BOs/EtiquetaBO";
 import { catalogoAccesoMock } from "../../helpers/mocks";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 const productoEntity = (over: any = {}) => ({
   id: 5n,

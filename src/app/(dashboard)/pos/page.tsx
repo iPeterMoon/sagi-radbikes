@@ -85,28 +85,6 @@ export default function POSPage() {
     null,
   );
 
-  // Sincroniza las imágenes y datos del carrito con el catálogo cargado.
-  useEffect(() => {
-    if (products.length === 0 || cart.length === 0) return;
-
-    setCart((prev) =>
-      prev.map((item) => {
-        const prod = products.find((p) => p.id === item.product.id);
-        if (!prod) return item;
-        return {
-          ...item,
-          product: {
-            ...item.product,
-            image: prod.image,
-            name: prod.name,
-            category: prod.category,
-            sku: prod.sku,
-          },
-        };
-      }),
-    );
-  }, [products, cart.length]);
-
   /**
    * Función auxiliar para manejar errores de autenticación.
    * Si el error contiene "Unauthorized" o "No token provided", redirige al login.
@@ -130,10 +108,13 @@ export default function POSPage() {
 
   // ── Load products and cart ──
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadInitialData = async () => {
+      let catalogo: POSProduct[] = [];
+
       try {
         const data = await posApi.obtenerProductos();
-        setProducts(data.map(mapProductoVenta));
+        catalogo = data.map(mapProductoVenta);
+        setProducts(catalogo);
       } catch (err: any) {
         if (!handleAuthError(err)) {
           console.error("Error loading products:", err);
@@ -141,12 +122,29 @@ export default function POSPage() {
       } finally {
         setLoading(false);
       }
-    };
 
-    const loadCart = async () => {
       try {
         const data = await posApi.obtenerCarrito();
-        setCart(data.map(mapCarritoItem));
+        // Complete los datos del carrito con el catálogo recién cargado
+        // (imagen, nombre, categoría y SKU) sin un efecto que vuelva a
+        // actualizar el estado después del render.
+        setCart(
+          data.map((item) => {
+            const base = mapCarritoItem(item);
+            const prod = catalogo.find((p) => p.id === base.product.id);
+            if (!prod) return base;
+            return {
+              ...base,
+              product: {
+                ...base.product,
+                image: prod.image,
+                name: prod.name,
+                category: prod.category,
+                sku: prod.sku,
+              },
+            };
+          }),
+        );
       } catch (err: any) {
         if (!handleAuthError(err)) {
           console.error("Error loading carrito:", err);
@@ -154,8 +152,7 @@ export default function POSPage() {
       }
     };
 
-    loadProducts();
-    loadCart();
+    loadInitialData();
   }, [handleAuthError]);
 
   const categories = [
@@ -332,14 +329,14 @@ export default function POSPage() {
     }
   };
 
+  const [printError, setPrintError] = useState<string | null>(null);
+
   /** Manejador para limpiar carrito y cerrar modal */
   const handleNewSale = useCallback(() => {
     clearCart();
     setVentaResumen(null);
     setPrintError(null);
   }, [clearCart]);
-
-  const [printError, setPrintError] = useState<string | null>(null);
 
   /** Manejador para imprimir recibo */
   const handlePrintReceipt = useCallback(async (resumen: VentaResumenDTO) => {
@@ -350,7 +347,7 @@ export default function POSPage() {
       console.error("Error al imprimir ticket:", error);
       setPrintError(error.message || "Ocurrió un error al imprimir el ticket.");
     }
-  }, []);
+  }, [setPrintError]);
 
   return (
     <div className="flex h-full overflow-hidden">

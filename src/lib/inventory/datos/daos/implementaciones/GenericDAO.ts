@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { IGenericDAO } from "../interfaces/IGenericDAO";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 /**
  * Clase abstracta que proporciona una implementación genérica para el Acceso a Datos (DAO)

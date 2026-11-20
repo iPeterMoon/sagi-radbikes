@@ -5,7 +5,7 @@ import { VentaBO } from "@/lib/pos/negocio/BOs/VentaBO";
 import { DetalleStockDTO } from "@/lib/pos/negocio/DTOsSalida/DetalleStockDTO";
 import { posAccesoMock } from "../../helpers/mocks";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 const item = (over: any = {}) => ({
   idVariante: "7",

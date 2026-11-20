@@ -49,7 +49,7 @@ import {
 } from "@/app/api/roles/[id]/route";
 import { GET as vendedoresGET } from "@/app/api/pos/vendedores/route";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 const jsonReq = (url: string, method = "GET", body?: unknown, headers: Record<string, string> = {}) =>
   new NextRequest(`http://localhost:3000${url}`, {
