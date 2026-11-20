@@ -1,17 +1,24 @@
 "use client";
 
-import { useState, useRef, useEffect, ChangeEvent } from "react";
+import { useState, useRef, useEffect, useMemo, type ChangeEvent } from "react";
 import Image from "next/image";
 import { Product, ProductTag, ProductFormModalProps } from "@/types/inventory";
 import { VarianteDTO } from "@/types/dtos";
 import { inventarioApi } from "@/lib/api/inventario";
 import { configuracionApi } from "@/lib/api/configuracion";
+import SearchableCombobox from "@/components/ui/SearchableCombobox";
 import AddAttributeModal, { AttributeType } from "./AddAttributeModal";
 import VariantFormModal, { VariantFormData } from "./VariantFormModal";
 import AjustarStockModal from "./AjustarStockModal";
 
 type CategoryOption = { idCategoria: string; nombre: string };
 type BrandOption = { idMarca: string; nombre: string };
+
+function sortByNombre<T extends { nombre: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) =>
+    a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }),
+  );
+}
 import {
   IconX,
   IconTag,
@@ -109,19 +116,30 @@ export default function ProductFormModal({
   const [subcategoryId, setSubcategoryId] = useState<string>("");
 
   const [localBrands, setLocalBrands] = useState<BrandOption[]>([]);
-  const [brandSearch, setBrandSearch] = useState<string>("");
-  const [categorySearch, setCategorySearch] = useState<string>("");
-
   const [localCategories, setLocalCategories] = useState<CategoryOption[]>([]);
   const [localSubcategoriesWithIds, setLocalSubcategoriesWithIds] = useState<
     Record<string, Array<{ id: string; nombre: string }>>
   >({});
 
-  const filteredBrands = localBrands.filter((b) =>
-    b.nombre.toLowerCase().includes(brandSearch.toLowerCase())
+  const brandOptions = useMemo(
+    () => sortByNombre(localBrands).map((b) => ({ id: b.idMarca, label: b.nombre })),
+    [localBrands],
   );
-  const filteredCategories = localCategories.filter((c) =>
-    c.nombre.toLowerCase().includes(categorySearch.toLowerCase())
+  const categoryOptions = useMemo(
+    () =>
+      sortByNombre(localCategories).map((c) => ({
+        id: c.idCategoria,
+        label: c.nombre,
+      })),
+    [localCategories],
+  );
+  const subcategoryOptions = useMemo(
+    () =>
+      sortByNombre(localSubcategoriesWithIds[categoryId] || []).map((s) => ({
+        id: s.id,
+        label: s.nombre,
+      })),
+    [localSubcategoriesWithIds, categoryId],
   );
 
   const [margenConfigurado, setMargenConfigurado] = useState<number | null>(null);
@@ -173,34 +191,39 @@ export default function ProductFormModal({
           inventarioApi.obtenerSubCategorias(),
         ]);
 
-        const brandsList: BrandOption[] = brands.map((b) => ({
-          idMarca: b.idMarca,
-          nombre: b.nombre,
-        }));
+        const brandsList: BrandOption[] = sortByNombre(
+          brands.map((b) => ({
+            idMarca: b.idMarca,
+            nombre: b.nombre,
+          })),
+        );
 
-        const categoriesList: CategoryOption[] = categories.map((c) => ({
-          idCategoria: c.idCategoria,
-          nombre: c.nombre,
-        }));
+        const categoriesList: CategoryOption[] = sortByNombre(
+          categories.map((c) => ({
+            idCategoria: c.idCategoria,
+            nombre: c.nombre,
+          })),
+        );
 
         const subcategoriesMap: Record<
           string,
           Array<{ id: string; nombre: string }>
         > = {};
         subcategories.forEach((sc) => {
-          const categoryId = sc.idCategoria;
-          if (!subcategoriesMap[categoryId]) {
-            subcategoriesMap[categoryId] = [];
+          const catId = sc.idCategoria;
+          if (!subcategoriesMap[catId]) {
+            subcategoriesMap[catId] = [];
           }
-          if (
-            !subcategoriesMap[categoryId].some((s) => s.nombre === sc.nombre)
-          ) {
-            subcategoriesMap[categoryId].push({
+          if (!subcategoriesMap[catId].some((s) => s.nombre === sc.nombre)) {
+            subcategoriesMap[catId].push({
               id: sc.idSubCategoria,
               nombre: sc.nombre,
             });
           }
         });
+        for (const catId of Object.keys(subcategoriesMap)) {
+          subcategoriesMap[catId] = sortByNombre(subcategoriesMap[catId]);
+        }
 
         setLocalBrands(brandsList);
         setLocalCategories(categoriesList);
@@ -430,7 +453,7 @@ export default function ProductFormModal({
         });
         setLocalBrands((prev) => {
           if (prev.some((b) => b.nombre === created.nombre)) return prev;
-          return [...prev, created];
+          return sortByNombre([...prev, created]);
         });
         setBrandId(created.idMarca);
         set("brand", created.nombre);
@@ -441,7 +464,7 @@ export default function ProductFormModal({
         });
         setLocalCategories((prev) => {
           if (prev.some((c) => c.nombre === created.nombre)) return prev;
-          return [...prev, created];
+          return sortByNombre([...prev, created]);
         });
         setLocalSubcategoriesWithIds((prev) => ({
           ...prev,
@@ -459,7 +482,7 @@ export default function ProductFormModal({
             nombre: parentCat,
             descripcion: "",
           });
-          setLocalCategories((prev) => [...prev, createdCategory]);
+          setLocalCategories((prev) => sortByNombre([...prev, createdCategory]));
           category = createdCategory;
         }
 
@@ -479,10 +502,10 @@ export default function ProductFormModal({
           if (existing.some((s) => s.nombre === created.nombre)) return prev;
           return {
             ...prev,
-            [category!.idCategoria]: [
+            [category!.idCategoria]: sortByNombre([
               ...existing,
               { id: created.idSubCategoria, nombre: created.nombre },
-            ],
+            ]),
           };
         });
 
@@ -727,43 +750,26 @@ export default function ProductFormModal({
 
             <div className="mb-3">
               <label className={twLabel}>Marca</label>
-              <div className="flex gap-2">
-                <FieldWithIcon icon={<IconLayers />} className="flex-1">
-                  <select
+              <div className="flex gap-2 items-start">
+                <div className="flex-1">
+                  <SearchableCombobox
                     id="marca"
+                    options={brandOptions}
                     value={brandId}
-                    onChange={(e) => {
-                      const selectedBrand = filteredBrands.find(
-                        (b) => b.idMarca === e.target.value,
-                      );
-                      if (selectedBrand) {
-                        setBrandId(selectedBrand.idMarca);
-                        set("brand", selectedBrand.nombre);
-                      }
+                    onChange={(id, option) => {
+                      setBrandId(id);
+                      set("brand", option?.label ?? "");
                     }}
-                    className={`${twField} pl-8 appearance-none cursor-pointer ${errors.brand ? "border-red-500" : ""}`}
-                  >
-                    <option value="">Seleccionar...</option>
-                    {filteredBrands.map((b) => (
-                      <option key={b.idMarca} value={b.idMarca}>
-                        {b.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </FieldWithIcon>
-                <input
-                  type="text"
-                  placeholder="Buscar marca..."
-                  value={brandSearch}
-                  onChange={(e) => setBrandSearch(e.target.value)}
-                  className="mt-1 w-full py-[9px] px-3 border border-gray-200 rounded-lg text-[13px] text-gray-900 outline-none bg-white box-border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
+                    placeholder="Seleccionar marca..."
+                    icon={<IconLayers />}
+                    error={!!errors.brand}
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={() => setActiveSubModal("brand")}
                   className={twAddBtn}
                   title="Agregar Marca"
-                  id="marca"
                 >
                   <IconPlus />
                 </button>
@@ -776,39 +782,21 @@ export default function ProductFormModal({
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
                 <label className={twLabel}>Categoría</label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-start">
                   <div className="flex-1">
-                    <FieldWithIcon icon={<IconGrid />}>
-                      <select
-                        id="categoria"
-                        value={categoryId}
-                        onChange={(e) => {
-                          const selectedCategory = filteredCategories.find(
-                            (c) => c.idCategoria === e.target.value,
-                          );
-                          if (selectedCategory) {
-                            setCategoryId(selectedCategory.idCategoria);
-                            set("category", selectedCategory.nombre);
-                            setSubcategoryId("");
-                            set("subcategory", "");
-                          }
-                        }}
-                        className={`${twField} pl-8 appearance-none cursor-pointer ${errors.category ? "border-red-500" : ""}`}
-                      >
-                        <option value="">Seleccionar...</option>
-                        {filteredCategories.map((c) => (
-                          <option key={c.idCategoria} value={c.idCategoria}>
-                            {c.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </FieldWithIcon>
-                    <input
-                      type="text"
-                      placeholder="Buscar categoría..."
-                      value={categorySearch}
-                      onChange={(e) => setCategorySearch(e.target.value)}
-                      className="mt-1 w-full py-[9px] px-3 border border-gray-200 rounded-lg text-[13px] text-gray-900 outline-none bg-white box-border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    <SearchableCombobox
+                      id="categoria"
+                      options={categoryOptions}
+                      value={categoryId}
+                      onChange={(id, option) => {
+                        setCategoryId(id);
+                        set("category", option?.label ?? "");
+                        setSubcategoryId("");
+                        set("subcategory", "");
+                      }}
+                      placeholder="Seleccionar categoría..."
+                      icon={<IconGrid />}
+                      error={!!errors.category}
                     />
                   </div>
                   <button
@@ -816,7 +804,6 @@ export default function ProductFormModal({
                     onClick={() => setActiveSubModal("category")}
                     className={twAddBtn}
                     title="Agregar Categoría"
-                    id="categoria"
                   >
                     <IconPlus />
                   </button>
@@ -829,39 +816,36 @@ export default function ProductFormModal({
               </div>
               <div>
                 <label className={twLabel}>Subcategoría</label>
-                <div className="flex gap-2">
-                  <FieldWithIcon icon={<IconHash />} className="flex-1">
-                    <select
+                <div className="flex gap-2 items-start">
+                  <div className="flex-1">
+                    <SearchableCombobox
                       id="subcategoria"
+                      options={subcategoryOptions}
                       value={subcategoryId}
-                      onChange={(e) => {
-                        const selectedSubcategory = (
-                          localSubcategoriesWithIds[categoryId] || []
-                        ).find((s) => s.id === e.target.value);
-                        if (selectedSubcategory) {
-                          setSubcategoryId(selectedSubcategory.id);
-                          set("subcategory", selectedSubcategory.nombre);
-                        }
+                      onChange={(id, option) => {
+                        setSubcategoryId(id);
+                        set("subcategory", option?.label ?? "");
                       }}
-                      className={`${twField} pl-8 appearance-none cursor-pointer ${errors.subcategory ? "border-red-500" : ""}`}
+                      placeholder={
+                        categoryId
+                          ? "Seleccionar subcategoría..."
+                          : "Selecciona una categoría"
+                      }
+                      icon={<IconHash />}
+                      error={!!errors.subcategory}
                       disabled={!categoryId}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {(localSubcategoriesWithIds[categoryId] || []).map(
-                        (s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.nombre}
-                          </option>
-                        ),
-                      )}
-                    </select>
-                  </FieldWithIcon>
+                      emptyMessage={
+                        categoryId
+                          ? "Sin subcategorías"
+                          : "Selecciona una categoría"
+                      }
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => setActiveSubModal("subcategory")}
                     className={twAddBtn}
                     title="Agregar Subcategoría"
-                    id="subcategoria"
                   >
                     <IconPlus />
                   </button>
