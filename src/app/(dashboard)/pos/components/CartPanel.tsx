@@ -35,7 +35,13 @@ export default function CartPanel({
   const totalItems = cart.reduce((s, i) => s + i.qty, 0);
   const subtotal = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
   const IVA_RATE = 0.16;
-  const iva = subtotal * IVA_RATE;
+  // Solo los productos que causan IVA lo suman; los exentos se cobran a precio base.
+  const iva = cart.reduce(
+    (s, i) =>
+      s +
+      (i.product.tieneIVA ? i.product.price * i.qty * IVA_RATE : 0),
+    0,
+  );
   const total = subtotal + iva;
 
   const hasItems = cart.length > 0;

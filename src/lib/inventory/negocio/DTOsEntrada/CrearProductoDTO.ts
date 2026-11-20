@@ -40,6 +40,11 @@ export interface CrearProductoDTO {
   descripcion: string;
 
   /**
+   * Indica si al producto se le calcula IVA (16%). Por defecto `true`.
+   */
+  tieneIVA?: boolean;
+
+  /**
    * El identificador único de la categoría principal a la que pertenecerá el producto.
    */
   idCategoria: string;

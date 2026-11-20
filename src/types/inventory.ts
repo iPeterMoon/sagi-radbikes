@@ -58,6 +58,8 @@ export interface Product {
   tags: ProductTag[];
   /** Indica si el producto está activo y visible en el catálogo. */
   active: boolean;
+  /** Indica si al producto se le calcula IVA (16%). */
+  tieneIVA: boolean;
   /** URL de la imagen principal. */
   image: string;
   /** Variantes vendibles del producto (SKU, precio y stock autoritativos). */

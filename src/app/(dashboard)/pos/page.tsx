@@ -30,6 +30,7 @@ function mapProductoVenta(p: ProductoVentaDTO): POSProduct {
     }`,
     category: p.categoria?.nombre ?? "Sin categoría",
     price: p.precio,
+    tieneIVA: p.tieneIVA,
     stock: p.stock,
     image: p.urlImagen || "/placeholder.png",
     sku: p.SKU,
@@ -46,6 +47,7 @@ function mapCarritoItem(item: ProductoCarritoDTO): CartItem {
       name: item.nombre,
       category: "Sin categoría",
       price: item.precioUnitario,
+      tieneIVA: (item.porcentajeImpuesto ?? 16) > 0,
       stock: 0,
       image: item.urlImagen || "/placeholder.png",
       sku: "",
@@ -184,6 +186,7 @@ export default function POSPage() {
           precioUnitario: product.price,
           subtotal: product.price,
           urlImagen: product.image,
+          porcentajeImpuesto: product.tieneIVA ? 16 : 0,
         });
         setCart(data.map(mapCarritoItem));
       } catch (err: any) {
@@ -308,6 +311,7 @@ export default function POSPage() {
           precioUnitario: item.product.price,
           subtotal: item.product.price * item.qty,
           urlImagen: item.product.image,
+          porcentajeImpuesto: item.product.tieneIVA ? 16 : 0,
         })),
       };
 

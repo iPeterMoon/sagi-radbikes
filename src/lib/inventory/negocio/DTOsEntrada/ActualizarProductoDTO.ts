@@ -44,6 +44,11 @@ export interface ActualizarProductoDTO {
   descripcion: string;
 
   /**
+   * Indica si al producto se le calcula IVA (16%). Por defecto `true`.
+   */
+  tieneIVA?: boolean;
+
+  /**
    * El nuevo identificador único de la categoría a la que pertenece el producto.
    */
   idCategoria: string;

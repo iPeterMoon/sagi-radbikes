@@ -15,4 +15,6 @@ export interface ProductoCarritoDTO {
     subtotal: number;
     /** URL de la imagen del producto */
     urlImagen: string;
+    /** Porcentaje de IVA aplicable a este ítem (0 si el producto está exento). */
+    porcentajeImpuesto?: number;
 }

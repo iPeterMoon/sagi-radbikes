@@ -59,6 +59,7 @@ type FormState = Omit<
   referencePrice: number | string;
   referenceCost: number | string;
   referenceMinStock: number | string;
+  tieneIVA: boolean;
 };
 
 export default function ProductFormModal({
@@ -86,6 +87,7 @@ export default function ProductFormModal({
           description: "",
           tags: [],
           active: true,
+          tieneIVA: true,
           image: "",
         },
   );
@@ -115,10 +117,20 @@ export default function ProductFormModal({
   const [subcategoryId, setSubcategoryId] = useState<string>("");
 
   const [localBrands, setLocalBrands] = useState<BrandOption[]>([]);
+  const [brandSearch, setBrandSearch] = useState<string>("");
+  const [categorySearch, setCategorySearch] = useState<string>("");
+
   const [localCategories, setLocalCategories] = useState<CategoryOption[]>([]);
   const [localSubcategoriesWithIds, setLocalSubcategoriesWithIds] = useState<
     Record<string, Array<{ id: string; nombre: string }>>
   >({});
+
+  const filteredBrands = localBrands.filter((b) =>
+    b.nombre.toLowerCase().includes(brandSearch.toLowerCase())
+  );
+  const filteredCategories = localCategories.filter((c) =>
+    c.nombre.toLowerCase().includes(categorySearch.toLowerCase())
+  );
 
   const [margenConfigurado, setMargenConfigurado] = useState<number | null>(null);
   useEffect(() => {
@@ -729,7 +741,7 @@ export default function ProductFormModal({
                     id="marca"
                     value={brandId}
                     onChange={(e) => {
-                      const selectedBrand = localBrands.find(
+                      const selectedBrand = filteredBrands.find(
                         (b) => b.idMarca === e.target.value,
                       );
                       if (selectedBrand) {
@@ -740,13 +752,20 @@ export default function ProductFormModal({
                     className={`${twField} pl-8 appearance-none cursor-pointer ${errors.brand ? "border-red-500" : ""}`}
                   >
                     <option value="">Seleccionar...</option>
-                    {localBrands.map((b) => (
+                    {filteredBrands.map((b) => (
                       <option key={b.idMarca} value={b.idMarca}>
                         {b.nombre}
                       </option>
                     ))}
                   </select>
                 </FieldWithIcon>
+                <input
+                  type="text"
+                  placeholder="Buscar marca..."
+                  value={brandSearch}
+                  onChange={(e) => setBrandSearch(e.target.value)}
+                  className="mt-1 w-full py-[9px] px-3 border border-gray-200 rounded-lg text-[13px] text-gray-900 outline-none bg-white box-border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
                 <button
                   type="button"
                   onClick={() => setActiveSubModal("brand")}
@@ -766,31 +785,40 @@ export default function ProductFormModal({
               <div>
                 <label className={twLabel}>Categoría</label>
                 <div className="flex gap-2">
-                  <FieldWithIcon icon={<IconGrid />} className="flex-1">
-                    <select
-                      id="categoria"
-                      value={categoryId}
-                      onChange={(e) => {
-                        const selectedCategory = localCategories.find(
-                          (c) => c.idCategoria === e.target.value,
-                        );
-                        if (selectedCategory) {
-                          setCategoryId(selectedCategory.idCategoria);
-                          set("category", selectedCategory.nombre);
-                          setSubcategoryId("");
-                          set("subcategory", "");
-                        }
-                      }}
-                      className={`${twField} pl-8 appearance-none cursor-pointer ${errors.category ? "border-red-500" : ""}`}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {localCategories.map((c) => (
-                        <option key={c.idCategoria} value={c.idCategoria}>
-                          {c.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </FieldWithIcon>
+                  <div className="flex-1">
+                    <FieldWithIcon icon={<IconGrid />}>
+                      <select
+                        id="categoria"
+                        value={categoryId}
+                        onChange={(e) => {
+                          const selectedCategory = filteredCategories.find(
+                            (c) => c.idCategoria === e.target.value,
+                          );
+                          if (selectedCategory) {
+                            setCategoryId(selectedCategory.idCategoria);
+                            set("category", selectedCategory.nombre);
+                            setSubcategoryId("");
+                            set("subcategory", "");
+                          }
+                        }}
+                        className={`${twField} pl-8 appearance-none cursor-pointer ${errors.category ? "border-red-500" : ""}`}
+                      >
+                        <option value="">Seleccionar...</option>
+                        {filteredCategories.map((c) => (
+                          <option key={c.idCategoria} value={c.idCategoria}>
+                            {c.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </FieldWithIcon>
+                    <input
+                      type="text"
+                      placeholder="Buscar categoría..."
+                      value={categorySearch}
+                      onChange={(e) => setCategorySearch(e.target.value)}
+                      className="mt-1 w-full py-[9px] px-3 border border-gray-200 rounded-lg text-[13px] text-gray-900 outline-none bg-white box-border focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => setActiveSubModal("category")}
@@ -918,6 +946,26 @@ export default function ProductFormModal({
                   </p>
                 )}
               </div>
+            </div>
+
+            <div className="mb-3">
+              <label className={twLabel}>IVA</label>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  id="tieneIVA"
+                  type="checkbox"
+                  checked={form.tieneIVA}
+                  onChange={(e) => set("tieneIVA", e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 accent-[#1a2e5a] cursor-pointer"
+                />
+                <span className="text-[12px] text-gray-600">
+                  Calcular IVA (16%) al vender este producto
+                </span>
+              </label>
+              <p className="text-[11px] text-gray-400 mt-1">
+                Si está marcado, el POS muestra el precio con IVA incluido y la
+                venta lo agrega al total.
+              </p>
             </div>
 
             <div className="mb-3">

@@ -75,6 +75,8 @@ model products {
   /// Stock mínimo de referencia/plantilla, mismo rol que `price` arriba.
   min_stock        Int?
   is_active        Boolean            @default(true)
+  /// Indica si a este producto se le calcula IVA (16%) al venderlo/mostrarlo en el POS.
+  has_iva          Boolean            @default(true)
   subcategory_id   BigInt?
   brand_id         BigInt?
   product_images   product_images[]

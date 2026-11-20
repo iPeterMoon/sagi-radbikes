@@ -13,6 +13,8 @@ export interface ProductoVentaDTO {
   precio: number;
   /** Inventario actual disponible */
   stock: number;
+  /** Indica si al producto se le calcula IVA (16%). */
+  tieneIVA: boolean;
   /** Detalles adicionales del artículo */
   descripcion: string;
   /** Código interno (Stock Keeping Unit) */

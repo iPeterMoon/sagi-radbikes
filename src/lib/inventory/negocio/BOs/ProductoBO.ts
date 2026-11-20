@@ -103,6 +103,7 @@ export class ProductoBO implements IProductoBO {
       brand_id: BigInt(dto.idMarca),
       subcategory_id: BigInt(dto.idSubCategoria),
       is_active: true,
+      has_iva: dto.tieneIVA ?? true,
     };
     const created = await this.accesoDatos.productDAO.create(entity);
 
@@ -149,6 +150,7 @@ export class ProductoBO implements IProductoBO {
       description: dto.descripcion,
       brand_id: BigInt(dto.idMarca),
       subcategory_id: BigInt(dto.idSubCategoria),
+      has_iva: dto.tieneIVA ?? true,
     };
     const updated = await this.accesoDatos.productDAO.update(
       BigInt(dto.idProducto),

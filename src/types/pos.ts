@@ -7,6 +7,8 @@ export interface POSProduct {
   name: string;
   category: string;
   price: number;
+  /** Indica si al producto se le calcula IVA (16%). */
+  tieneIVA: boolean;
   /** `null` indica stock ilimitado (ej. servicios de taller). */
   stock: number | null;
   image: string;

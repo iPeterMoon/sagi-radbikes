@@ -75,6 +75,11 @@ export interface ProductoDTO {
   activo: boolean;
 
   /**
+   * Indica si al producto se le calcula IVA (16%) al mostrarlo o venderlo.
+   */
+  tieneIVA: boolean;
+
+  /**
    * Una lista de atributos dinámicos o etiquetas clave-valor que complementan la información del producto.
    */
   etiquetas: EtiquetaDTO[];

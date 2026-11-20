@@ -66,7 +66,13 @@ export class VentaBO implements IVentaBO {
     porcentajeImpuesto: number,
   ): { subtotal: number; importeIVA: number; total: number } {
     const subtotal = productos.reduce((acc, p) => acc + p.subtotal, 0);
-    const importeIVA = subtotal * (porcentajeImpuesto / 100);
+    // Cada ítem puede traer su propio porcentaje (0 para productos exentos).
+    // Si no lo trae, se usa la tasa general de la venta.
+    const importeIVA = productos.reduce(
+      (acc, p) =>
+        acc + p.subtotal * ((p.porcentajeImpuesto ?? porcentajeImpuesto) / 100),
+      0,
+    );
     const total = subtotal + importeIVA;
     return {
       subtotal: Math.round(subtotal * 100) / 100,
