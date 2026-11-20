@@ -13,7 +13,9 @@
     "start:prod": "node scripts/run-with-prod-env.js start",
     "prod": "npm run build:prod && npm run start:prod",
     "lint": "eslint",
-    "postinstall": "electron-builder install-app-deps && prisma generate && electron-rebuild -f -w usb"
+    "postinstall": "electron-builder install-app-deps && prisma generate && electron-rebuild -f -w usb",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@boxicons/react": "^1.0.3",
@@ -39,6 +41,10 @@
   "devDependencies": {
     "@electron/rebuild": "^4.2.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.10",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/jsonwebtoken": "^9.0.10",
@@ -46,14 +52,19 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.3.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "concurrently": "^9.2.4",
     "electron": "^43.2.0",
     "electron-builder": "^26.15.3",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.12",
+    "jsdom": "^29.1.1",
     "prisma": "^7.5.0",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^3.2.4",
     "wait-on": "^9.1.0"
   }
 }
