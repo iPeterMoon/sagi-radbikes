@@ -315,7 +315,8 @@ export default function InventarioPage() {
         title: "Error de Eliminación",
         subtitle: `No se puede eliminar '${modal.product.name}'`,
         infoText:
-          "Este producto tiene un historial de ventas registrado. Por integridad del sistema y cumplimiento contable, los productos con ventas asociadas no pueden ser eliminados permanentemente.",
+          error?.message ||
+          "Ocurrió un error inesperado al eliminar el producto.",
         suggestionText:
           "Puede desactivar el producto utilizando el interruptor 'Activo' en la lista del catálogo para que deje de estar disponible.",
       });

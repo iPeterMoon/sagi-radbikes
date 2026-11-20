@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { createServicioCatalogo } from "@/lib/inventory/factory";
 import { PrismaFactory } from "@/lib/PrismaFactory";
 import { ActualizarProductoDTO } from "@/types/dtos";
@@ -29,8 +30,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     if (dto.idMarca && isNaN(Number(dto.idMarca))) {
       const brand = await prisma.brands.findFirst({ where: { name: dto.idMarca } });
-      if (!brand) throw new Error(`La ma
-rca '${dto.idMarca}' no existe.`);
+      if (!brand) throw new Error(`La marca '${dto.idMarca}' no existe.`);
       dto.idMarca = brand.id.toString();
     }
     if (dto.idCategoria && isNaN(Number(dto.idCategoria))) {
@@ -61,6 +61,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return new NextResponse(null, { status: 204 });
   } catch (error: any) {
     console.error("DELETE PRODUCTO[ID] - ERROR: ", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      return NextResponse.json(
+        {
+          error:
+            "No se puede eliminar: una o más variantes de este producto tienen ventas registradas. Desactivá el producto en su lugar.",
+        },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

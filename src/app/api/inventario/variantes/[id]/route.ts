@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { createServicioCatalogo } from "@/lib/inventory/factory";
 import { ActualizarVarianteDTO } from "@/types/dtos";
 
@@ -25,6 +26,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return new NextResponse(null, { status: 204 });
   } catch (error: any) {
     console.error("DELETE VARIANTES[ID] - ERROR: ", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      return NextResponse.json(
+        { error: "No se puede eliminar: esta variante tiene ventas registradas. Desactivala en su lugar." },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
