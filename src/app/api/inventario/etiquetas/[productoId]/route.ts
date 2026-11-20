@@ -14,13 +14,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prod
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ productoId: string }> }) {
-  try {
-    const idEtiqueta = (await params).productoId;
-    await servicio.eliminarEtiqueta(idEtiqueta);
-    return new NextResponse(null, { status: 204 });
-  } catch (error: any) {
-    console.error("DELETE ETIQUETAS[PRODUCTOID] - ERROR: ",error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
+// La eliminación vive en `/etiquetas/etiqueta/{idEtiqueta}` para no confundir
+// el ID de producto de este GET con el ID de la etiqueta a borrar.

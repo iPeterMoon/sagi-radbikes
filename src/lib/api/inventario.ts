@@ -31,6 +31,11 @@ async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
     const error = await res.json().catch(() => ({ error: "Request failed" }));
     throw new Error(error.error || "Request failed");
   }
+  // 204 No Content (ej. los DELETE) no trae body: parsearlo como JSON
+  // rompe con "Unexpected end of JSON input".
+  if (res.status === 204) {
+    return undefined as T;
+  }
   return res.json();
 }
 
@@ -104,12 +109,12 @@ export const inventarioApi = {
 
   /** Obtiene todas las categorías disponibles. */
   async obtenerCategorias(): Promise<CategoriaDTO[]> {
-    return fetchApi<CategoriaDTO[]>(`${API_BASE}/categorias`);
+    return fetchApi<CategoriaDTO[]>(`${API_BASE}/categorias`).then(cs => cs.sort((a, b) => a.nombre.localeCompare(b.nombre)));
   },
 
   /** Obtiene todas las marcas disponibles. */
   async obtenerMarcas(): Promise<MarcaDTO[]> {
-    return fetchApi<MarcaDTO[]>(`${API_BASE}/marcas`);
+    return fetchApi<MarcaDTO[]>(`${API_BASE}/marcas`).then(ms => ms.sort((a, b) => a.nombre.localeCompare(b.nombre)));
   },
 
   /**
@@ -218,7 +223,7 @@ export const inventarioApi = {
 
   /** Elimina una etiqueta por su ID. */
   async eliminarEtiqueta(idEtiqueta: string): Promise<boolean> {
-    return fetchApi<boolean>(`${API_BASE}/etiquetas/${idEtiqueta}`, {
+    return fetchApi<boolean>(`${API_BASE}/etiquetas/etiqueta/${idEtiqueta}`, {
       method: "DELETE",
     });
   },
@@ -306,7 +311,7 @@ export const inventarioApi = {
 
   /** Elimina un atributo de variante por su ID. */
   async eliminarAtributoVariante(idAtributo: string): Promise<boolean> {
-    return fetchApi<boolean>(`${API_BASE}/atributos-variante/${idAtributo}`, {
+    return fetchApi<boolean>(`${API_BASE}/atributos-variante/atributo/${idAtributo}`, {
       method: "DELETE",
     });
   },
