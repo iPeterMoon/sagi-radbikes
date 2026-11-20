@@ -1,0 +1,71 @@
+name: Aplicar migraciones a producción
+
+# Workflow manual con aprobación (GitHub Environment "production").
+# Hace backup lógico antes de `migrate deploy` y lo sube como artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: 'Escribí APPLY para aplicar; cualquier otro valor solo verifica'
+        required: true
+        default: 'VERIFICAR'
+      dry_run:
+        description: 'Solo verificar (no aplicar ni backup)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      DIRECT_URL: ${{ secrets.PROD_DIRECT_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cliente PostgreSQL
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Dependencias nativas (Electron/USB)
+        run: sudo apt-get install -y libudev-dev libusb-1.0-0-dev
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Estado antes de migrar
+        run: |
+          node scripts/check-migrations.mjs || true
+          npx prisma migrate status
+
+      - name: Backup lógico (custom format)
+        if: ${{ inputs.confirmar == 'APPLY' && !inputs.dry_run }}
+        run: pg_dump "$DIRECT_URL" -Fc -f /tmp/sagi-prod-before.dump
+
+      - name: Subir backup como artifact
+        if: ${{ inputs.confirmar == 'APPLY' && !inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagi-prod-backup-${{ github.run_number }}
+          path: /tmp/sagi-prod-before.dump
+          retention-days: 90
+
+      - name: Aplicar migraciones
+        if: ${{ inputs.confirmar == 'APPLY' && !inputs.dry_run }}
+        run: npx prisma migrate deploy
+
+      - name: Verificar estado después
+        run: |
+          node scripts/check-migrations.mjs
+          psql "$DIRECT_URL" -Atc "SELECT column_name, column_default, is_nullable FROM information_schema.columns WHERE table_name='products' AND column_name='has_iva'"

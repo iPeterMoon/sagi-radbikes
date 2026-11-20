@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sagi_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sagi_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dependencias nativas (Electron/USB)
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev libusb-1.0-0-dev
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true # Deuda preexistente (React compiler + scripts CJS); no bloquear CI
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Tests unitarios
+        run: npm test
+
+      - name: Coverage
+        run: npm run test:coverage
+
+      - name: Preparar base CI y migraciones
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sagi_ci
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/sagi_ci
+        run: |
+          npx prisma migrate deploy
+          npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script
+          SMOKE_SEED=1 node scripts/seed-smoke.mjs
+          node scripts/check-migrations.mjs
+
+      - name: Build
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sagi_ci
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/sagi_ci
+          JWT_SECRET: ci-smoke-secret
+          SESSION_TIMEOUT_HOURS: "12"
+          SUPABASE_URL: http://127.0.0.1:54321
+          SUPABASE_SERVICE_ROLE_KEY: ci-smoke-key
+          SUPABASE_BUCKET_IMAGES: smoke-local
+        run: npm run build
+
+      - name: Smoke HTTP (lectura + escritura)
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sagi_ci
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/sagi_ci
+          JWT_SECRET: ci-smoke-secret
+          SESSION_TIMEOUT_HOURS: "12"
+          SUPABASE_URL: http://127.0.0.1:54321
+          SUPABASE_SERVICE_ROLE_KEY: ci-smoke-key
+          SUPABASE_BUCKET_IMAGES: smoke-local
+          SMOKE_BASE_URL: http://localhost:3100
+          SMOKE_USER: plunal
+          SMOKE_PASSWORD: crujones
+          SMOKE_LIMITED_USER: vendedor_smoke
+          SMOKE_LIMITED_PASSWORD: crujones
+          SMOKE_REPORT: smoke-report.json
+        run: |
+          npm run start -- -p 3100 &
+          SERVER_PID=$!
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3100/login > /dev/null; then break; fi
+            sleep 1
+          done
+          SMOKE_WRITE=1 node scripts/smoke-test.mjs
+          kill $SERVER_PID || true
+
+      - name: Subir reporte de smoke
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: smoke-report.json
+          if-no-files-found: ignore

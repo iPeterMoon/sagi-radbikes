@@ -20,6 +20,12 @@
     "test:smoke:write": "node scripts/smoke-write.mjs",
     "test:smoke:local": "node scripts/with-env.mjs .env.smoke -- node scripts/smoke-test.mjs",
     "test:smoke:local:write": "node scripts/with-env.mjs .env.smoke -- node scripts/smoke-write.mjs",
+    "db:status:local": "node scripts/with-env.mjs .env.local -- prisma migrate status",
+    "db:deploy:local": "node scripts/with-env.mjs .env.local -- prisma migrate deploy",
+    "db:check:local": "node scripts/with-env.mjs .env.local -- node scripts/check-migrations.mjs",
+    "db:status:prod": "node scripts/with-env.mjs .env -- prisma migrate status",
+    "db:deploy:prod": "node scripts/with-env.mjs .env -- prisma migrate deploy",
+    "db:check:prod": "node scripts/with-env.mjs .env -- node scripts/check-migrations.mjs",
     "seed:smoke": "node scripts/with-env.mjs .env.smoke -- node scripts/seed-smoke.mjs"
   },
   "dependencies": {
