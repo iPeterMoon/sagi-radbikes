@@ -2,6 +2,11 @@
 
 import { CartItem, PaymentMethod } from "@/types/pos";
 import { formatPrice } from "@/lib/utils";
+import {
+  desglosarIVA,
+  redondearMonto,
+  TASA_IVA,
+} from "@/lib/pos/impuestos";
 import { CartAlt, ChevronRight } from "@boxicons/react";
 import CartItemRow from "./CartItemRow";
 import PaymentMethodSelector from "./PaymentMethodSelector";
@@ -33,16 +38,20 @@ export default function CartPanel({
   onCheckout,
 }: CartPanelProps) {
   const totalItems = cart.reduce((s, i) => s + i.qty, 0);
-  const subtotal = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
-  const IVA_RATE = 0.16;
-  // Solo los productos que causan IVA lo suman; los exentos se cobran a precio base.
-  const iva = cart.reduce(
-    (s, i) =>
-      s +
-      (i.product.tieneIVA ? i.product.price * i.qty * IVA_RATE : 0),
-    0,
+  // Misma regla que el backend: el IVA se suma al precio base o se extrae del
+  // precio final según la configuración del producto.
+  const desgloses = cart.map((i) =>
+    desglosarIVA(
+      i.product.price * i.qty,
+      TASA_IVA,
+      !i.product.calcularIVA,
+    ),
   );
-  const total = subtotal + iva;
+  const subtotal = redondearMonto(
+    desgloses.reduce((s, d) => s + d.base, 0),
+  );
+  const iva = redondearMonto(desgloses.reduce((s, d) => s + d.iva, 0));
+  const total = redondearMonto(desgloses.reduce((s, d) => s + d.total, 0));
 
   const hasItems = cart.length > 0;
 
@@ -105,7 +114,7 @@ export default function CartPanel({
             <span className="tabular-nums">${formatPrice(subtotal)}</span>
           </div>
           <div className="flex justify-between text-[13px] text-gray-500">
-            <span>IVA (16%)</span>
+            <span>IVA ({TASA_IVA}%)</span>
             <span className="tabular-nums">${formatPrice(iva)}</span>
           </div>
           <div className="flex justify-between items-center text-[17px] font-extrabold text-gray-900 pt-2.5 border-t border-gray-100 mt-2">

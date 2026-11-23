@@ -15,6 +15,7 @@ import type {
   ProductoVentaDTO,
 } from "@/types/dtos";
 import { posApi } from "@/lib/api/pos";
+import { TASA_IVA } from "@/lib/pos/impuestos";
 import SearchBar from "./components/SearchBar";
 import CategoryTabs from "./components/CategoryTabs";
 import ProductGrid from "./components/ProductGrid";
@@ -30,7 +31,7 @@ function mapProductoVenta(p: ProductoVentaDTO): POSProduct {
     }`,
     category: p.categoria?.nombre ?? "Sin categoría",
     price: p.precio,
-    tieneIVA: p.tieneIVA,
+    calcularIVA: p.calcularIVA,
     stock: p.stock,
     image: p.urlImagen || "/placeholder.png",
     sku: p.SKU,
@@ -41,13 +42,17 @@ function mapProductoVenta(p: ProductoVentaDTO): POSProduct {
 }
 
 function mapCarritoItem(item: ProductoCarritoDTO): CartItem {
+  // Carritos persistidos antes del cambio no traen `precioIncluyeIVA`: un
+  // porcentaje 0 significaba "precio final", que ahora se lee como incluido.
+  const precioIncluyeIVA =
+    item.precioIncluyeIVA ?? ((item.porcentajeImpuesto ?? 16) === 0);
   return {
     product: {
       id: Number(item.idVariante),
       name: item.nombre,
       category: "Sin categoría",
       price: item.precioUnitario,
-      tieneIVA: (item.porcentajeImpuesto ?? 16) > 0,
+      calcularIVA: !precioIncluyeIVA,
       stock: 0,
       image: item.urlImagen || "/placeholder.png",
       sku: "",
@@ -183,7 +188,8 @@ export default function POSPage() {
           precioUnitario: product.price,
           subtotal: product.price,
           urlImagen: product.image,
-          porcentajeImpuesto: product.tieneIVA ? 16 : 0,
+          porcentajeImpuesto: TASA_IVA,
+          precioIncluyeIVA: !product.calcularIVA,
         });
         setCart(data.map(mapCarritoItem));
       } catch (err: any) {
@@ -300,7 +306,7 @@ export default function POSPage() {
         idUsuario,
         metodoPago:
           paymentMethod === "tarjeta" ? "tarjeta_debito" : paymentMethod,
-        porcentajeImpuesto: 16,
+        porcentajeImpuesto: TASA_IVA,
         productos: cart.map((item) => ({
           idVariante: String(item.product.id),
           nombre: item.product.name,
@@ -308,7 +314,8 @@ export default function POSPage() {
           precioUnitario: item.product.price,
           subtotal: item.product.price * item.qty,
           urlImagen: item.product.image,
-          porcentajeImpuesto: item.product.tieneIVA ? 16 : 0,
+          porcentajeImpuesto: TASA_IVA,
+          precioIncluyeIVA: !item.product.calcularIVA,
         })),
       };
 

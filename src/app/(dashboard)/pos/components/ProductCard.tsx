@@ -3,15 +3,13 @@
 import Image from "next/image";
 import { POSProduct } from "@/types/pos";
 import { formatPrice } from "@/lib/utils";
+import { precioFinal } from "@/lib/pos/impuestos";
 import { Plus } from "@boxicons/react";
 
 interface ProductCardProps {
   product: POSProduct;
   onAdd: (product: POSProduct) => void;
 }
-
-/** Porcentaje de IVA aplicado a los productos que lo causan. */
-const IVA_RATE = 0.16;
 
 /**
  * Tarjeta de producto en la cuadrícula del POS.
@@ -21,10 +19,9 @@ const IVA_RATE = 0.16;
 export default function ProductCard({ product, onAdd }: ProductCardProps) {
   const outOfStock = product.stock !== null && product.stock === 0;
   const stockLabel = product.stock === null ? "∞" : `${product.stock}`;
-  // El POS muestra el precio final al cliente, con IVA incluido cuando aplica.
-  const displayPrice = product.tieneIVA
-    ? product.price * (1 + IVA_RATE)
-    : product.price;
+  // Siempre se muestra el precio final con IVA incluido, tanto si el precio
+  // capturado era base (se le suma) como si ya venía con IVA (se muestra tal cual).
+  const displayPrice = precioFinal(product.price, product.calcularIVA);
 
   return (
     <div
@@ -58,11 +55,9 @@ export default function ProductCard({ product, onAdd }: ProductCardProps) {
         <div className="flex items-center justify-between mt-auto">
           <span className="text-[#1a2e5a] font-extrabold text-[15px]">
             ${formatPrice(displayPrice)}
-            {product.tieneIVA && (
-              <span className="ml-1 text-[9px] font-semibold text-gray-400">
-                IVA incl.
-              </span>
-            )}
+            <span className="ml-1 text-[9px] font-semibold text-gray-400">
+              IVA incl.
+            </span>
           </span>
           <button
             onClick={() => onAdd(product)}

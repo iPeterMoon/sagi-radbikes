@@ -31,7 +31,7 @@ describe("ProductoMapper (POS)", () => {
       nombre: "Bici",
       precio: 100,
       stock: 5,
-      tieneIVA: true,
+      calcularIVA: true,
       descripcion: "d",
       SKU: "S1",
       codigoBarras: "123",
@@ -77,7 +77,7 @@ describe("ProductoMapper (POS)", () => {
       nombre: "",
       precio: 0,
       stock: 0,
-      tieneIVA: true,
+      calcularIVA: true,
       descripcion: "",
       SKU: undefined,
       codigoBarras: "",
@@ -88,18 +88,18 @@ describe("ProductoMapper (POS)", () => {
     });
   });
 
-  it("mapea has_iva=false del producto padre a tieneIVA=false", () => {
+  it("mapea calcular_iva=false del producto padre a calcularIVA=false", () => {
     const dto = ProductoMapper.toDTO({
       id: 1n,
       product_id: 9n,
-      products: { has_iva: false },
+      products: { calcular_iva: false },
     });
-    expect(dto.tieneIVA).toBe(false);
+    expect(dto.calcularIVA).toBe(false);
   });
 
   it("asume IVA por defecto si el producto padre no lo define", () => {
     const dto = ProductoMapper.toDTO({ id: 1n, product_id: 9n });
-    expect(dto.tieneIVA).toBe(true);
+    expect(dto.calcularIVA).toBe(true);
   });
 
   it("toDTOList mapea listas", () => {

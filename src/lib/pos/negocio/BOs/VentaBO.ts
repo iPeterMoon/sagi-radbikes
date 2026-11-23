@@ -8,6 +8,7 @@ import { DetalleStockDTO } from "../DTOsSalida/DetalleStockDTO";
 import { TicketMapper } from "../mappers/TicketMapper";
 import { VentaTicketDTO } from "../DTOsSalida";
 import { product_variants, products } from "@prisma/client";
+import { desglosarIVA, redondearMonto } from "../../impuestos";
 
 /**
  * Objeto de Negocio (Business Object) encargado de las reglas de negocio de las Ventas.
@@ -65,19 +66,22 @@ export class VentaBO implements IVentaBO {
     productos: ProductoCarritoDTO[],
     porcentajeImpuesto: number,
   ): { subtotal: number; importeIVA: number; total: number } {
-    const subtotal = productos.reduce((acc, p) => acc + p.subtotal, 0);
-    // Cada ítem puede traer su propio porcentaje (0 para productos exentos).
-    // Si no lo trae, se usa la tasa general de la venta.
-    const importeIVA = productos.reduce(
-      (acc, p) =>
-        acc + p.subtotal * ((p.porcentajeImpuesto ?? porcentajeImpuesto) / 100),
-      0,
+    // Cada línea se desglosa por separado: si el precio ya incluye IVA se
+    // extrae, si no se suma. Así carrito, venta y ticket coinciden al centavo.
+    const desgloses = productos.map((p) =>
+      desglosarIVA(
+        p.subtotal,
+        p.porcentajeImpuesto ?? porcentajeImpuesto,
+        p.precioIncluyeIVA ?? false,
+      ),
     );
-    const total = subtotal + importeIVA;
+    const subtotal = desgloses.reduce((acc, d) => acc + d.base, 0);
+    const importeIVA = desgloses.reduce((acc, d) => acc + d.iva, 0);
+    const total = desgloses.reduce((acc, d) => acc + d.total, 0);
     return {
-      subtotal: Math.round(subtotal * 100) / 100,
-      importeIVA: Math.round(importeIVA * 100) / 100,
-      total: Math.round(total * 100) / 100,
+      subtotal: redondearMonto(subtotal),
+      importeIVA: redondearMonto(importeIVA),
+      total: redondearMonto(total),
     };
   }
 
@@ -105,15 +109,26 @@ export class VentaBO implements IVentaBO {
     });
 
     // Creación de las partidas/detalles de la venta. El costo unitario se toma del
-    // servidor (nunca del cliente) para snapshotearlo igual que ya se hace con el precio.
+    // servidor (nunca del cliente). El precio unitario se guarda sin IVA para que
+    // los reportes de ingresos y margen sigan siendo comparables entre productos
+    // con precio base y con precio ya incluido.
     const detalles = await Promise.all(
       dto.productos.map(async (p) => {
         const variante = await this.accesoDatos.productoDAO.getById(BigInt(p.idVariante));
+        const desglose = desglosarIVA(
+          p.subtotal,
+          p.porcentajeImpuesto ?? dto.porcentajeImpuesto,
+          p.precioIncluyeIVA ?? false,
+        );
+        const unitPrice =
+          p.cantidad > 0
+            ? redondearMonto(desglose.base / p.cantidad)
+            : redondearMonto(p.precioUnitario);
         return {
           sale_id: venta.id,
           variant_id: BigInt(p.idVariante),
           quantity: p.cantidad,
-          unitPrice: p.precioUnitario,
+          unitPrice,
           unitCost: variante?.cost ?? 0,
         };
       }),

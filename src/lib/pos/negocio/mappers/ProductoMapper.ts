@@ -26,7 +26,7 @@ export class ProductoMapper {
       nombre: p.products?.name ?? "",
       precio: p.price ?? 0,
       stock: p.stock ?? 0,
-      tieneIVA: p.products?.has_iva ?? true,
+      calcularIVA: p.products?.calcular_iva ?? true,
       descripcion: p.products?.description ?? "",
       SKU: p.SKU,
       codigoBarras: p.barcode_upc ?? "",

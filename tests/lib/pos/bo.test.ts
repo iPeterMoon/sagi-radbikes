@@ -220,9 +220,10 @@ describe("VentaBO.calcularTotal", () => {
       [item({ subtotal: 100 }), item({ idVariante: "8", subtotal: 33.333 })],
       16,
     );
+    // Cada línea se redondea a centavos: subtotal + IVA == total exactamente.
     expect(total.subtotal).toBe(133.33);
     expect(total.importeIVA).toBe(21.33);
-    expect(total.total).toBe(154.67);
+    expect(total.total).toBe(154.66);
   });
 
   it("con impuesto 0 el total iguala al subtotal", () => {
@@ -233,7 +234,7 @@ describe("VentaBO.calcularTotal", () => {
     });
   });
 
-  it("respeta el porcentaje por ítem para productos exentos", () => {
+  it("respeta el porcentaje por ítem cuando la tasa es 0", () => {
     const total = bo.calcularTotal(
       [
         item({ subtotal: 100, porcentajeImpuesto: 16 }),
@@ -253,6 +254,25 @@ describe("VentaBO.calcularTotal", () => {
     );
     expect(total.importeIVA).toBe(16);
     expect(total.total).toBe(166);
+  });
+
+  it("extrae el IVA cuando el precio del ítem ya lo incluye", () => {
+    const total = bo.calcularTotal(
+      [item({ subtotal: 116, precioIncluyeIVA: true })],
+      16,
+    );
+    expect(total).toEqual({ subtotal: 100, importeIVA: 16, total: 116 });
+  });
+
+  it("combina ítems con precio base y con precio ya incluido", () => {
+    const total = bo.calcularTotal(
+      [
+        item({ subtotal: 100 }),
+        item({ idVariante: "8", subtotal: 100, precioIncluyeIVA: true }),
+      ],
+      16,
+    );
+    expect(total).toEqual({ subtotal: 186.21, importeIVA: 29.79, total: 216 });
   });
 });
 
@@ -321,6 +341,27 @@ describe("VentaBO.registrarVenta", () => {
     expect(acceso.productoDAO.restarStock).toHaveBeenCalledWith(7n, 2);
     expect(resumen.idVenta).toBe("10");
     expect(resumen.total).toBe(116);
+  });
+
+  it("extrae el IVA y guarda el precio base si el precio ya lo incluye", async () => {
+    await bo.registrarVenta({
+      ...dto,
+      productos: [
+        item({
+          cantidad: 2,
+          precioUnitario: 58,
+          subtotal: 116,
+          precioIncluyeIVA: true,
+        }),
+      ],
+    } as any);
+
+    expect(acceso.ventaDAO.createWithDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ subtotal: 100, IVA_amount: 16, total: 116 }),
+    );
+    expect(acceso.detalleVentaDAO.createMany).toHaveBeenCalledWith([
+      expect.objectContaining({ quantity: 2, unitPrice: 50 }),
+    ]);
   });
 
   it("usa costo 0 si la variante ya no existe al crear detalles", async () => {

@@ -210,8 +210,8 @@ async function main() {
   status("GET /api/inventario/productos responde 200", inventario, 200, (r) => Array.isArray(r.json));
   if (Array.isArray(inventario.json)) {
     check(
-      "los productos incluyen tieneIVA booleano",
-      inventario.json.every((p) => typeof p.tieneIVA === "boolean"),
+      "los productos incluyen calcularIVA booleano",
+      inventario.json.every((p) => typeof p.calcularIVA === "boolean"),
     );
     const filtrado = await admin.request("/api/inventario/productos?busqueda=__no_existe__");
     status("filtro de búsqueda responde 200", filtrado, 200, (r) => Array.isArray(r.json));
@@ -222,8 +222,8 @@ async function main() {
   status("GET /api/pos/productos responde 200", pos, 200, (r) => Array.isArray(r.json));
   if (Array.isArray(pos.json)) {
     check(
-      "los productos del POS incluyen tieneIVA booleano",
-      pos.json.every((p) => typeof p.tieneIVA === "boolean"),
+      "los productos del POS incluyen calcularIVA booleano",
+      pos.json.every((p) => typeof p.calcularIVA === "boolean"),
     );
     const busqueda = await admin.request("/api/pos/productos?busqueda=__no_existe__");
     status("búsqueda del POS responde 200", busqueda, 200, (r) => Array.isArray(r.json));
@@ -298,18 +298,18 @@ async function main() {
         codigoDeBarras: codigo,
         minStock: 1,
         descripcion: "producto temporal de smoke test",
-        tieneIVA: false,
+        calcularIVA: false,
         idCategoria: categoriaId,
         idMarca: marcaId,
         imagenesArchivo: [],
         idSubCategoria: subcategoriaId,
       },
     });
-    status("POST producto con tieneIVA=false responde 201", creado, 201, (r) => r.json?.tieneIVA === false);
+    status("POST producto con calcularIVA=false responde 201", creado, 201, (r) => r.json?.calcularIVA === false);
     const id = creado.json?.idProducto;
 
     if (id) {
-      status("GET producto creado responde 200", await admin.request(`/api/inventario/productos/${id}`), 200, (r) => r.json?.tieneIVA === false);
+      status("GET producto creado responde 200", await admin.request(`/api/inventario/productos/${id}`), 200, (r) => r.json?.calcularIVA === false);
 
       const actualizado = await admin.request(`/api/inventario/productos/${id}`, {
         method: "PUT",
@@ -322,7 +322,7 @@ async function main() {
           codigoDeBarras: "",
           minStock: 1,
           descripcion: "producto temporal de smoke test",
-          tieneIVA: true,
+          calcularIVA: true,
           idCategoria: categoriaId,
           imagenesNuevas: [],
           imagenesEliminar: [],
@@ -331,7 +331,7 @@ async function main() {
           idSubCategoria: subcategoriaId,
         },
       });
-      status("PUT producto cambia tieneIVA a true", actualizado, 200, (r) => r.json?.tieneIVA === true);
+      status("PUT producto cambia calcularIVA a true", actualizado, 200, (r) => r.json?.calcularIVA === true);
 
       const variantes = await admin.request(`/api/inventario/productos/${id}/variantes`);
       const varianteCreada = await admin.request(`/api/inventario/productos/${id}/variantes`, {
@@ -387,11 +387,15 @@ async function main() {
   section("Escritura: carrito y venta (IVA mixto)");
   await admin.request("/api/pos/carrito", { method: "DELETE" });
   const posActualizado = await admin.request("/api/pos/productos");
-  const conIVA = posActualizado.json?.find((p) => p.tieneIVA === true);
-  const exento = posActualizado.json?.find((p) => p.tieneIVA === false);
-  check("hay variantes con y sin IVA para la venta mixta", Boolean(conIVA && exento), `conIVA=${conIVA?.idVariante} exento=${exento?.idVariante}`);
+  const conIVA = posActualizado.json?.find((p) => p.calcularIVA === true);
+  const conIVAIncluido = posActualizado.json?.find((p) => p.calcularIVA === false);
+  check(
+    "hay variantes con precio base y con precio con IVA incluido",
+    Boolean(conIVA && conIVAIncluido),
+    `conIVA=${conIVA?.idVariante} conIVAIncluido=${conIVAIncluido?.idVariante}`,
+  );
 
-  if (conIVA && exento) {
+  if (conIVA && conIVAIncluido) {
     const itemConIVA = {
       idVariante: conIVA.idVariante,
       nombre: conIVA.nombre,
@@ -400,21 +404,23 @@ async function main() {
       subtotal: 2 * conIVA.precio,
       urlImagen: conIVA.urlImagen || "",
       porcentajeImpuesto: 16,
+      precioIncluyeIVA: false,
     };
-    const itemExento = {
-      idVariante: exento.idVariante,
-      nombre: exento.nombre,
+    const itemIVAIncluido = {
+      idVariante: conIVAIncluido.idVariante,
+      nombre: conIVAIncluido.nombre,
       cantidad: 1,
-      precioUnitario: exento.precio,
-      subtotal: exento.precio,
-      urlImagen: exento.urlImagen || "",
-      porcentajeImpuesto: 0,
+      precioUnitario: conIVAIncluido.precio,
+      subtotal: conIVAIncluido.precio,
+      urlImagen: conIVAIncluido.urlImagen || "",
+      porcentajeImpuesto: 16,
+      precioIncluyeIVA: true,
     };
     const agregado = await admin.request("/api/pos/carrito", { method: "POST", body: itemConIVA });
     status("POST carrito responde 200", agregado, 200, (r) => Array.isArray(r.json) && r.json.length === 1);
     const modificado = await admin.request(`/api/pos/carrito/${conIVA.idVariante}`, { method: "PATCH", body: { cantidad: 2 } });
     status("PATCH carrito responde 200", modificado, 200, (r) => Array.isArray(r.json));
-    await admin.request("/api/pos/carrito", { method: "POST", body: itemExento });
+    await admin.request("/api/pos/carrito", { method: "POST", body: itemIVAIncluido });
     const carrito = await admin.request("/api/pos/carrito");
     status("GET carrito devuelve 2 items", carrito, 200, (r) => r.json?.length === 2);
 
@@ -427,22 +433,25 @@ async function main() {
         idUsuario: login.json?.usuario?.idUsuario,
         metodoPago: "Efectivo",
         porcentajeImpuesto: 16,
-        productos: [itemConIVA, itemExento],
+        productos: [itemConIVA, itemIVAIncluido],
       },
     });
     status("POST /api/pos/venta responde 201", venta, 201, (r) => Boolean(r.json?.folio));
-    const esperadoSubtotal = Math.round((2 * conIVA.precio + exento.precio) * 100) / 100;
-    const esperadoIVA = Math.round(2 * conIVA.precio * 0.16 * 100) / 100;
-    const esperadoTotal = Math.round((esperadoSubtotal + esperadoIVA) * 100) / 100;
+    const redondear = (n) => Math.round(n * 100) / 100;
+    const ivaBase = redondear(2 * conIVA.precio * 0.16);
+    const ivaIncluido = redondear(conIVAIncluido.precio - conIVAIncluido.precio / 1.16);
+    const esperadoSubtotal = redondear(2 * conIVA.precio + conIVAIncluido.precio - ivaIncluido);
+    const esperadoIVA = redondear(ivaBase + ivaIncluido);
+    const esperadoTotal = redondear(2 * conIVA.precio + conIVAIncluido.precio + ivaBase);
     check("subtotal de la venta mixta es correcto", Math.abs(venta.json?.subtotal - esperadoSubtotal) < 0.02, `${venta.json?.subtotal} vs ${esperadoSubtotal}`);
-    check("IVA solo aplica al producto con IVA", Math.abs(venta.json?.importeIVA - esperadoIVA) < 0.02, `${venta.json?.importeIVA} vs ${esperadoIVA}`);
+    check("IVA se suma y se extrae según cada producto", Math.abs(venta.json?.importeIVA - esperadoIVA) < 0.02, `${venta.json?.importeIVA} vs ${esperadoIVA}`);
     check("total de la venta mixta es correcto", Math.abs(venta.json?.total - esperadoTotal) < 0.02, `${venta.json?.total} vs ${esperadoTotal}`);
 
     const stockDespues = Object.fromEntries(
       (await admin.request("/api/pos/productos")).json.map((p) => [p.idVariante, p.stock]),
     );
     check("el stock de la variante con IVA bajó 2 unidades", stockDespues[conIVA.idVariante] === stockAntes[conIVA.idVariante] - 2);
-    check("el stock de la variante exenta bajó 1 unidad", stockDespues[exento.idVariante] === stockAntes[exento.idVariante] - 1);
+    check("el stock de la variante con IVA incluido bajó 1 unidad", stockDespues[conIVAIncluido.idVariante] === stockAntes[conIVAIncluido.idVariante] - 1);
 
     const ventaSinStock = await admin.request("/api/pos/venta", {
       method: "POST",
