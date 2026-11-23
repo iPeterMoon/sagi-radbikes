@@ -91,17 +91,17 @@ async function ensureNamed(table, name, extraColumn, extraValue) {
   return fila.id;
 }
 
-async function ensureProduct(nombre, sku, precio, costo, stock, hasIva, subcategoryId, brandId) {
+async function ensureProduct(nombre, sku, precio, costo, stock, calcularIVA, subcategoryId, brandId) {
   let producto = await one("SELECT id FROM products WHERE name = $1", [nombre]);
   if (!producto) {
     producto = await one(
-      `INSERT INTO products (name, price, cost, min_stock, is_active, has_iva,
+      `INSERT INTO products (name, price, cost, min_stock, is_active, calcular_iva,
                              subcategory_id, brand_id, created_at)
        VALUES ($1, $2, $3, 1, true, $4, $5, $6, NOW()) RETURNING id`,
-      [nombre, precio, costo, hasIva, subcategoryId, brandId],
+      [nombre, precio, costo, calcularIVA, subcategoryId, brandId],
     );
   } else {
-    await client.query("UPDATE products SET has_iva = $1 WHERE id = $2", [hasIva, producto.id]);
+    await client.query("UPDATE products SET calcular_iva = $1 WHERE id = $2", [calcularIVA, producto.id]);
   }
 
   let variante = await one('SELECT id FROM product_variants WHERE "SKU" = $1', [sku]);
@@ -173,8 +173,8 @@ try {
     subcategoryId,
     brandId,
   );
-  const exento = await ensureProduct(
-    `Bicicleta ${suffix} exenta`,
+  const conIVAIncluido = await ensureProduct(
+    `Bicicleta ${suffix} con IVA incluido`,
     `${suffix}-EXENTO-001`,
     500,
     300,
@@ -198,7 +198,7 @@ try {
   console.log(`  roles: Admin ${suffix}(${adminRoleId}), Vendedor ${suffix}(${limitedRoleId})`);
   console.log(`  marca/categoria/subcategoria: ${brandId}/${categoryId}/${subcategoryId}`);
   console.log(`  producto con IVA: ${conIva.productoId} / variante: ${conIva.varianteId}`);
-  console.log(`  producto exento: ${exento.productoId} / variante: ${exento.varianteId}`);
+  console.log(`  producto con IVA incluido: ${conIVAIncluido.productoId} / variante: ${conIVAIncluido.varianteId}`);
 } catch (error) {
   await client.query("ROLLBACK");
   console.error(`Error aplicando seed: ${error.message}`);

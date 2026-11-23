@@ -97,7 +97,7 @@ El smoke de escritura crea/edita/elimina datos temporales (producto, variante, e
 SMOKE_SEED=1 npm run seed:smoke
 ```
 
-Crea `plunal`/`vendedor_smoke` (password `crujones`), roles con/sin módulos, catálogo mínimo y productos con `has_iva=true/false`. Solo corre con `SMOKE_SEED=1` y contra DB local.
+Crea `plunal`/`vendedor_smoke` (password `crujones`), roles con/sin módulos, catálogo mínimo y productos con `calcular_iva=true` (precio base) y `calcular_iva=false` (precio con IVA incluido). Solo corre con `SMOKE_SEED=1` y contra DB local.
 
 ### CI
 

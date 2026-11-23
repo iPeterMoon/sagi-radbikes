@@ -68,4 +68,4 @@ jobs:
       - name: Verificar estado después
         run: |
           node scripts/check-migrations.mjs
-          psql "$DIRECT_URL" -Atc "SELECT column_name, column_default, is_nullable FROM information_schema.columns WHERE table_name='products' AND column_name='has_iva'"
+          psql "$DIRECT_URL" -Atc "SELECT column_name, column_default, is_nullable FROM information_schema.columns WHERE table_name='products' AND column_name='calcular_iva'"
