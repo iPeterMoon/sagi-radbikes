@@ -364,6 +364,68 @@ describe("VentaBO.registrarVenta", () => {
     ]);
   });
 
+  it("usa el precio y la regla vigentes de BD aunque el DTO traiga datos viejos", async () => {
+    acceso.productoDAO.getById.mockResolvedValue({
+      id: 7n,
+      cost: 30,
+      price: 100,
+      products: { calcular_iva: false },
+    });
+
+    await bo.registrarVenta({
+      ...dto,
+      productos: [
+        item({
+          cantidad: 1,
+          precioUnitario: 80,
+          subtotal: 80,
+          precioIncluyeIVA: false,
+        }),
+      ],
+    } as any);
+
+    expect(acceso.productoDAO.getById).toHaveBeenCalledWith(7n, {
+      products: true,
+    });
+    expect(acceso.ventaDAO.createWithDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ subtotal: 86.21, IVA_amount: 13.79, total: 100 }),
+    );
+    expect(acceso.detalleVentaDAO.createMany).toHaveBeenCalledWith([
+      expect.objectContaining({ quantity: 1, unitPrice: 86.21, unitCost: 30 }),
+    ]);
+    expect(acceso.pagoDAO.createPago).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 100 }),
+    );
+  });
+
+  it("suma el IVA cuando el producto pasó de precio incluido a precio base", async () => {
+    acceso.productoDAO.getById.mockResolvedValue({
+      id: 7n,
+      cost: 30,
+      price: 100,
+      products: { calcular_iva: true },
+    });
+
+    await bo.registrarVenta({
+      ...dto,
+      productos: [
+        item({
+          cantidad: 1,
+          precioUnitario: 100,
+          subtotal: 100,
+          precioIncluyeIVA: true,
+        }),
+      ],
+    } as any);
+
+    expect(acceso.ventaDAO.createWithDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ subtotal: 100, IVA_amount: 16, total: 116 }),
+    );
+    expect(acceso.detalleVentaDAO.createMany).toHaveBeenCalledWith([
+      expect.objectContaining({ quantity: 1, unitPrice: 100 }),
+    ]);
+  });
+
   it("usa costo 0 si la variante ya no existe al crear detalles", async () => {
     acceso.productoDAO.getById.mockResolvedValue(null);
     await bo.registrarVenta(dto as any);

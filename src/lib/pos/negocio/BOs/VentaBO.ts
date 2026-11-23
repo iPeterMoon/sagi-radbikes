@@ -8,7 +8,13 @@ import { DetalleStockDTO } from "../DTOsSalida/DetalleStockDTO";
 import { TicketMapper } from "../mappers/TicketMapper";
 import { VentaTicketDTO } from "../DTOsSalida";
 import { product_variants, products } from "@prisma/client";
-import { desglosarIVA, redondearMonto } from "../../impuestos";
+import { desglosarIVA, redondearMonto, TASA_IVA } from "../../impuestos";
+
+/** Línea del carrito ya resuelta contra el catálogo vigente. */
+interface LineaResuelta {
+  producto: ProductoCarritoDTO;
+  variante: (product_variants & { products?: products | null }) | null;
+}
 
 /**
  * Objeto de Negocio (Business Object) encargado de las reglas de negocio de las Ventas.
@@ -19,6 +25,43 @@ export class VentaBO implements IVentaBO {
    * Inyecta el acceso a datos consolidado.
    */
   constructor(private accesoDatos: IPOSAccesoDatos) { }
+
+  /**
+   * Reemplaza el precio y la regla de IVA de cada línea por los vigentes en la
+   * base de datos. El carrito snapshottea ambos al agregar el producto: sin
+   * esto, un cambio en el catálogo se cobraría con la regla anterior.
+   */
+  private async resolverLineas(
+    productos: ProductoCarritoDTO[],
+  ): Promise<LineaResuelta[]> {
+    return Promise.all(
+      productos.map(async (producto) => {
+        const variante = (await this.accesoDatos.productoDAO.getById(
+          BigInt(producto.idVariante),
+          { products: true },
+        )) as (product_variants & { products?: products | null }) | null;
+
+        // Si la variante ya no existe se mantiene el snapshot del cliente,
+        // igual que se hacía antes para el costo.
+        if (!variante) return { producto, variante: null };
+
+        const precio = variante.price ?? producto.precioUnitario;
+        const calcularIVA =
+          variante.products?.calcular_iva ?? !(producto.precioIncluyeIVA ?? false);
+
+        return {
+          producto: {
+            ...producto,
+            precioUnitario: precio,
+            subtotal: redondearMonto(precio * producto.cantidad),
+            porcentajeImpuesto: TASA_IVA,
+            precioIncluyeIVA: !calcularIVA,
+          },
+          variante,
+        };
+      }),
+    );
+  }
 
   /**
    * Valida la estructura y los datos requeridos para procesar una venta.
@@ -91,9 +134,10 @@ export class VentaBO implements IVentaBO {
    * @returns {Promise<VentaResumenDTO>} Resumen de la venta registrada.
    */
   async registrarVenta(dto: CrearVentaDTO): Promise<VentaResumenDTO> {
+    const lineas = await this.resolverLineas(dto.productos);
     const { subtotal, importeIVA, total } = this.calcularTotal(
-      dto.productos,
-      dto.porcentajeImpuesto,
+      lineas.map((linea) => linea.producto),
+      TASA_IVA,
     );
 
     const folio = `VENTA-${Date.now()}`;
@@ -105,19 +149,18 @@ export class VentaBO implements IVentaBO {
       total,
       subtotal,
       IVA_amount: importeIVA,
-      tax_percentage: dto.porcentajeImpuesto,
+      tax_percentage: TASA_IVA,
     });
 
-    // Creación de las partidas/detalles de la venta. El costo unitario se toma del
-    // servidor (nunca del cliente). El precio unitario se guarda sin IVA para que
-    // los reportes de ingresos y margen sigan siendo comparables entre productos
-    // con precio base y con precio ya incluido.
+    // Creación de las partidas/detalles de la venta. Precio, regla de IVA y
+    // costo se toman del servidor (nunca del cliente). El precio unitario se
+    // guarda sin IVA para que los reportes de ingresos y margen sigan siendo
+    // comparables entre productos con precio base y con precio ya incluido.
     const detalles = await Promise.all(
-      dto.productos.map(async (p) => {
-        const variante = await this.accesoDatos.productoDAO.getById(BigInt(p.idVariante));
+      lineas.map(({ producto: p, variante }) => {
         const desglose = desglosarIVA(
           p.subtotal,
-          p.porcentajeImpuesto ?? dto.porcentajeImpuesto,
+          TASA_IVA,
           p.precioIncluyeIVA ?? false,
         );
         const unitPrice =

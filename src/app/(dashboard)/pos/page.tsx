@@ -9,13 +9,14 @@ import {
   VentaResumenDTO,
   CheckoutError,
 } from "@/types/pos";
-import type {
-  CrearVentaDTO,
-  ProductoCarritoDTO,
-  ProductoVentaDTO,
-} from "@/types/dtos";
+import type { CrearVentaDTO, ProductoVentaDTO } from "@/types/dtos";
 import { posApi } from "@/lib/api/pos";
 import { TASA_IVA } from "@/lib/pos/impuestos";
+import {
+  mapCarritoItem,
+  prepararProductosVenta,
+  sincronizarCarrito,
+} from "@/lib/pos/sincronizarCarrito";
 import SearchBar from "./components/SearchBar";
 import CategoryTabs from "./components/CategoryTabs";
 import ProductGrid from "./components/ProductGrid";
@@ -38,27 +39,6 @@ function mapProductoVenta(p: ProductoVentaDTO): POSProduct {
     barcodeUpc: p.codigoBarras,
     variantAttributes: p.atributos?.map((a) => ({ name: a.nombre, value: a.valor })),
     parentProductId: Number(p.idProductoPadre),
-  };
-}
-
-function mapCarritoItem(item: ProductoCarritoDTO): CartItem {
-  // Carritos persistidos antes del cambio no traen `precioIncluyeIVA`: un
-  // porcentaje 0 significaba "precio final", que ahora se lee como incluido.
-  const precioIncluyeIVA =
-    item.precioIncluyeIVA ?? ((item.porcentajeImpuesto ?? 16) === 0);
-  return {
-    product: {
-      id: Number(item.idVariante),
-      name: item.nombre,
-      category: "Sin categoría",
-      price: item.precioUnitario,
-      calcularIVA: !precioIncluyeIVA,
-      stock: 0,
-      image: item.urlImagen || "/placeholder.png",
-      sku: "",
-      barcodeUpc: "",
-    },
-    qty: item.cantidad,
   };
 }
 
@@ -130,26 +110,9 @@ export default function POSPage() {
 
       try {
         const data = await posApi.obtenerCarrito();
-        // Complete los datos del carrito con el catálogo recién cargado
-        // (imagen, nombre, categoría y SKU) sin un efecto que vuelva a
-        // actualizar el estado después del render.
-        setCart(
-          data.map((item) => {
-            const base = mapCarritoItem(item);
-            const prod = catalogo.find((p) => p.id === base.product.id);
-            if (!prod) return base;
-            return {
-              ...base,
-              product: {
-                ...base.product,
-                image: prod.image,
-                name: prod.name,
-                category: prod.category,
-                sku: prod.sku,
-              },
-            };
-          }),
-        );
+        // El precio y la regla de IVA pueden haber cambiado en el catálogo
+        // desde que se agregó el producto: siempre se usa la versión vigente.
+        setCart(sincronizarCarrito(data.map(mapCarritoItem), catalogo));
       } catch (err: any) {
         if (!handleAuthError(err)) {
           console.error("Error loading carrito:", err);
@@ -158,6 +121,37 @@ export default function POSPage() {
     };
 
     loadInitialData();
+  }, [handleAuthError]);
+
+  // Si la regla de IVA o el precio cambian en el catálogo (por ejemplo, desde
+  // otra pestaña), el carrito se actualiza al volver al POS sin recargar.
+  useEffect(() => {
+    const recargarCatalogo = async () => {
+      try {
+        const data = await posApi.obtenerProductos();
+        const catalogo = data.map(mapProductoVenta);
+        setProducts(catalogo);
+        setCart((prev) => sincronizarCarrito(prev, catalogo));
+      } catch (err: any) {
+        if (!handleAuthError(err)) {
+          console.error("Error refrescando catálogo:", err);
+        }
+      }
+    };
+
+    const onFocus = () => {
+      void recargarCatalogo();
+    };
+    const onVisibilityChange = () => {
+      if (!document.hidden) onFocus();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [handleAuthError]);
 
   const categories = [
@@ -191,14 +185,14 @@ export default function POSPage() {
           porcentajeImpuesto: TASA_IVA,
           precioIncluyeIVA: !product.calcularIVA,
         });
-        setCart(data.map(mapCarritoItem));
+        setCart(sincronizarCarrito(data.map(mapCarritoItem), products));
       } catch (err: any) {
         if (!handleAuthError(err)) {
           setCheckoutError(mapCheckoutError(err));
         }
       }
     },
-    [handleAuthError],
+    [handleAuthError, products],
   );
 
   const handleScan = useCallback(
@@ -224,14 +218,14 @@ export default function POSPage() {
         const currentItem = cart.find((item) => item.product.id === id);
         const newQty = currentItem ? currentItem.qty + 1 : 1;
         const data = await posApi.cambiarCantidad(String(id), newQty);
-        setCart(data.map(mapCarritoItem));
+        setCart(sincronizarCarrito(data.map(mapCarritoItem), products));
       } catch (err: any) {
         if (!handleAuthError(err)) {
           setCheckoutError(mapCheckoutError(err));
         }
       }
     },
-    [handleAuthError, cart],
+    [handleAuthError, cart, products],
   );
 
   const decrement = useCallback(
@@ -243,18 +237,18 @@ export default function POSPage() {
         if (newQty < 1) {
           console.log("cantidad: ", newQty);
           const data = await posApi.eliminarProductoCarrito(String(id));
-          setCart(data.map(mapCarritoItem));
+          setCart(sincronizarCarrito(data.map(mapCarritoItem), products));
           return;
         }
         const data = await posApi.cambiarCantidad(String(id), newQty);
-        setCart(data.map(mapCarritoItem));
+        setCart(sincronizarCarrito(data.map(mapCarritoItem), products));
       } catch (err: any) {
         if (!handleAuthError(err)) {
           setCheckoutError(mapCheckoutError(err));
         }
       }
     },
-    [handleAuthError, cart],
+    [handleAuthError, cart, products],
   );
 
   const clearCart = useCallback(async () => {
@@ -307,16 +301,7 @@ export default function POSPage() {
         metodoPago:
           paymentMethod === "tarjeta" ? "tarjeta_debito" : paymentMethod,
         porcentajeImpuesto: TASA_IVA,
-        productos: cart.map((item) => ({
-          idVariante: String(item.product.id),
-          nombre: item.product.name,
-          cantidad: item.qty,
-          precioUnitario: item.product.price,
-          subtotal: item.product.price * item.qty,
-          urlImagen: item.product.image,
-          porcentajeImpuesto: TASA_IVA,
-          precioIncluyeIVA: !item.product.calcularIVA,
-        })),
+        productos: prepararProductosVenta(cart, products),
       };
 
       const resumen = await posApi.registrarVenta(dto);
