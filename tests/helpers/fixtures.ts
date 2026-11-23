@@ -31,7 +31,7 @@ export function makeProduct(overrides: Partial<Product> = {}): Product {
     description: "",
     tags: [],
     active: true,
-    tieneIVA: true,
+    calcularIVA: true,
     image: "",
     variants: [],
     ...overrides,

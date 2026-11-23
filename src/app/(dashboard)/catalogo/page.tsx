@@ -46,7 +46,7 @@ function mapDtoToProduct(dto: any): Product {
       value: etiqueta.valor,
     })),
     active: dto.activo ?? true,
-    tieneIVA: dto.tieneIVA ?? true,
+    calcularIVA: dto.calcularIVA ?? true,
     image: imageUrl,
     variants: (dto.variantes || []).map((v: any) => {
       const variantMainImage = v.imagenes?.find((img: any) => img.esPrincipal);
@@ -223,7 +223,7 @@ export default function InventarioPage() {
           codigoDeBarras: "",
           minStock: data.referenceMinStock,
           descripcion: data.description,
-          tieneIVA: data.tieneIVA,
+          calcularIVA: data.calcularIVA,
           idCategoria: attributeIds?.categoryId ?? "",
           imagenesNuevas: [],
           imagenesEliminar: attributeIds?.deletedImageIds ?? [],
@@ -262,7 +262,7 @@ export default function InventarioPage() {
           codigoDeBarras: "",
           minStock: data.referenceMinStock,
           descripcion: data.description,
-          tieneIVA: data.tieneIVA,
+          calcularIVA: data.calcularIVA,
           idCategoria: attributeIds?.categoryId ?? "",
           idMarca: attributeIds?.brandId ?? "",
           imagenesArchivo: [],

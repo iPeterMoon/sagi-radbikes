@@ -44,9 +44,10 @@ export interface ActualizarProductoDTO {
   descripcion: string;
 
   /**
-   * Indica si al producto se le calcula IVA (16%). Por defecto `true`.
+   * Indica si el IVA (16%) se calcula sobre el precio capturado. Por defecto `true`.
+   * Si es `false`, el precio capturado ya incluye IVA y debe extraerse.
    */
-  tieneIVA?: boolean;
+  calcularIVA?: boolean;
 
   /**
    * El nuevo identificador único de la categoría a la que pertenece el producto.

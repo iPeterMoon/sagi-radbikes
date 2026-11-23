@@ -59,7 +59,7 @@ export class ProductoMapper {
       minStockReferencia: entity.min_stock || 0,
       estadoStock: this.calcularEstadoStock(variantesActivas),
       activo: entity.is_active ?? true,
-      tieneIVA: entity.has_iva ?? true,
+      calcularIVA: entity.calcular_iva ?? true,
       etiquetas: (entity.product_physical || []).map(EtiquetaMapper.toDTO),
       variantes,
     };

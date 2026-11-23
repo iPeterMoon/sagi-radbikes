@@ -66,7 +66,7 @@ type FormState = Omit<
   referencePrice: number | string;
   referenceCost: number | string;
   referenceMinStock: number | string;
-  tieneIVA: boolean;
+  calcularIVA: boolean;
 };
 
 export default function ProductFormModal({
@@ -94,7 +94,7 @@ export default function ProductFormModal({
           description: "",
           tags: [],
           active: true,
-          tieneIVA: true,
+          calcularIVA: true,
           image: "",
         },
   );
@@ -889,7 +889,12 @@ export default function ProductFormModal({
                 )}
               </div>
               <div>
-                <label className={twLabel}>Precio de referencia</label>
+                <label className={twLabel}>
+                  Precio de referencia{" "}
+                  <span className="font-normal text-gray-400">
+                    ({form.calcularIVA ? "sin IVA" : "con IVA incluido"})
+                  </span>
+                </label>
                 <div className="relative">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[13px]">
                     $
@@ -928,19 +933,20 @@ export default function ProductFormModal({
               <label className={twLabel}>IVA</label>
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
-                  id="tieneIVA"
+                  id="calcularIVA"
                   type="checkbox"
-                  checked={form.tieneIVA}
-                  onChange={(e) => set("tieneIVA", e.target.checked)}
+                  checked={form.calcularIVA}
+                  onChange={(e) => set("calcularIVA", e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300 accent-[#1a2e5a] cursor-pointer"
                 />
                 <span className="text-[12px] text-gray-600">
-                  Calcular IVA (16%) al vender este producto
+                  Calcular IVA (16%) sobre el precio capturado
                 </span>
               </label>
               <p className="text-[11px] text-gray-400 mt-1">
-                Si está marcado, el POS muestra el precio con IVA incluido y la
-                venta lo agrega al total.
+                Marcado: capturás el precio sin IVA y el sistema lo suma.
+                Desmarcado: capturás el precio final con IVA incluido y el
+                sistema lo extrae para mostrarlo en la venta.
               </p>
             </div>
 
@@ -1309,6 +1315,7 @@ export default function ProductFormModal({
           initialBarcode={
             variantModal.mode === "add" ? initialBarcode : undefined
           }
+          calcularIVA={form.calcularIVA}
           onClose={() => setVariantModal(null)}
           onSave={handleSaveVariant}
         />

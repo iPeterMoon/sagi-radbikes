@@ -125,7 +125,7 @@ describe("ProductoBO", () => {
       brand_id: 3n,
       subcategory_id: 2n,
       is_active: true,
-      has_iva: true,
+      calcular_iva: true,
     });
     const varianteCreada = acceso.variantDAO.create.mock.calls[0][0];
     expect(varianteCreada).toMatchObject({
@@ -163,12 +163,12 @@ describe("ProductoBO", () => {
     const producto = acceso.productDAO.create.mock.calls[0][0];
     expect(producto.cost).toBeNull();
     expect(producto.min_stock).toBe(0);
-    expect(producto.has_iva).toBe(true);
+    expect(producto.calcular_iva).toBe(true);
     expect(acceso.variantDAO.create.mock.calls[0][0].barcode_upc).toBeNull();
     expect(acceso.labelDAO.create).not.toHaveBeenCalled();
   });
 
-  it("crear respeta tieneIVA=false", async () => {
+  it("crear respeta calcularIVA=false (precio con IVA incluido)", async () => {
     acceso.productDAO.create.mockResolvedValue(productoEntity());
     acceso.variantDAO.create.mockResolvedValue(varianteEntity());
 
@@ -181,10 +181,10 @@ describe("ProductoBO", () => {
       idMarca: "3",
       idSubCategoria: "2",
       imagenesArchivo: [],
-      tieneIVA: false,
+      calcularIVA: false,
     } as any);
 
-    expect(acceso.productDAO.create.mock.calls[0][0].has_iva).toBe(false);
+    expect(acceso.productDAO.create.mock.calls[0][0].calcular_iva).toBe(false);
   });
 
   it("actualizar reemplaza etiquetas y elimina imágenes", async () => {
@@ -212,7 +212,7 @@ describe("ProductoBO", () => {
 
     expect(acceso.productDAO.update).toHaveBeenCalledWith(
       5n,
-      expect.objectContaining({ name: "Nuevo", brand_id: 3n, has_iva: true }),
+      expect.objectContaining({ name: "Nuevo", brand_id: 3n, calcular_iva: true }),
     );
     expect(acceso.labelDAO.deleteByProduct).toHaveBeenCalledWith(5n);
     expect(acceso.labelDAO.create).toHaveBeenCalledWith({

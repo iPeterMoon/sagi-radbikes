@@ -79,7 +79,7 @@ const product = (over: any = {}) => ({
   description: "Una bici",
   min_stock: 2,
   is_active: true,
-  has_iva: true,
+  calcular_iva: true,
   subcategory_id: 2n,
   brand_id: 3n,
   product_images: [],
@@ -316,7 +316,7 @@ describe("ProductoMapper.toDTO", () => {
       descripcion: "Una bici",
       minStockReferencia: 2,
       activo: true,
-      tieneIVA: true,
+      calcularIVA: true,
       estadoStock: EstadoStock.NORMAL,
     });
     expect(dto.categoria).toEqual({
@@ -369,12 +369,12 @@ describe("ProductoMapper.toDTO", () => {
     expect(dto.estadoStock).toBe(EstadoStock.CRITICO);
   });
 
-  it("mapea has_iva a tieneIVA y usa true por defecto", () => {
-    expect(ProductoMapper.toDTO(product({ has_iva: false }) as any).tieneIVA).toBe(
+  it("mapea calcular_iva a calcularIVA y usa true por defecto", () => {
+    expect(ProductoMapper.toDTO(product({ calcular_iva: false }) as any).calcularIVA).toBe(
       false,
     );
     expect(
-      ProductoMapper.toDTO(product({ has_iva: undefined }) as any).tieneIVA,
+      ProductoMapper.toDTO(product({ calcular_iva: undefined }) as any).calcularIVA,
     ).toBe(true);
   });
 });

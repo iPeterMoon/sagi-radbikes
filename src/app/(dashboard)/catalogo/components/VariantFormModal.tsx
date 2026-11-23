@@ -42,6 +42,8 @@ interface VariantFormModalProps {
   referenceMinStock: number;
   /** Código de barras a pre-llenar al crear una variante nueva (ej. tras un escaneo sin coincidencias). */
   initialBarcode?: string;
+  /** Define si el precio capturado es base (true) o ya incluye IVA (false). */
+  calcularIVA: boolean;
   onClose: () => void;
   onSave: (
     data: VariantFormData,
@@ -82,6 +84,7 @@ export default function VariantFormModal({
   referenceCost,
   referenceMinStock,
   initialBarcode,
+  calcularIVA,
   onClose,
   onSave,
 }: VariantFormModalProps) {
@@ -358,7 +361,12 @@ export default function VariantFormModal({
               </div>
             </div>
             <div>
-              <label className={twLabel}>Precio</label>
+              <label className={twLabel}>
+                Precio{" "}
+                <span className="font-normal text-gray-400">
+                  ({calcularIVA ? "sin IVA" : "con IVA incluido"})
+                </span>
+              </label>
               <div className="relative">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[13px]">
                   $
